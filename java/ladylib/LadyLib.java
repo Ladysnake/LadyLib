@@ -1,7 +1,7 @@
 package ladylib;
 
-import ladylib.client.particle.ParticleManager;
 import ladylib.client.ShaderUtil;
+import ladylib.client.particle.ParticleManager;
 import ladylib.registration.AutoRegistrar;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.IReloadableResourceManager;
@@ -37,7 +37,13 @@ public class LadyLib {
     @SideOnly(Side.CLIENT)
     private ParticleManager particleManager;
 
-    public static LadyLib newLibInstance(FMLPreInitializationEvent event) {
+    /**
+     * Creates and initializes an instance of this class.
+     * Simply calling this is enough to have annotation magic work on your mod.
+     * @param event a pre initialization event to get setup information
+     * @return an instance of this class, to further interact with the library
+     */
+    public static LadyLib initLib(FMLPreInitializationEvent event) {
         LadyLib ret = new LadyLib();
         ret.preInit(event);
         allInstances.add(ret);

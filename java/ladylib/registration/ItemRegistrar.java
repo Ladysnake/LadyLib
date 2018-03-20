@@ -5,11 +5,9 @@ import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
 import ladylib.LadyLib;
 import ladylib.client.ICustomLocation;
-import ladylib.misc.TemplateUtil;
 import net.minecraft.block.Block;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemBlock;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.event.RegistryEvent;
@@ -20,6 +18,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 import javax.annotation.Nonnull;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -86,21 +85,8 @@ public class ItemRegistrar {
         ModelLoader.setCustomModelResourceLocation(item, 0, loc);
     }
 
-    /**
-     * Call that anytime between item registration and model registration
-     *
-     * @param srcRoot the location of the <tt>resources</tt> directory in which the files will be generated
-     */
-    public void generateStubModels(String srcRoot) {
-        TemplateUtil.srcRoot = srcRoot;
-        List<String> createdModelFiles = allItems.keySet().stream()
-                .filter(itemIn -> !(itemIn instanceof ItemBlock) && !(itemIn instanceof ICustomLocation))
-                .map(Item::getRegistryName)
-                .map(TemplateUtil::generateItemModel)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-        if (!createdModelFiles.isEmpty())
-            throw new TemplateUtil.ModelStubsCreatedPleaseRestartTheGameException(createdModelFiles); // Because stupid forge prevents System.exit()
+    public Collection<Item> getAllItems() {
+        return allItems.keySet();
     }
 
     public List<Item> getInvisibleItems() {

@@ -1,9 +1,13 @@
 package ladylib.misc;
 
 import ladylib.LadyLib;
+import ladylib.client.ICustomLocation;
+import ladylib.registration.ItemRegistrar;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiErrorScreen;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemBlock;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.client.CustomModLoadingErrorDisplayException;
 
@@ -13,7 +17,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
 import java.util.List;
+import java.util.Objects;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class TemplateUtil {
 
@@ -21,6 +27,23 @@ public class TemplateUtil {
     public static final String NAME_TOKEN = "@NAME@";
     public static final String DOMAIN_TOKEN = "@DOMAIN@";
     public static String srcRoot;
+
+    /**
+     * Call that anytime between item registration and model registration
+     *
+     * @param srcRoot the location of the <tt>resources</tt> directory in which the files will be generated
+     */
+    public void generateStubModels(ItemRegistrar itemRegistrar, String srcRoot) {
+        TemplateUtil.srcRoot = srcRoot;
+        List<String> createdModelFiles = itemRegistrar.getAllItems().stream()
+                .filter(itemIn -> !(itemIn instanceof ItemBlock) && !(itemIn instanceof ICustomLocation))
+                .map(Item::getRegistryName)
+                .map(TemplateUtil::generateItemModel)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        if (!createdModelFiles.isEmpty())
+            throw new TemplateUtil.ModelStubsCreatedPleaseRestartTheGameException(createdModelFiles); // Because stupid forge prevents System.exit()
+    }
 
     @Nullable
     public static String generateItemModel(ResourceLocation loc) {
