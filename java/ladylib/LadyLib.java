@@ -83,14 +83,20 @@ public class LadyLib {
         MinecraftForge.EVENT_BUS.register(particleManager);
     }
 
-    public void makeCreativeTab(Supplier<ItemStack> icon) {
-        creativeTab = new CreativeTabs(shadingMod.getName()) {
+    public CreativeTabs makeCreativeTab(Supplier<ItemStack> icon) {
+        CreativeTabs ret = new CreativeTabs(shadingMod.getName()) {
             @Nonnull
             @Override
             public ItemStack getTabIconItem() {
                 return icon.get();
             }
         };
+        setCreativeTab(ret);
+        return ret;
+    }
+
+    public void setCreativeTab(CreativeTabs tab) {
+        this.creativeTab = tab;
     }
 
     public CreativeTabs getCreativeTab() {

@@ -1,5 +1,6 @@
 package ladylib.registration;
 
+import com.google.common.base.Preconditions;
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
 import ladylib.LadyLib;
@@ -45,8 +46,10 @@ public class ItemRegistrar {
      *
      * @param item   the item to be registered
      * @param listed whether this item will appear in the creative and JEI tabs
+     * @throws IllegalArgumentException if the given item has a null registry name
      */
     public void addItem(@Nonnull Item item, boolean listed) {
+        Preconditions.checkNotNull(item.getRegistryName(), "Can't use a null-name for the registry, object %s.", item);
         allItems.put(item, !listed);
     }
 

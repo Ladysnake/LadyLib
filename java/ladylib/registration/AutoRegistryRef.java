@@ -3,6 +3,7 @@ package ladylib.registration;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import ladylib.LadyLib;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.util.ResourceLocation;
@@ -15,12 +16,13 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 class AutoRegistryRef {
-    private static final LoadingCache<Class<?>, MethodHandle> unlocalizedNamesCache = CacheBuilder.newBuilder()
+    private final LoadingCache<Class<?>, Optional<MethodHandle>> unlocalizedNamesCache = CacheBuilder.newBuilder()
             .build(CacheLoader.from(type -> {
-                if (type == null) return null;
+                if (type == null) return Optional.empty();
                 try {
                     Method m;
                     // Items and blocks have different obfuscated names for their setUnlocalizedName method
@@ -31,15 +33,15 @@ class AutoRegistryRef {
                     else    // If it has a setUnlocalizedName method, it is not from vanilla so not obfuscated
                         m = type.getMethod("setUnlocalizedName", String.class);
                     if (m != null)
-                        return MethodHandles.lookup().unreflect(m);
-                } catch (NoSuchMethodException | IllegalAccessException e) {
-                    e.printStackTrace();
+                        return Optional.of(MethodHandles.lookup().unreflect(m));
+                } catch (NoSuchMethodException ignored) {
+                } catch (IllegalAccessException e) {
+                    LadyLib.LOGGER.error("Error while getting a getUnlocalizedName handle", e);
                 }
-                return null;
+                return Optional.empty();
     }));
 
     private Field field;
-    private MethodHandle setUnlocalizedName;
     private boolean listed;
     private boolean makeItemBlock;
     private String modId;
@@ -47,13 +49,8 @@ class AutoRegistryRef {
     AutoRegistryRef(String modId, Field field) {
         this.modId = modId;
         this.field = field;
-        try {
-            setUnlocalizedName = unlocalizedNamesCache.get(field.getType());
-            listed = !field.isAnnotationPresent(AutoRegister.Unlisted.class);
-            makeItemBlock = !field.isAnnotationPresent(AutoRegister.NoItem.class);
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
+        listed = !field.isAnnotationPresent(AutoRegister.Unlisted.class);
+        makeItemBlock = !field.isAnnotationPresent(AutoRegister.NoItem.class);
     }
 
     boolean isValidForRegistry(IForgeRegistry<?> registry) {
@@ -65,12 +62,21 @@ class AutoRegistryRef {
         try {
             String name = field.getName().toLowerCase(Locale.ENGLISH);
             IForgeRegistryEntry value = ((IForgeRegistryEntry) field.get(null));
+            if (value == null) {
+                LadyLib.LOGGER.error("A field marked to be automatically registered has a null value {}", field);
+                return null;
+            }
             value.setRegistryName(new ResourceLocation(modId, name));
-            if (setUnlocalizedName != null)
-                setUnlocalizedName.invoke(value, modId + "." + name);
+            unlocalizedNamesCache.get(field.getType()).ifPresent(handle -> {
+                try {
+                    handle.invoke(value, modId + "." + name);
+                } catch (Throwable throwable) {
+                    throwable.printStackTrace();
+                }
+            });
             return (V) value;
-        } catch (Throwable throwable) {
-            throwable.printStackTrace();
+        } catch (ExecutionException | IllegalAccessException e) {
+            LadyLib.LOGGER.error("Could not access an auto registered field", e);
         }
         return null;
     }
