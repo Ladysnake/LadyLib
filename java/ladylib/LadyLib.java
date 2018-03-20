@@ -1,6 +1,6 @@
 package ladylib;
 
-import ladylib.client.ParticleManager;
+import ladylib.client.particle.ParticleManager;
 import ladylib.client.ShaderUtil;
 import ladylib.registration.AutoRegistrar;
 import net.minecraft.client.Minecraft;
@@ -68,18 +68,16 @@ public class LadyLib {
         MinecraftForge.EVENT_BUS.register(registrar);
         MinecraftForge.EVENT_BUS.register(registrar.getItemRegistrar());
         MinecraftForge.EVENT_BUS.register(registrar.getBlockRegistrar());
+        if (FMLCommonHandler.instance().getSide() == Side.CLIENT)
+            clientInit();
     }
 
     /**
-     * Initializes client-only helpers like {@link ShaderUtil} or {@link ParticleManager} <br/>
-     * Call this in your client proxy PreInitialization method
+     * Initializes client-only helpers like {@link ShaderUtil} or {@link ParticleManager}
      */
-    public void clientInit(Supplier<Integer> maxParticles) {
-        // safety checks can't hurt
-        if (FMLCommonHandler.instance().getSide() == Side.SERVER) return;
-
+    private void clientInit() {
         ((IReloadableResourceManager) Minecraft.getMinecraft().getResourceManager()).registerReloadListener(ShaderUtil::loadShaders);
-        particleManager = new ParticleManager(maxParticles);
+        particleManager = new ParticleManager();
         MinecraftForge.EVENT_BUS.register(particleManager);
     }
 

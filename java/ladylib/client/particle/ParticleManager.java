@@ -1,4 +1,4 @@
-package ladylib.client;
+package ladylib.client.particle;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.Particle;
@@ -18,10 +18,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.opengl.GL11;
 
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Supplier;
 
 /**
@@ -33,14 +30,20 @@ import java.util.function.Supplier;
 @SideOnly(Side.CLIENT)
 public class ParticleManager {
 
-    private final List<Particle> particles = new LinkedList<>();
+    private final Queue<ISpecialParticle> particles = new ArrayDeque<>();
     private final Set<ResourceLocation> particleTextures = new HashSet<>();
-    private final Supplier<Integer> maxParticles;
+    private Supplier<Integer> maxParticles = () -> 300;
 
-    public ParticleManager(Supplier<Integer> maxParticles) {
+    public void setMaxParticlesConfig(Supplier<Integer> maxParticles) {
         this.maxParticles = maxParticles;
     }
 
+    /**
+     * Convenience method that can be called at preinit to register particle textures to be added in the atlas. <br/>
+     * Using this method to register particle textures is not mandatory, mods can use their own event subscriber.
+     *
+     * @param location a resource location indicating where to find the texture in assets
+     */
     public void registerParticleTexture(ResourceLocation location) {
         particleTextures.add(location);
     }
@@ -61,17 +64,23 @@ public class ParticleManager {
     }
 
     private void updateParticles() {
-        // particles cost a lot less to update than to render
-        particles.stream().limit(3 * maxParticles.get()).forEach(Particle::onUpdate);
-        particles.removeIf(p -> !p.isAlive());
+        int count = 0;
+        for (Iterator<ISpecialParticle> iterator = particles.iterator(); iterator.hasNext(); ) {
+            if (++count > 3 * maxParticles.get()) break;
+            ISpecialParticle particle = iterator.next();
+            // particles cost a lot less to update than to render
+            particle.onUpdate();
+            if (particle.isDead())
+                iterator.remove();
+        }
     }
 
     private void renderParticles(float partialTicks) {
-        float f = ActiveRenderInfo.getRotationX();
-        float f1 = ActiveRenderInfo.getRotationZ();
-        float f2 = ActiveRenderInfo.getRotationYZ();
-        float f3 = ActiveRenderInfo.getRotationXY();
-        float f4 = ActiveRenderInfo.getRotationXZ();
+        float x = ActiveRenderInfo.getRotationX();
+        float z = ActiveRenderInfo.getRotationZ();
+        float yz = ActiveRenderInfo.getRotationYZ();
+        float xy = ActiveRenderInfo.getRotationXY();
+        float xz = ActiveRenderInfo.getRotationXZ();
         EntityPlayer player = Minecraft.getMinecraft().player;
         if (player != null) {
             Particle.interpPosX = player.lastTickPosX + (player.posX - player.lastTickPosX) * partialTicks;
@@ -83,7 +92,7 @@ public class ParticleManager {
 
             GlStateManager.enableAlpha();
             GlStateManager.enableBlend();
-            GlStateManager.alphaFunc(516, 0.003921569F);
+            GlStateManager.alphaFunc(GL11.GL_GREATER, 0.003921569F);
             GlStateManager.disableCull();
 
             GlStateManager.depthMask(false);
@@ -92,28 +101,34 @@ public class ParticleManager {
             Tessellator tess = Tessellator.getInstance();
             BufferBuilder buffer = tess.getBuffer();
 
-            // render normal particles
-            {
-                GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+            int particleCount = 0;
+            drawParticles:
+            for (DrawingStages stage : DrawingStages.VALUES) {
+                stage.prepareRender();
                 buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.PARTICLE_POSITION_TEX_COLOR_LMAP);
-                particles.stream()
-                        .limit(maxParticles.get())
-                        .forEach(p -> p.renderParticle(buffer, player, partialTicks, f, f4, f1, f2, f3));
+                for (ISpecialParticle particle : particles) {
+                    if (stage.canDraw(particle)) {
+                        if (++particleCount > maxParticles.get()) {
+                            stage.clear();
+                            break drawParticles;
+                        }
+                        particle.renderParticle(buffer, player, partialTicks, x, xz, z, yz, xy);
+                    }
+                }
                 tess.draw();
+                stage.clear();
             }
-            // TODO add fancy particles back
 
             GlStateManager.enableCull();
             GlStateManager.depthMask(true);
             GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
             GlStateManager.disableBlend();
-            GlStateManager.alphaFunc(516, 0.1F);
-
+            GlStateManager.alphaFunc(GL11.GL_GREATER, 0.1F);
             GlStateManager.popMatrix();
         }
     }
 
-    public void addParticle(Particle p) {
+    public void addParticle(ISpecialParticle p) {
         // If we can't even tick them, don't add them
         if (particles.size() < maxParticles.get() * 3)
             particles.add(p);

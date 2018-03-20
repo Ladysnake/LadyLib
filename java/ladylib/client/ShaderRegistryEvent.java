@@ -25,16 +25,14 @@ public class ShaderRegistryEvent extends Event implements IContextSetter {
      * Convenience method to register a shader with the fragment and vertex shaders having the same name <br/>
      * The corresponding program will be created and linked during the next ResourceManager reloading
      *
-     * @param shaderName the common name or relative location of both shaders, minus the file extension
+     * @param identifier the common name or relative location of both shaders, minus the file extension
      */
-    public void registerShader(String shaderName) {
-        ModContainer mc = Loader.instance().activeModContainer();
-        String prefix = mc == null || (mc instanceof InjectedModContainer && ((InjectedModContainer)mc).wrappedContainer instanceof FMLContainer) ? "minecraft" : mc.getModId().toLowerCase();
-        ResourceLocation identifier = new ResourceLocation(prefix, shaderName);
-        registeredShaders.put(identifier, Pair.of(
-                new ResourceLocation(prefix, ShaderUtil.SHADER_LOCATION_PREFIX + shaderName + ".vsh"),
-                new ResourceLocation(prefix, ShaderUtil.SHADER_LOCATION_PREFIX + shaderName + ".fsh")
-        ));
+    public void registerShader(ResourceLocation identifier) {
+        registerShader(
+                identifier,
+                new ResourceLocation(identifier.getResourceDomain(), ShaderUtil.SHADER_LOCATION_PREFIX + identifier.getResourcePath() + ".vsh"),
+                new ResourceLocation(identifier.getResourceDomain(), ShaderUtil.SHADER_LOCATION_PREFIX + identifier.getResourcePath() + ".fsh")
+        );
     }
 
     /**
