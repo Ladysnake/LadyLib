@@ -111,16 +111,19 @@ public class ParticleManager {
             drawParticles:
             // render every particle grouped by particle stage
             for (Map.Entry<IParticleDrawingStage, Queue<ISpecialParticle>> particleStage : particles.entrySet()) {
+                particleStage.getKey().prepareRender();
                 buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.PARTICLE_POSITION_TEX_COLOR_LMAP);
                 // add every particle in the drawing stage to the buffer
                 for (ISpecialParticle particle : particleStage.getValue()) {
                     if (++particleCount > maxParticles.get()) {
+                        // upload whatever is currently in the buffer
+                        tess.draw();
+                        particleStage.getKey().clear();
                         break drawParticles;
                     }
                     particle.renderParticle(buffer, player, partialTicks, x, xz, z, yz, xy);
                 }
                 // apply custom stage effects and upload
-                particleStage.getKey().prepareRender();
                 tess.draw();
                 particleStage.getKey().clear();
             }

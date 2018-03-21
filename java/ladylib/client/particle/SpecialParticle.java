@@ -11,6 +11,9 @@ import net.minecraft.world.World;
 import javax.annotation.Nonnull;
 
 public class SpecialParticle extends Particle implements ISpecialParticle {
+    @Nonnull
+    protected DrawingStages drawStage = DrawingStages.NORMAL;
+
     protected SpecialParticle(World worldIn, double posXIn, double posYIn, double posZIn) {
         super(worldIn, posXIn, posYIn, posZIn);
     }
@@ -18,7 +21,11 @@ public class SpecialParticle extends Particle implements ISpecialParticle {
     @Nonnull
     @Override
     public DrawingStages getDrawStage() {
-        return DrawingStages.NORMAL;
+        return drawStage;
+    }
+
+    public void setDrawStage(@Nonnull DrawingStages drawStage) {
+        this.drawStage = drawStage;
     }
 
     @Override
