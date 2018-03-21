@@ -30,7 +30,8 @@ import java.util.function.Supplier;
 @SideOnly(Side.CLIENT)
 public class ParticleManager {
 
-    private final Queue<ISpecialParticle> particles = new ArrayDeque<>();
+    /**Stores each currently active particle in a queue, depending on its drawing stage*/
+    private final Map<IParticleDrawingStage, Queue<ISpecialParticle>> particles = new HashMap<>();
     private final Set<ResourceLocation> particleTextures = new HashSet<>();
     private Supplier<Integer> maxParticles = () -> 300;
 
@@ -55,7 +56,9 @@ public class ParticleManager {
 
     @SubscribeEvent
     public void onGameTick(TickEvent.ClientTickEvent event) {
-        updateParticles();
+        // TODO check if particles look weird when updated only once per tick
+        if (event.phase == TickEvent.Phase.START)
+            updateParticles();
     }
 
     @SubscribeEvent
@@ -65,13 +68,16 @@ public class ParticleManager {
 
     private void updateParticles() {
         int count = 0;
-        for (Iterator<ISpecialParticle> iterator = particles.iterator(); iterator.hasNext(); ) {
-            if (++count > 3 * maxParticles.get()) break;
-            ISpecialParticle particle = iterator.next();
-            // particles cost a lot less to update than to render
-            particle.onUpdate();
-            if (particle.isDead())
-                iterator.remove();
+        // go through every particle indiscriminately
+        for (Queue<ISpecialParticle> particleQueue : particles.values()) {
+            for (Iterator<ISpecialParticle> iterator = particleQueue.iterator(); iterator.hasNext(); ) {
+                // particles cost a lot less to update than to render so we can update more of them
+                if (++count > 3 * maxParticles.get()) break;
+                ISpecialParticle particle = iterator.next();
+                particle.onUpdate();
+                if (particle.isDead())
+                    iterator.remove();
+            }
         }
     }
 
@@ -103,20 +109,20 @@ public class ParticleManager {
 
             int particleCount = 0;
             drawParticles:
-            for (DrawingStages stage : DrawingStages.VALUES) {
-                stage.prepareRender();
+            // render every particle grouped by particle stage
+            for (Map.Entry<IParticleDrawingStage, Queue<ISpecialParticle>> particleStage : particles.entrySet()) {
                 buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.PARTICLE_POSITION_TEX_COLOR_LMAP);
-                for (ISpecialParticle particle : particles) {
-                    if (stage.canDraw(particle)) {
-                        if (++particleCount > maxParticles.get()) {
-                            stage.clear();
-                            break drawParticles;
-                        }
-                        particle.renderParticle(buffer, player, partialTicks, x, xz, z, yz, xy);
+                // add every particle in the drawing stage to the buffer
+                for (ISpecialParticle particle : particleStage.getValue()) {
+                    if (++particleCount > maxParticles.get()) {
+                        break drawParticles;
                     }
+                    particle.renderParticle(buffer, player, partialTicks, x, xz, z, yz, xy);
                 }
+                // apply custom stage effects and upload
+                particleStage.getKey().prepareRender();
                 tess.draw();
-                stage.clear();
+                particleStage.getKey().clear();
             }
 
             GlStateManager.enableCull();
@@ -130,8 +136,8 @@ public class ParticleManager {
 
     public void addParticle(ISpecialParticle p) {
         // If we can't even tick them, don't add them
-        if (particles.size() < maxParticles.get() * 3)
-            particles.add(p);
+        if (particles.values().stream().mapToInt(Collection::size).sum() < maxParticles.get() * 3)
+            particles.computeIfAbsent(p.getDrawStage(), i -> new ArrayDeque<>()).add(p);
     }
 
 }

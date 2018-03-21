@@ -2,7 +2,7 @@ package ladylib.client.particle;
 
 import net.minecraft.client.renderer.GlStateManager;
 
-public enum DrawingStages {
+public enum DrawingStages implements IParticleDrawingStage {
     NORMAL(GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, false),
     ADDITIVE(GlStateManager.DestFactor.ONE, false),
     GHOST(GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, true),
@@ -17,18 +17,17 @@ public enum DrawingStages {
         this.renderThroughBlocks = renderThroughBlocks;
     }
 
-    void prepareRender() {
+    @Override
+    public void prepareRender() {
         GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, destFactor);
         if (this.renderThroughBlocks)
             GlStateManager.disableDepth();
     }
 
-    void clear() {
+    @Override
+    public void clear() {
         if (this.renderThroughBlocks)
             GlStateManager.enableDepth();
     }
 
-    boolean canDraw(ISpecialParticle particle) {
-        return particle.getDrawStage() == this;
-    }
 }
