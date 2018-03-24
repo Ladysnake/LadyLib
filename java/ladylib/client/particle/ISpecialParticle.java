@@ -5,14 +5,21 @@ import net.minecraft.entity.player.EntityPlayer;
 
 import javax.annotation.Nonnull;
 
+/**
+ * @see ParticleManager
+ * @see IParticleDrawingStage
+ */
 public interface ISpecialParticle {
 
     @Nonnull
-    DrawingStages getDrawStage();
+    IParticleDrawingStage getDrawStage();
 
     void renderParticle(@Nonnull BufferBuilder buffer, EntityPlayer player, float partialTicks, float x, float xz, float z, float yz, float xy);
 
-    void onUpdate();
+    /**
+     * This needs to be called something else than {@code onUpdate} otherwise it will crash on obfuscated clients
+     */
+    void updateParticle();
 
     boolean isDead();
 }

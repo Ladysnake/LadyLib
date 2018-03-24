@@ -12,7 +12,7 @@ import javax.annotation.Nonnull;
 
 public class SpecialParticle extends Particle implements ISpecialParticle {
     @Nonnull
-    protected DrawingStages drawStage = DrawingStages.NORMAL;
+    protected IParticleDrawingStage drawStage = DrawingStages.NORMAL;
 
     protected SpecialParticle(World worldIn, double posXIn, double posYIn, double posZIn) {
         super(worldIn, posXIn, posYIn, posZIn);
@@ -20,17 +20,22 @@ public class SpecialParticle extends Particle implements ISpecialParticle {
 
     @Nonnull
     @Override
-    public DrawingStages getDrawStage() {
+    public IParticleDrawingStage getDrawStage() {
         return drawStage;
     }
 
-    public void setDrawStage(@Nonnull DrawingStages drawStage) {
+    public void setDrawStage(@Nonnull IParticleDrawingStage drawStage) {
         this.drawStage = drawStage;
     }
 
     @Override
     public void renderParticle(@Nonnull BufferBuilder buffer, EntityPlayer player, float partialTicks, float x, float xz, float z, float yz, float xy) {
         super.renderParticle(buffer, player, partialTicks, x, xz, z, yz, xy);
+    }
+
+    @Override
+    public void updateParticle() {
+        onUpdate();
     }
 
     @Override

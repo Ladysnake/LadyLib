@@ -87,7 +87,7 @@ public class ParticleManager {
                 // particles cost a lot less to update than to render so we can update more of them
                 if (++count > 3 * maxParticles.get()) break;
                 ISpecialParticle particle = iterator.next();
-                particle.onUpdate();
+                particle.updateParticle();
                 if (particle.isDead())
                     iterator.remove();
             }
