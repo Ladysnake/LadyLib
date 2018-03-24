@@ -22,10 +22,24 @@ import java.util.*;
 import java.util.function.Supplier;
 
 /**
- * This class has been adapted from embers' source code under GNU Lesser General Public License 2.1
- * https://github.com/RootsTeam/Embers/blob/master/src/main/java/teamroots/embers/particle/ParticleRenderer.java
+ * A particle manager that handles custom particles updates and rendering. <br/>
+ * This particle manager makes use of a hard limit on the number of particles drawn to alleviate the load on the client framerate.
+ * This limit can be controlled with {@link #setMaxParticlesConfig(Supplier)}.
+ * <p>
+ * Particles are classed by {@link IParticleDrawingStage}, with each drawing stage describing a specific rendering context.
+ * Particles sharing the same drawing stage will be drawn as part of the same batch.
+ * </p>
  *
+ * <p>
+ * This class was originally adapted from embers' source code under GNU Lesser General Public License 2.1
+ * https://github.com/RootsTeam/Embers/blob/master/src/main/java/teamroots/embers/particle/ParticleRenderer.java
+ * </p>
+ *
+ * @author Pyrofab
  * @author Elucent
+
+ * @see ISpecialParticle
+ * @see IParticleDrawingStage
  */
 @SideOnly(Side.CLIENT)
 public class ParticleManager {
@@ -56,7 +70,6 @@ public class ParticleManager {
 
     @SubscribeEvent
     public void onGameTick(TickEvent.ClientTickEvent event) {
-        // TODO check if particles look weird when updated only once per tick
         if (event.phase == TickEvent.Phase.START)
             updateParticles();
     }
@@ -115,6 +128,7 @@ public class ParticleManager {
                 buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.PARTICLE_POSITION_TEX_COLOR_LMAP);
                 // add every particle in the drawing stage to the buffer
                 for (ISpecialParticle particle : particleStage.getValue()) {
+                    // check that we don't render past the limit
                     if (++particleCount > maxParticles.get()) {
                         // upload whatever is currently in the buffer
                         tess.draw();
