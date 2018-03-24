@@ -17,7 +17,7 @@ import java.util.function.Function;
  * Blocks will be automatically associated with a corresponding ItemBlock. Use {@link NoItem} to prevent this behaviour.
  * Items will be automatically added to the mod's creative tab. Use {@link Unlisted} to hide an item.
  */
-@Target(ElementType.TYPE)
+@Target({ElementType.TYPE, ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface AutoRegister {
 

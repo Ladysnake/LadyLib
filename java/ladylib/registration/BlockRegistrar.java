@@ -31,7 +31,7 @@ public class BlockRegistrar {
      */
     private Object2BooleanMap<Block> allBlocks = new Object2BooleanOpenHashMap<>();
 
-    public BlockRegistrar(LadyLib ladyLib, ItemRegistrar itemRegistrar) {
+    BlockRegistrar(LadyLib ladyLib, ItemRegistrar itemRegistrar) {
         this.ladyLib = ladyLib;
         this.itemRegistrar = itemRegistrar;
     }

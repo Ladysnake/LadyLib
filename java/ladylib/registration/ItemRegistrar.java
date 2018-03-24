@@ -29,6 +29,11 @@ import java.util.stream.Collectors;
  */
 public class ItemRegistrar {
 
+    @SuppressWarnings({"unchecked", "ConstantConditions"})
+    public static <T extends Item> T name(T item, String name) {
+        return (T) item.setRegistryName(name).setUnlocalizedName(item.getRegistryName().getResourceDomain() + "." + name);
+    }
+
     private final LadyLib ladyLib;
     /**
      * A map tracking all registered items and whether they should be invisible in the creative and JEI tabs
@@ -36,7 +41,7 @@ public class ItemRegistrar {
      */
     private Object2BooleanMap<Item> allItems = new Object2BooleanOpenHashMap<>();
 
-    public ItemRegistrar(LadyLib ladyLib) {
+    ItemRegistrar(LadyLib ladyLib) {
         this.ladyLib = ladyLib;
     }
 

@@ -33,9 +33,16 @@ public class AutoRegistrar {
             // each mod using this library has its own instance so we must only affect the owning mod
             String modId = (String) data.getAnnotationInfo().get("value");
             if (modId.equals(ladyLib.getModId())) {
+                String className = data.getClassName();
+                String annotationTarget = data.getObjectName();
+                boolean isClass = className.equals(annotationTarget);
                 try {
-                    scanClassForFields(modId, Class.forName(data.getClassName(), false, getClass().getClassLoader()));
-                } catch (ClassNotFoundException e) {
+                    Class<?> clazz = Class.forName(data.getClassName(), false, getClass().getClassLoader());
+                    if (isClass)
+                        scanClassForFields(modId, clazz);
+                    else
+                        references.add(new AutoRegistryRef(modId, clazz.getDeclaredField(annotationTarget)));
+                } catch (ClassNotFoundException | NoSuchFieldException e) {
                     e.printStackTrace();
                 }
             }
@@ -48,7 +55,9 @@ public class AutoRegistrar {
             // use the same criteria as ObjectHolderRegistry to detect candidates
             boolean isMatch = Modifier.isPublic(mods) && Modifier.isStatic(mods) && Modifier.isFinal(mods);
             // No point in trying to automatically register non registrable fields
-            if (isMatch && IForgeRegistryEntry.class.isAssignableFrom(f.getType()) && !f.isAnnotationPresent(AutoRegister.Ignore.class)) {
+            // also don't register annotated fields here
+            if (isMatch && IForgeRegistryEntry.class.isAssignableFrom(f.getType()) &&
+                    !f.isAnnotationPresent(AutoRegister.Ignore.class) && !f.isAnnotationPresent(AutoRegister.class)) {
                 references.add(new AutoRegistryRef(modId, f));
             }
         }
