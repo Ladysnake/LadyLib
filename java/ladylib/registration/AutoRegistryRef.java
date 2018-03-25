@@ -44,6 +44,7 @@ class AutoRegistryRef {
     private Field field;
     private boolean listed;
     private boolean makeItemBlock;
+    private String[] oreNames;
     private String modId;
 
     AutoRegistryRef(String modId, Field field) {
@@ -51,6 +52,7 @@ class AutoRegistryRef {
         this.field = field;
         listed = !field.isAnnotationPresent(AutoRegister.Unlisted.class);
         makeItemBlock = !field.isAnnotationPresent(AutoRegister.NoItem.class);
+        oreNames = field.isAnnotationPresent(AutoRegister.Ore.class) ? field.getAnnotation(AutoRegister.Ore.class).value() : new String[0];
     }
 
     boolean isValidForRegistry(IForgeRegistry<?> registry) {
@@ -86,6 +88,10 @@ class AutoRegistryRef {
      */
     boolean isListed() {
         return listed;
+    }
+
+    String[] getOreNames() {
+        return oreNames;
     }
 
     /**

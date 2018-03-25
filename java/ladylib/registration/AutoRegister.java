@@ -47,11 +47,21 @@ public @interface AutoRegister {
     /**
      * If put on a Block field, no corresponding ItemBlock will be created
      * For more control over the ItemBlock creation, ignore the field
-     * and directly call {@link BlockRegistrar#addBlock(Block, boolean, Function)} instead
+     * and directly call {@link BlockRegistrar#addBlock(Block, Function, boolean, String...)} instead
      */
     @Target(ElementType.FIELD)
     @Retention(RetentionPolicy.RUNTIME)
     @interface NoItem {
+    }
+
+    /**
+     * If put on an Item or Block field, the corresponding item will automatically be added to the ore dictionary with
+     * the given names
+     */
+    @Target(ElementType.FIELD)
+    @Retention(RetentionPolicy.RUNTIME)
+    @interface Ore {
+        String[] value();
     }
 
 }

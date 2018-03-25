@@ -1,8 +1,6 @@
 package ladylib.registration;
 
 import com.google.common.base.Preconditions;
-import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
-import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
 import ladylib.LadyLib;
 import ladylib.client.ICustomLocation;
 import net.minecraft.block.Block;
@@ -16,13 +14,14 @@ import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.oredict.OreDictionary;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Class in charge of item-specific registration behaviour
@@ -36,13 +35,16 @@ public class ItemRegistrar {
 
     private final LadyLib ladyLib;
     /**
-     * A map tracking all registered items and whether they should be invisible in the creative and JEI tabs
-     * (the value is true if the item is unlisted)
+     * A map tracking all registered items and the associated info
      */
-    private Object2BooleanMap<Item> allItems = new Object2BooleanOpenHashMap<>();
+    private Map<Item, ItemInfo> allItems = new HashMap<>();
 
     ItemRegistrar(LadyLib ladyLib) {
         this.ladyLib = ladyLib;
+    }
+
+    void addItem(@Nonnull Item item, AutoRegistryRef ref) {
+        addItem(item, ref.isListed(), ref.getOreNames());
     }
 
     /**
@@ -52,20 +54,20 @@ public class ItemRegistrar {
      * @param listed whether this item will appear in the creative and JEI tabs
      * @throws IllegalArgumentException if the given item has a null registry name
      */
-    public void addItem(@Nonnull Item item, boolean listed) {
+    public void addItem(@Nonnull Item item, boolean listed, String... oreNames) {
         Preconditions.checkNotNull(item.getRegistryName(), "Can't use a null-name for the registry, object %s.", item);
-        allItems.put(item, !listed);
+        allItems.put(item, new ItemInfo(listed, oreNames));
     }
 
-    /**
-     * Needs to be called after the main registrar has discovered all items
-     */
+    // Needs to be called after the main registrar has discovered all items
     @SubscribeEvent(priority = EventPriority.LOW)
     public void registerItems(RegistryEvent.Register<Item> event) {
-        allItems.forEach((item, unlisted) -> {
+        allItems.forEach((item, info) -> {
             event.getRegistry().register(item);
-            if (!unlisted)
+            if (info.listed)
                 item.setCreativeTab(ladyLib.getCreativeTab());
+            for (String oreName : info.oreNames)
+                OreDictionary.registerOre(oreName, item);
         });
     }
 
@@ -94,11 +96,23 @@ public class ItemRegistrar {
         return allItems.keySet();
     }
 
-    public List<Item> getInvisibleItems() {
-        return allItems.object2BooleanEntrySet().stream()
-                .filter(Object2BooleanMap.Entry::getBooleanValue)
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
+    public Stream<Item> getInvisibleItems() {
+        return allItems.entrySet().stream()
+                .filter(entry -> !entry.getValue().listed)
+                .map(Map.Entry::getKey);
+    }
+
+    class ItemInfo {
+        /**
+         * whether the item should be invisible in the creative and JEI tabs
+         */
+        boolean listed;
+        String[] oreNames;
+
+        ItemInfo(boolean listed, String[] oreNames) {
+            this.listed = listed;
+            this.oreNames = oreNames;
+        }
     }
 
 }

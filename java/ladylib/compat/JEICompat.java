@@ -7,11 +7,7 @@ import mezz.jei.api.IModPlugin;
 import mezz.jei.api.IModRegistry;
 import mezz.jei.api.JEIPlugin;
 import mezz.jei.api.ingredients.IIngredientBlacklist;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.oredict.OreDictionary;
-
-import java.util.Collection;
 
 @JEIPlugin
 public class JEICompat implements IModPlugin {
@@ -24,8 +20,7 @@ public class JEICompat implements IModPlugin {
         LadyLib.getAllInstances().stream()
                 .map(LadyLib::getRegistrar)
                 .map(AutoRegistrar::getItemRegistrar)
-                .map(ItemRegistrar::getInvisibleItems)
-                .flatMap(Collection::stream)
+                .flatMap(ItemRegistrar::getInvisibleItems)
                 .map(ItemStack::new)
                 .forEach(blacklist::addIngredientToBlacklist);
     }

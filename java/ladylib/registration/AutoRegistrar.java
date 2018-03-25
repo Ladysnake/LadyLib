@@ -73,9 +73,9 @@ public class AutoRegistrar {
                     IForgeRegistryEntry value = ref.nameAndGet();
                     // items and blocks have additional registration behaviours
                     if (value instanceof Item) {
-                        itemRegistrar.addItem((Item) value, ref.isListed());
+                        itemRegistrar.addItem((Item) value, ref);
                     } else if (value instanceof Block) {
-                        blockRegistrar.addBlock((Block) value, ref.isListed(), ref.isMakeItemBlock());
+                        blockRegistrar.addBlock((Block) value, ref);
                     } else {
                         event.getRegistry().register(value);
                     }

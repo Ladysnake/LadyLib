@@ -19,6 +19,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nonnull;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -33,6 +34,7 @@ public class LadyLib {
     private String shadingModId;
     private CreativeTabs creativeTab;
     private AutoRegistrar registrar;
+    private File configFolder;
 
     @SideOnly(Side.CLIENT)
     private ParticleManager particleManager;
@@ -76,6 +78,7 @@ public class LadyLib {
         MinecraftForge.EVENT_BUS.register(registrar.getBlockRegistrar());
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT)
             clientInit();
+        configFolder = event.getModConfigurationDirectory();
     }
 
     /**
@@ -97,6 +100,10 @@ public class LadyLib {
         };
         setCreativeTab(ret);
         return ret;
+    }
+
+    public File getConfigFolder() {
+        return configFolder;
     }
 
     public void setCreativeTab(CreativeTabs tab) {
