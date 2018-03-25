@@ -17,9 +17,14 @@ public interface ISpecialParticle {
     void renderParticle(@Nonnull BufferBuilder buffer, EntityPlayer player, float partialTicks, float x, float xz, float z, float yz, float xy);
 
     /**
+     * Called every tick to update the particle state. <br/>
      * This needs to be called something else than {@code onUpdate} otherwise it will crash on obfuscated clients
      */
     void updateParticle();
 
+    /**
+     * If true, this particle will get removed from the particle manager and will not be updated nor rendered anymore
+     * @return whether the particle should be removed
+     */
     boolean isDead();
 }
