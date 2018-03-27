@@ -44,6 +44,7 @@ class AutoRegistryRef {
     private Field field;
     private boolean listed;
     private boolean makeItemBlock;
+    private String[] oldNames;
     private String[] oreNames;
     private String modId;
 
@@ -52,6 +53,7 @@ class AutoRegistryRef {
         this.field = field;
         listed = !field.isAnnotationPresent(AutoRegister.Unlisted.class);
         makeItemBlock = !field.isAnnotationPresent(AutoRegister.NoItem.class);
+        oldNames = field.isAnnotationPresent(AutoRegister.OldNames.class) ? field.getAnnotation(AutoRegister.OldNames.class).value() : new String[0];
         oreNames = field.isAnnotationPresent(AutoRegister.Ore.class) ? field.getAnnotation(AutoRegister.Ore.class).value() : new String[0];
     }
 
@@ -90,8 +92,19 @@ class AutoRegistryRef {
         return listed;
     }
 
+    /**
+     * @return every known name that this entry has had in previous versions
+     */
+    String[] getOldNames() {
+        return oldNames;
+    }
+
     String[] getOreNames() {
         return oreNames;
+    }
+
+    String getModId() {
+        return modId;
     }
 
     /**
@@ -101,4 +114,5 @@ class AutoRegistryRef {
     boolean isMakeItemBlock() {
         return makeItemBlock;
     }
+
 }

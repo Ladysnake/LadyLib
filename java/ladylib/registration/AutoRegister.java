@@ -64,4 +64,13 @@ public @interface AutoRegister {
         String[] value();
     }
 
+    /**
+     * When put on a field, missing mappings that use one of the old names will be remapped to this entry
+     */
+    @Target(ElementType.FIELD)
+    @Retention(RetentionPolicy.RUNTIME)
+    @interface OldNames {
+        String[] value();
+    }
+
 }
