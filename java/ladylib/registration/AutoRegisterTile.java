@@ -1,6 +1,5 @@
 package ladylib.registration;
 
-import ladysnake.dissolution.client.renders.tileentities.TileEntityCrucibleRenderer;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 
 import java.lang.annotation.ElementType;
