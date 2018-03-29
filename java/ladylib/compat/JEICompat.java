@@ -18,8 +18,7 @@ public class JEICompat implements IModPlugin {
 
     private void blacklistInvisibleItems(IIngredientBlacklist blacklist) {
         LadyLib.getAllInstances().stream()
-                .map(LadyLib::getRegistrar)
-                .map(AutoRegistrar::getItemRegistrar)
+                .map(LadyLib::getItemRegistrar)
                 .flatMap(ItemRegistrar::getInvisibleItems)
                 .map(ItemStack::new)
                 .forEach(blacklist::addIngredientToBlacklist);

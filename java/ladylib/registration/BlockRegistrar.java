@@ -31,6 +31,19 @@ public class BlockRegistrar {
      */
     private Map<Block, BlockInfo> allBlocks = new HashMap<>();
 
+    /**
+     * Utility method to set at the same time an item's unlocalized and registry name. <br/>
+     * Unlocalized name will be set to <tt>tile.(modid).(name).name</tt>
+     * @param block the block to name
+     * @param name the name that will be used as registry name resource path and unlocalized name
+     * @return block
+     */
+    @Nonnull
+    @SuppressWarnings({"unchecked", "ConstantConditions"})
+    public static <T extends Block> T name(@Nonnull T block, @Nonnull String name) {
+        return (T) block.setRegistryName(name).setUnlocalizedName(block.getRegistryName().getResourceDomain() + "." + name);
+    }
+
     BlockRegistrar(LadyLib ladyLib, ItemRegistrar itemRegistrar) {
         this.ladyLib = ladyLib;
         this.itemRegistrar = itemRegistrar;
@@ -48,8 +61,8 @@ public class BlockRegistrar {
      * @param makeItemBlock whether this block should get an associated ItemBlock created and registered automatically
      * @param oreNames      ore dictionary names to add to this block
      */
-    public void addBlock(Block block, boolean listed, boolean makeItemBlock, String... oreNames) {
-        Function<Block, Item> itemGen;
+    public void addBlock(@Nonnull Block block, boolean listed, boolean makeItemBlock, @Nonnull String... oreNames) {
+        final Function<Block, Item> itemGen;
         if (makeItemBlock)
             // a default function generating a default ItemBlock and giving it the block's own registry name
             itemGen = (b -> new ItemBlock(b).setRegistryName(Objects.requireNonNull(b.getRegistryName())));
@@ -69,8 +82,8 @@ public class BlockRegistrar {
      * @param oreNames          ore dictionary names to add to this block
      * @return the generated ItemBlock
      */
-    @SuppressWarnings({"unchecked", "WeakerAccess", "UnusedReturnValue"})
-    public <T extends Item> T addBlock(Block block, Function<Block, T> blockItemFunction, boolean listed, String... oreNames) {
+    @SuppressWarnings({"unchecked", "WeakerAccess"})
+    public <T extends Item> T addBlock(@Nonnull Block block, @Nonnull Function<Block, T> blockItemFunction, boolean listed, @Nonnull String... oreNames) {
         // adds the block to the list to be registered later
         allBlocks.put(block, new BlockInfo(oreNames));
         if (listed)
@@ -87,7 +100,7 @@ public class BlockRegistrar {
      * Needs to be called after the main registrar has discovered all blocks
      */
     @SubscribeEvent(priority = EventPriority.LOW)
-    public void registerBlocks(RegistryEvent.Register<Block> event) {
+    void registerBlocks(RegistryEvent.Register<Block> event) {
         allBlocks.forEach((block, info) -> {
             event.getRegistry().register(block);
             for (String oreName : info.oreNames)
@@ -102,7 +115,8 @@ public class BlockRegistrar {
      * @param rl    The model resource location for your custom baked model
      */
     @SideOnly(Side.CLIENT)
-    public void registerSmartRender(Block block, ModelResourceLocation rl) {
+    @SuppressWarnings("unused")
+    public void registerSmartRender(@Nonnull Block block, @Nonnull ModelResourceLocation rl) {
         StateMapperBase ignoreState = new StateMapperBase() {
             @Nonnull
             @Override
@@ -114,9 +128,10 @@ public class BlockRegistrar {
     }
 
     class BlockInfo {
+        @Nonnull
         String[] oreNames;
 
-        public BlockInfo(String[] oreNames) {
+        public BlockInfo(@Nonnull String[] oreNames) {
             this.oreNames = oreNames;
         }
     }
