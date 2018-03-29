@@ -124,7 +124,7 @@ public class ShaderUtil {
     /**
      * Sets the value of an int uniform from the current shader program
      *
-     * @param uniformName the name of the uniform referenced in the shader source file
+     * @param uniformName the name of the uniform field in the shader source file
      * @param value       an int value for this uniform
      */
     public static void setUniform(String uniformName, int value) {
@@ -138,10 +138,10 @@ public class ShaderUtil {
 
     /**
      * Sets the value of an uniform from the current shader program
-     * If exactly 1 value is supplied, will set the value of a float uniform referenced
+     * If exactly 1 value is supplied, will set the value of a float uniform field
      * If between 2 and 4 values are supplied, will set the value of a vec uniform of corresponding length
      *
-     * @param uniformName the name of the uniform referenced in the shader source file
+     * @param uniformName the name of the uniform field in the shader source file
      * @param values      between 1 and 4 float values
      */
     public static void setUniform(String uniformName, float... values) {
@@ -169,7 +169,7 @@ public class ShaderUtil {
     /**
      * Sets the value of a mat4 uniform in the current shader
      *
-     * @param uniformName the name of the uniform referenced in the shader source file
+     * @param uniformName the name of the uniform field in the shader source file
      * @param mat4        a raw array of float values
      */
     public static void setUniform(String uniformName, FloatBuffer mat4) {
