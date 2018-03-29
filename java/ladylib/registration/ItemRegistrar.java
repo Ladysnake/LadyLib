@@ -61,7 +61,7 @@ public class ItemRegistrar {
 
     // Needs to be called after the main registrar has discovered all items
     @SubscribeEvent(priority = EventPriority.LOW)
-    public void registerItems(RegistryEvent.Register<Item> event) {
+    void registerItems(RegistryEvent.Register<Item> event) {
         allItems.forEach((item, info) -> {
             event.getRegistry().register(item);
             if (info.listed)
@@ -73,7 +73,7 @@ public class ItemRegistrar {
 
     @SideOnly(Side.CLIENT)
     @SubscribeEvent
-    public void registerRenders(ModelRegistryEvent event) {
+    void registerRenders(ModelRegistryEvent event) {
         allItems.keySet().stream()
                 .filter(itemIn -> !(Block.getBlockFromItem(itemIn) instanceof BlockFluidBase))
                 .forEach(ItemRegistrar::registerRender);

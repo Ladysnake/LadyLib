@@ -1,10 +1,10 @@
 package ladylib;
 
-import ladylib.client.ShaderUtil;
-import ladylib.client.particle.ParticleManager;
+import ladylib.client.ClientHandler;
+import ladylib.client.IClientHandler;
 import ladylib.registration.AutoRegistrar;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.resources.IReloadableResourceManager;
+import ladylib.registration.BlockRegistrar;
+import ladylib.registration.ItemRegistrar;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.ItemStack;
 import net.minecraft.launchwrapper.Launch;
@@ -20,24 +20,22 @@ import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nonnull;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Supplier;
 
 public class LadyLib {
 
     public static Logger LOGGER = LogManager.getLogger("LadyLib");
-    private static final List<LadyLib> allInstances = new ArrayList<>();
+    private static final Map<String, LadyLib> allInstances = new HashMap<>();
 
-    private ModContainer shadingMod;
-    private String shadingModId;
+    private ModContainer owner;
+    private String ownerModId;
     private CreativeTabs creativeTab;
     private AutoRegistrar registrar;
     private File configFolder;
 
     @SideOnly(Side.CLIENT)
-    private ParticleManager particleManager;
+    private ClientHandler clientHandler;
 
     /**
      * Creates and initializes an instance of this class.
@@ -48,7 +46,7 @@ public class LadyLib {
     public static LadyLib initLib(FMLPreInitializationEvent event) {
         LadyLib ret = new LadyLib();
         ret.preInit(event);
-        allInstances.add(ret);
+        allInstances.put(ret.ownerModId, ret);
         return ret;
     }
 
@@ -56,8 +54,8 @@ public class LadyLib {
         return (Boolean) Launch.blackboard.get("fml.deobfuscatedEnvironment");
     }
 
-    public static List<LadyLib> getAllInstances() {
-        return allInstances;
+    public static Collection<LadyLib> getAllInstances() {
+        return allInstances.values();
     }
 
     private LadyLib() {}
@@ -65,33 +63,27 @@ public class LadyLib {
     /**
      * Call this during {@link net.minecraftforge.fml.common.event.FMLPreInitializationEvent}
      */
-    private void preInit(FMLPreInitializationEvent event) {
+    private void preInit(@Nonnull FMLPreInitializationEvent event) {
         // automatically gets the calling mod container
-        shadingMod = Loader.instance().activeModContainer();
-        if (shadingMod == null)
+        owner = Loader.instance().activeModContainer();
+        if (owner == null)
             throw new IllegalStateException("LadyLib initialization was done at the wrong time");
-        shadingModId = shadingMod.getModId();
-        LOGGER = LogManager.getLogger(shadingMod.getName() + ":lib");
+        ownerModId = owner.getModId();
+        LOGGER = LogManager.getLogger(owner.getName() + ":lib");
         registrar = new AutoRegistrar(this, event.getAsmData());
         MinecraftForge.EVENT_BUS.register(registrar);
         MinecraftForge.EVENT_BUS.register(registrar.getItemRegistrar());
         MinecraftForge.EVENT_BUS.register(registrar.getBlockRegistrar());
-        if (FMLCommonHandler.instance().getSide() == Side.CLIENT)
-            clientInit();
+        if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
+            clientHandler = new ClientHandler();
+            clientHandler.clientInit();
+        }
+        registrar.autoRegisterTileEntities(this, event.getAsmData());
         configFolder = event.getModConfigurationDirectory();
     }
 
-    /**
-     * Initializes client-only helpers like {@link ShaderUtil} or {@link ParticleManager}
-     */
-    private void clientInit() {
-        ((IReloadableResourceManager) Minecraft.getMinecraft().getResourceManager()).registerReloadListener(ShaderUtil::loadShaders);
-        particleManager = new ParticleManager();
-        MinecraftForge.EVENT_BUS.register(particleManager);
-    }
-
     public CreativeTabs makeCreativeTab(Supplier<ItemStack> icon) {
-        CreativeTabs ret = new CreativeTabs(shadingMod.getName()) {
+        CreativeTabs ret = new CreativeTabs(owner.getName()) {
             @Nonnull
             @Override
             public ItemStack getTabIconItem() {
@@ -114,16 +106,23 @@ public class LadyLib {
         return creativeTab;
     }
 
-    public AutoRegistrar getRegistrar() {
-        return registrar;
+    @Nonnull
+    public ItemRegistrar getItemRegistrar() {
+        return registrar.getItemRegistrar();
     }
 
+    @Nonnull
+    public BlockRegistrar getBlockRegistrar() {
+        return registrar.getBlockRegistrar();
+    }
+
+    @Nonnull
     public String getModId() {
-        return Objects.requireNonNull(shadingModId, "The enclosing mod's id was not set before calling the library");
+        return Objects.requireNonNull(ownerModId, "The enclosing mod's id was not set before calling the library");
     }
 
     @SideOnly(Side.CLIENT)
-    public ParticleManager getParticleManager() {
-        return particleManager;
+    public IClientHandler getClientHandler() {
+        return clientHandler;
     }
 }

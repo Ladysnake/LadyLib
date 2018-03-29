@@ -12,7 +12,7 @@ import java.util.Objects;
 public class ItemUtil {
 
     @Nonnull
-    public static NBTTagCompound getOrCreateCompound(ItemStack stack) {
+    public static NBTTagCompound getOrCreateCompound(@Nonnull ItemStack stack) {
         NBTTagCompound nbt = stack.getTagCompound();
         if (nbt == null) {
             nbt = new NBTTagCompound();
