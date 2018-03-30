@@ -104,10 +104,10 @@ public class TemplateUtil {
         try {
             in = Minecraft.getMinecraft().getResourceManager().getResource(stubModel).getInputStream();
         } catch (IOException e) {
-            in = TemplateUtil.class.getResourceAsStream("assets/ladylib/" + stubModel.getResourcePath());
+            in = TemplateUtil.class.getResourceAsStream("/assets/ladylib/" + stubModel.getResourcePath());
         }
         if (in == null) {
-            LadyLib.LOGGER.error("The model stub file {} could not be found.", fileName);
+            LadyLib.LOGGER.error("The model stub file {} could not be found.", stubModel);
             return null;
         }
         try (Scanner scan = new Scanner(in)) {
@@ -151,7 +151,7 @@ public class TemplateUtil {
             int i = 0;
             for (; i < createdModelFiles.size(); i++) {
                 String s = createdModelFiles.get(i);
-                fontRenderer.drawString(s, 5, 30 * (i+1), 0xFFFFFFFF);
+                fontRenderer.drawString(s, 5, 20 * (i+2), 0xFFFFFFFF);
             }
             fontRenderer.drawString("The game should now be restarted", 30, 30*(i+1), 0xFFFFFFFF);
         }
