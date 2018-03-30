@@ -21,6 +21,10 @@ import java.util.Objects;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 
+/**
+ * A class to help generating base json files for registered blocks and items. <br/>
+ * Methods in this class will do nothing outside of a development environment.
+ */
 public class TemplateUtil {
 
     public static final ResourceLocation STUB_ITEM_MODEL = new ResourceLocation("ladylib", "models/item/sample_item.json");
@@ -34,6 +38,8 @@ public class TemplateUtil {
      * @param srcRoot the location of the <tt>resources</tt> directory in which the files will be generated
      */
     public void generateStubModels(ItemRegistrar itemRegistrar, String srcRoot) {
+        if (!LadyLib.isDevEnv()) return;
+
         TemplateUtil.srcRoot = srcRoot;
         List<String> createdModelFiles = itemRegistrar.getAllItems().stream()
                 .filter(itemIn -> !(itemIn instanceof ItemBlock) && !(itemIn instanceof ICustomLocation))

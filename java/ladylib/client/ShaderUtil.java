@@ -14,6 +14,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.commons.lang3.tuple.Pair;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.ARBShaderObjects;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
@@ -44,6 +45,9 @@ public class ShaderUtil {
         return !OpenGlHelper.shadersSupported;
     }
 
+    /**
+     * Subscribes this class to minecraft's resource manager to reload shaders like normal assets.
+     */
     static void init() {
         if (!initialized) {
             ((IReloadableResourceManager) Minecraft.getMinecraft().getResourceManager()).registerReloadListener(ShaderUtil::loadShaders);
@@ -194,18 +198,19 @@ public class ShaderUtil {
             // start texture uniforms at 1, as 0 would be the default texture which doesn't require any special operation
             setUniform("texture" + (i + 1), i + 2);
         }
+        GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
     }
 
     public static FloatBuffer getProjectionMatrix() {
-        ByteBuffer projection = ByteBuffer.allocateDirect(16 * Float.BYTES);
-        projection.order(ByteOrder.nativeOrder());
-        GL11.glGetFloat(GL11.GL_PROJECTION_MATRIX, (FloatBuffer) projection.asFloatBuffer().position(0));
-        return projection.asFloatBuffer();
+        FloatBuffer projection = BufferUtils.createFloatBuffer(16);
+        GL11.glGetFloat(GL11.GL_PROJECTION_MATRIX, (FloatBuffer) projection.position(0));
+        projection.position(0);
+        return projection;
     }
 
     public static FloatBuffer getProjectionMatrixInverse() {
         FloatBuffer projection = ShaderUtil.getProjectionMatrix();
-        FloatBuffer projectionInverse = ByteBuffer.allocateDirect(16 * Float.BYTES).asFloatBuffer();
+        FloatBuffer projectionInverse = BufferUtils.createFloatBuffer(16);
         MatUtil.invertMat4FBFA((FloatBuffer) projectionInverse.position(0), (FloatBuffer) projection.position(0));
         projection.position(0);
         projectionInverse.position(0);
@@ -216,10 +221,10 @@ public class ShaderUtil {
      * This one is actually broken for some reason
      */
     public static FloatBuffer getModelViewMatrix() {
-        ByteBuffer modelView = ByteBuffer.allocateDirect(16 * Float.BYTES);
-        modelView.order(ByteOrder.nativeOrder());
-        GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, (FloatBuffer) modelView.asFloatBuffer().position(0));
-        return modelView.asFloatBuffer();
+        FloatBuffer modelView = BufferUtils.createFloatBuffer(16);
+        GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, (FloatBuffer) modelView.position(0));
+        modelView.position(0);
+        return modelView;
     }
 
     public static FloatBuffer getModelViewMatrixInverse() {

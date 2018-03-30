@@ -6,6 +6,8 @@ import net.minecraft.entity.player.EntityPlayer;
 import javax.annotation.Nonnull;
 
 /**
+ * A {@link net.minecraft.client.particle.Particle particle} with special properties
+ * @see SpecialParticle
  * @see ParticleManager
  * @see IParticleDrawingStage
  */

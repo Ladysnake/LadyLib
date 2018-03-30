@@ -22,6 +22,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
+/**
+ * A class providing methods to ease the block registration process. <br/>
+ * Also used internally by the automatic registration process.
+ */
 public class BlockRegistrar {
 
     private final LadyLib ladyLib;
@@ -76,8 +80,7 @@ public class BlockRegistrar {
      *
      * @param block             the block to be registered
      * @param blockItemFunction a function to create an {@link ItemBlock} from the passed block
-     *                          If the result is Items.AIR, no item will be registered for this block
-     *                          <b>DO NOT</b> return a null Item
+     *                          If the result is Items.AIR, no item will be registered for this block.
      * @param listed            if false, this block will not appear in the creative and JEI tabs
      * @param oreNames          ore dictionary names to add to this block
      * @return the generated ItemBlock
@@ -90,7 +93,7 @@ public class BlockRegistrar {
             block.setCreativeTab(ladyLib.getCreativeTab());
         // adds the corresponding item to the list of items to be registered as well
         T item = blockItemFunction.apply(block);
-        if (item != Items.AIR)
+        if (item != null && item != Items.AIR)
             itemRegistrar.addItem(item, listed);
         // returns the obtained item in case I want to do something with it
         return item;

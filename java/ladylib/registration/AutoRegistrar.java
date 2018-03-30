@@ -7,10 +7,13 @@ import net.minecraft.item.Item;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.discovery.ASMDataTable;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.GameRegistry;
+import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.registries.IForgeRegistryEntry;
+import org.objectweb.asm.Type;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -70,6 +73,8 @@ public class AutoRegistrar {
                     if (name == null || name.isEmpty())
                         name = teClass.getSimpleName().toLowerCase(Locale.ENGLISH);
                     GameRegistry.registerTileEntity(teClass, modId + ":" + name);
+                    if (FMLCommonHandler.instance().getSide() == Side.CLIENT)
+                        ClientRegistrar.registerTESR(teClass, (Type) data.getAnnotationInfo().get("renderer"));
                 } catch (ClassNotFoundException e) {
                     e.printStackTrace();
                 }

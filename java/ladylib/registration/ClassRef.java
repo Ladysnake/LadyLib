@@ -7,6 +7,7 @@ import net.minecraftforge.registries.IForgeRegistryEntry;
 import javax.annotation.Nonnull;
 import java.util.Locale;
 
+// This may be used for entity automatic registration in the future
 class ClassRef<T extends IForgeRegistryEntry<T>> extends AutoRegistryRef<Class<T>> {
     @Nonnull
     private T value;

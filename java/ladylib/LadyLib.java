@@ -2,6 +2,7 @@ package ladylib;
 
 import ladylib.client.ClientHandler;
 import ladylib.client.IClientHandler;
+import ladylib.client.particle.ParticleManager;
 import ladylib.registration.AutoRegistrar;
 import ladylib.registration.BlockRegistrar;
 import ladylib.registration.ItemRegistrar;
@@ -124,5 +125,10 @@ public class LadyLib {
     @SideOnly(Side.CLIENT)
     public IClientHandler getClientHandler() {
         return clientHandler;
+    }
+
+    @SideOnly(Side.CLIENT)
+    public ParticleManager getParticleManager() {
+        return clientHandler.getParticleManager();
     }
 }

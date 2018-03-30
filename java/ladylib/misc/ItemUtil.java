@@ -4,13 +4,19 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.stats.StatBase;
 import net.minecraft.stats.StatList;
+import net.minecraftforge.items.ItemHandlerHelper;
 
 import javax.annotation.Nonnull;
-import java.util.Objects;
 
 public class ItemUtil {
 
+    /**
+     * Gets a stack's NBT compound. If it doesn't exist, it will be created and attached to the item stack.
+     * @param stack the stack for which an NBT compound should be retrieved or created
+     * @return the stack's nbt compound
+     */
     @Nonnull
     public static NBTTagCompound getOrCreateCompound(@Nonnull ItemStack stack) {
         NBTTagCompound nbt = stack.getTagCompound();
@@ -39,16 +45,17 @@ public class ItemUtil {
         if (!affectCreative && bearer instanceof EntityPlayer && ((EntityPlayer) bearer).isCreative())
             return fromStack;
         fromStack.shrink(toStack.getCount());
-        if (bearer instanceof EntityPlayer)
-            ((EntityPlayer)bearer).addStat(Objects.requireNonNull(StatList.getObjectUseStats(fromStack.getItem())));
+        if (bearer instanceof EntityPlayer) {
+            StatBase stat = StatList.getObjectUseStats(fromStack.getItem());
+            if (stat != null)
+                ((EntityPlayer)bearer).addStat(stat);
+        }
 
         if (fromStack.isEmpty()) {
             return toStack;
         } else {
             if (bearer instanceof EntityPlayer) {
-                if (!((EntityPlayer)bearer).inventory.addItemStackToInventory(toStack)) {
-                    ((EntityPlayer)bearer).dropItem(toStack, false);
-                }
+                ItemHandlerHelper.giveItemToPlayer((EntityPlayer) bearer, toStack);
             } else {
                 bearer.entityDropItem(toStack, 0);
             }
