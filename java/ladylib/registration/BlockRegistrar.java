@@ -20,6 +20,7 @@ import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -128,6 +129,10 @@ public class BlockRegistrar {
             }
         };
         ModelLoader.setCustomStateMapper(block, ignoreState);
+    }
+
+    public Set<Block> getAllBlocks() {
+        return allBlocks.keySet();
     }
 
     class BlockInfo {
