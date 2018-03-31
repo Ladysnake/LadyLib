@@ -1,6 +1,17 @@
 {
   "forge_marker": 1,
+  "defaults": {
+    "model": "minecraft:cube_all",
+    "textures": {
+      "all": "@NAME@"
+    }
+  },
   "variants": {
-    "normal": {"model": "@NAME@"}
+    "normal": [
+      {}
+    ],
+    "inventory": [
+      {}
+    ]
   }
 }
