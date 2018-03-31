@@ -84,7 +84,7 @@ public class TemplateUtil {
         String fileName = loc.getResourcePath() + ".json";
         String textureName = loc.getResourceDomain() + ":items/" + loc.getResourcePath();
         Path modelPath = Paths.get(srcRoot, "assets", domain, "models", "item", fileName);
-        return getStubModel(STUB_BLOCKSTATE, fileName, textureName, modelPath);
+        return getStubModel(STUB_ITEM_MODEL, fileName, textureName, modelPath);
     }
 
     @Nullable
@@ -96,7 +96,7 @@ public class TemplateUtil {
         String fileName = loc.getResourcePath() + ".json";
         String textureName = loc.getResourceDomain() + ":blocks/" + loc.getResourcePath();
         Path modelPath = Paths.get(srcRoot, "assets", domain, "blockstates", fileName);
-        return getStubModel(STUB_ITEM_MODEL, fileName, textureName, modelPath);
+        return getStubModel(STUB_BLOCKSTATE, fileName, textureName, modelPath);
     }
 
     private static String getStubModel(ResourceLocation stubModel, String fileName, String textureName, Path modelPath) {
