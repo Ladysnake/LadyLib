@@ -11,6 +11,8 @@ buildscript {
     }
 }
 
+apply plugin: 'maven'
+apply plugin: 'signing'
 apply plugin: "net.minecraftforge.gradle.forge"
 
 version = modVersion
@@ -61,6 +63,38 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
     deobfCompile "mezz.jei:jei_${mcVersion}:${jeiVersion}:api"
     runtime "mezz.jei:jei_${mcVersion}:${jeiVersion}"
+}
+
+jar {
+    manifest {
+        attributes([
+                'Maven-Artifact': "${project.group}:${project.archivesBaseName}:${project.version}",
+                'Timestamp'     : System.currentTimeMillis()
+        ])
+    }
+}
+
+task signJar(type: SignJar, dependsOn: reobfJar) {
+    onlyIf {
+        project.hasProperty('keyStore')
+    }
+
+    inputFile = jar.archivePath
+    outputFile = jar.archivePath
+
+    keyStore = project.properties.keyStore
+    alias = project.properties.keyStoreAlias
+    storePass = project.properties.keyStorePass
+    keyPass = project.properties.keyStoreKeyPass
+}
+
+artifacts {
+    archives(signJar.outputFile) {
+        file signJar.outputFile
+        type 'jar'
+        builtBy signJar
+    }
+    archives sourceJar
 }
 
 processResources {
