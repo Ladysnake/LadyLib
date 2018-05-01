@@ -55,6 +55,11 @@ public class LadyLib {
         return (Boolean) Launch.blackboard.get("fml.deobfuscatedEnvironment");
     }
 
+    public static void debug(Object message) {
+        if (isDevEnv())
+            System.out.println(message);
+    }
+
     public static Collection<LadyLib> getAllInstances() {
         return allInstances.values();
     }
