@@ -42,6 +42,11 @@ minecraft {
     version = project.forgeVersion
     runDir = "run"
 
+    if (canJarBeSigned()) {
+        replace '@FINGERPRINT@', signSHA1
+    }
+    replace '@VERSION@', modVersion
+
     mappings = project.mcpVersion
 }
 

@@ -41,12 +41,13 @@ public class TemplateUtil {
      *
      * @param srcRoot the location of the <tt>resources</tt> directory in which the files will be generated
      */
-    public static void generateStubModels(ItemRegistrar itemRegistrar, String srcRoot) {
+    public static void generateStubModels(String modid, String srcRoot) {
         if (!LadyLib.isDevEnv()) return;
         if (srcRoot == null) srcRoot = "../src/main/resources";
 
         TemplateUtil.srcRoot = srcRoot;
-        List<String> createdModelFiles = itemRegistrar.getAllItems().stream()
+        List<String> createdModelFiles = LadyLib.instance.getItemRegistrar().getAllItems().stream()
+                .filter(item -> modid.equals(item.getRegistryName().getResourceDomain()))
                 .filter(itemIn -> !(itemIn instanceof ItemBlock) && !(itemIn instanceof ICustomLocation))
                 .map(Item::getRegistryName)
                 .map(TemplateUtil::generateItemModel)

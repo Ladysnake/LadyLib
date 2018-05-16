@@ -1,18 +1,15 @@
 package ladylib;
 
+import com.google.common.collect.SetMultimap;
 import ladylib.client.ClientHandler;
-import ladylib.client.IClientHandler;
 import ladylib.client.particle.ParticleManager;
 import ladylib.registration.AutoRegistrar;
 import ladylib.registration.BlockRegistrar;
 import ladylib.registration.ItemRegistrar;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.item.ItemStack;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.ModContainer;
+import net.minecraftforge.fml.common.*;
+import net.minecraftforge.fml.common.discovery.ASMDataTable;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -20,36 +17,32 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nonnull;
-import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
+@Mod(
+        modid = LadyLib.MOD_ID,
+        name = LadyLib.MOD_NAME,
+        version = LadyLib.VERSION,
+        dependencies = "before:all"
+)
 public class LadyLib {
+    public static final String MOD_ID = "ladylib";
+    public static final String MOD_NAME = "LadyLib";
+    public static final String VERSION = "@VERSION@";
 
-    public static Logger LOGGER = LogManager.getLogger("LadyLib");
-    private static final Map<String, LadyLib> allInstances = new HashMap<>();
+    public static final Logger LOGGER = LogManager.getLogger(MOD_NAME);
+    private static final Map<String, LLModContainer> allInstances = new HashMap<>();
 
-    private ModContainer owner;
-    private String ownerModId;
-    private CreativeTabs creativeTab;
+    @Mod.Instance
+    public static LadyLib instance;
+
     private AutoRegistrar registrar;
-    private File configFolder;
 
     @SideOnly(Side.CLIENT)
     private ClientHandler clientHandler;
-
-    /**
-     * Creates and initializes an instance of this class.
-     * Simply calling this is enough to have annotation magic work on your mod.
-     * @param event a pre initialization event to get setup information
-     * @return an instance of this class, to further interact with the library
-     */
-    public static LadyLib initLib(FMLPreInitializationEvent event) {
-        LadyLib ret = new LadyLib();
-        ret.preInit(event);
-        allInstances.put(ret.ownerModId, ret);
-        return ret;
-    }
 
     public static boolean isDevEnv() {
         return (Boolean) Launch.blackboard.get("fml.deobfuscatedEnvironment");
@@ -60,22 +53,16 @@ public class LadyLib {
             System.out.println(message);
     }
 
-    public static Collection<LadyLib> getAllInstances() {
-        return allInstances.values();
+    @SideOnly(Side.CLIENT)
+    public static ParticleManager getParticleManager() {
+        return instance.clientHandler.getParticleManager();
     }
-
-    private LadyLib() {}
 
     /**
      * Call this during {@link net.minecraftforge.fml.common.event.FMLPreInitializationEvent}
      */
-    private void preInit(@Nonnull FMLPreInitializationEvent event) {
-        // automatically gets the calling mod container
-        owner = Loader.instance().activeModContainer();
-        if (owner == null)
-            throw new IllegalStateException("LadyLib initialization was done at the wrong time");
-        ownerModId = owner.getModId();
-        LOGGER = LogManager.getLogger(owner.getName() + ":lib");
+    @Mod.EventHandler
+    public void preInit(@Nonnull FMLPreInitializationEvent event) {
         registrar = new AutoRegistrar(this, event.getAsmData());
         MinecraftForge.EVENT_BUS.register(registrar);
         MinecraftForge.EVENT_BUS.register(registrar.getItemRegistrar());
@@ -84,56 +71,38 @@ public class LadyLib {
             clientHandler = new ClientHandler();
             clientHandler.clientInit();
         }
-        registrar.autoRegisterTileEntities(this, event.getAsmData());
-        configFolder = event.getModConfigurationDirectory();
+        registrar.autoRegisterTileEntities(event.getAsmData());
+        injectContainers(event.getAsmData());
     }
 
-    public CreativeTabs makeCreativeTab(Supplier<ItemStack> icon) {
-        CreativeTabs ret = new CreativeTabs(owner.getName()) {
-            @Nonnull
-            @Override
-            public ItemStack getTabIconItem() {
-                return icon.get();
+    private void injectContainers(ASMDataTable asmData) {
+        try {
+            Method parseSimpleFieldAnnotation = FMLModContainer.class.getDeclaredMethod("parseSimpleFieldAnnotation", SetMultimap.class, String.class, Function.class);
+            parseSimpleFieldAnnotation.setAccessible(true);
+            for (ModContainer container : Loader.instance().getModList()) {
+                SetMultimap<String, ASMDataTable.ASMData> annotations = asmData.getAnnotationsFor(container);
+                if (container instanceof FMLModContainer) {
+                    parseSimpleFieldAnnotation.invoke(container, annotations, LLInject.class.getName(), (Function<ModContainer, Object>) mc -> getContainer(mc.getModId()));
+                }
             }
-        };
-        setCreativeTab(ret);
-        return ret;
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public File getConfigFolder() {
-        return configFolder;
+    public Collection<LLModContainer> getAllInstances() {
+        return allInstances.values();
     }
 
-    public void setCreativeTab(CreativeTabs tab) {
-        this.creativeTab = tab;
+    public LLModContainer getContainer(String modid) {
+        return allInstances.computeIfAbsent(modid, id -> new LLModContainer(Loader.instance().getIndexedModList().get(id)));
     }
 
-    public CreativeTabs getCreativeTab() {
-        return creativeTab;
-    }
-
-    @Nonnull
     public ItemRegistrar getItemRegistrar() {
         return registrar.getItemRegistrar();
     }
 
-    @Nonnull
     public BlockRegistrar getBlockRegistrar() {
         return registrar.getBlockRegistrar();
-    }
-
-    @Nonnull
-    public String getModId() {
-        return Objects.requireNonNull(ownerModId, "The enclosing mod's id was not set before calling the library");
-    }
-
-    @SideOnly(Side.CLIENT)
-    public IClientHandler getClientHandler() {
-        return clientHandler;
-    }
-
-    @SideOnly(Side.CLIENT)
-    public ParticleManager getParticleManager() {
-        return clientHandler.getParticleManager();
     }
 }

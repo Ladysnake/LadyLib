@@ -65,7 +65,7 @@ public class ItemRegistrar {
         allItems.forEach((item, info) -> {
             event.getRegistry().register(item);
             if (info.listed)
-                item.setCreativeTab(ladyLib.getCreativeTab());
+                item.setCreativeTab(ladyLib.getContainer(item.getRegistryName().getResourceDomain()).getCreativeTab());
             for (String oreName : info.oreNames)
                 OreDictionary.registerOre(oreName, item);
         });

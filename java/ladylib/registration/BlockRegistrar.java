@@ -90,8 +90,9 @@ public class BlockRegistrar {
     public <T extends Item> T addBlock(@Nonnull Block block, @Nonnull Function<Block, T> blockItemFunction, boolean listed, @Nonnull String... oreNames) {
         // adds the block to the list to be registered later
         allBlocks.put(block, new BlockInfo(oreNames));
-        if (listed)
-            block.setCreativeTab(ladyLib.getCreativeTab());
+        if (listed) {
+            block.setCreativeTab(ladyLib.getContainer(block.getRegistryName().getResourceDomain()).getCreativeTab());
+        }
         // adds the corresponding item to the list of items to be registered as well
         T item = blockItemFunction.apply(block);
         if (item != null && item != Items.AIR)

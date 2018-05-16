@@ -8,11 +8,13 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.discovery.ASMDataTable;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.registries.IForgeRegistryEntry;
+import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.Type;
 
 import java.lang.reflect.Field;
@@ -33,51 +35,47 @@ public class AutoRegistrar {
     public AutoRegistrar(LadyLib ladyLib, ASMDataTable asmData) {
         this.itemRegistrar = new ItemRegistrar(ladyLib);
         this.blockRegistrar = new BlockRegistrar(ladyLib, itemRegistrar);
-        findRegistryHandlers(ladyLib, asmData);
+        findRegistryHandlers(asmData);
     }
 
-    private void findRegistryHandlers(LadyLib ladyLib, ASMDataTable asmData) {
+    private void findRegistryHandlers(ASMDataTable asmData) {
         // find all classes that will be handled by this registrar
         Set<ASMDataTable.ASMData> allRegistryHandlers = asmData.getAll(AutoRegister.class.getName());
         for (ASMDataTable.ASMData data : allRegistryHandlers) {
             // each mod using this library has its own instance so we must only affect the owning mod
             String modId = (String) data.getAnnotationInfo().get("value");
-            if (modId.equals(ladyLib.getModId())) {
-                String className = data.getClassName();
-                String annotationTarget = data.getObjectName();
-                boolean isClass = className.equals(annotationTarget);
-                try {
-                    Class<?> clazz = Class.forName(data.getClassName(), false, getClass().getClassLoader());
-                    if (isClass)
-                        scanClassForFields(modId, clazz);
-                    else
-                        references.add(new FieldRef(modId, clazz.getDeclaredField(annotationTarget)));
-                } catch (ClassNotFoundException | NoSuchFieldException e) {
-                    e.printStackTrace();
-                }
+            String className = data.getClassName();
+            String annotationTarget = data.getObjectName();
+            boolean isClass = className.equals(annotationTarget);
+            try {
+                Class<?> clazz = Class.forName(data.getClassName(), false, getClass().getClassLoader());
+                if (isClass)
+                    scanClassForFields(modId, clazz);
+                else
+                    references.add(new FieldRef(modId, clazz.getDeclaredField(annotationTarget)));
+            } catch (ClassNotFoundException | NoSuchFieldException e) {
+                e.printStackTrace();
             }
         }
     }
 
-    public void autoRegisterTileEntities(LadyLib ladyLib, ASMDataTable asmData) {
+    public void autoRegisterTileEntities(ASMDataTable asmData) {
         Set<ASMDataTable.ASMData> autoRegisterTypes = asmData.getAll(AutoRegisterTile.class.getName());
         for (ASMDataTable.ASMData data : autoRegisterTypes) {
             // each mod using this library has its own instance so we must only affect the owning mod
             String modId = (String) data.getAnnotationInfo().get("value");
-            if (modId.equals(ladyLib.getModId())) {
-                String className = data.getClassName();
-                try {
-                    @SuppressWarnings("unchecked") Class<? extends TileEntity> teClass =
-                            (Class<? extends TileEntity>) Class.forName(className, true, getClass().getClassLoader());
-                    String name = (String) data.getAnnotationInfo().get("name");
-                    if (name == null || name.isEmpty())
-                        name = teClass.getSimpleName().toLowerCase(Locale.ENGLISH);
-                    GameRegistry.registerTileEntity(teClass, modId + ":" + name);
-                    if (FMLCommonHandler.instance().getSide() == Side.CLIENT)
-                        ClientRegistrar.registerTESR(teClass, (Type) data.getAnnotationInfo().get("renderer"));
-                } catch (ClassNotFoundException e) {
-                    e.printStackTrace();
-                }
+            String className = data.getClassName();
+            try {
+                @SuppressWarnings("unchecked") Class<? extends TileEntity> teClass =
+                        (Class<? extends TileEntity>) Class.forName(className, true, getClass().getClassLoader());
+                String name = (String) data.getAnnotationInfo().get("name");
+                if (name == null || name.isEmpty())
+                    name = teClass.getSimpleName().toLowerCase(Locale.ENGLISH);
+                GameRegistry.registerTileEntity(teClass, modId + ":" + name);
+                if (FMLCommonHandler.instance().getSide() == Side.CLIENT)
+                    ClientRegistrar.registerTESR(teClass, (Type) data.getAnnotationInfo().get("renderer"));
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -99,25 +97,50 @@ public class AutoRegistrar {
     @SubscribeEvent
     @SuppressWarnings("unchecked")
     public void onRegistryRegister(RegistryEvent.Register event) {
-        references.stream()
-                // Only register for the right event, incidentally filters out entries with no corresponding registry
-                .filter(ref -> ref.isValidForRegistry(event.getRegistry()))
-                .forEach(ref -> {
-                    IForgeRegistryEntry value = ref.nameAndGet();
-                    for (String oldName : ref.getOldNames()) {
-                        this.remappings
-                                .computeIfAbsent(event.getRegistry().getRegistrySuperType(), a -> new HashMap())
-                                .put(new ResourceLocation(ref.getModId(), oldName), value);
-                    }
-                    // items and blocks have additional registration behaviours
-                    if (value instanceof Item) {
-                        itemRegistrar.addItem((Item) value, ref);
-                    } else if (value instanceof Block) {
-                        blockRegistrar.addBlock((Block) value, ref);
-                    } else {
-                        event.getRegistry().register(value);
-                    }
-                });
+        shutupForge(() -> references.stream()
+            // Only register for the right event, incidentally filters out entries with no corresponding registry
+            .filter(ref -> ref.isValidForRegistry(event.getRegistry()))
+            .forEach(ref -> {
+                IForgeRegistryEntry value = ref.nameAndGet();
+                for (String oldName : ref.getOldNames()) {
+                    this.remappings
+                            .computeIfAbsent(event.getRegistry().getRegistrySuperType(), a -> new HashMap())
+                            .put(new ResourceLocation(ref.getModId(), oldName), value);
+                }
+                // items and blocks have additional registration behaviours
+                if (value instanceof Item) {
+                    itemRegistrar.addItem((Item) value, ref);
+                } else if (value instanceof Block) {
+                    blockRegistrar.addBlock((Block) value, ref);
+                } else {
+                    event.getRegistry().register(value);
+                }
+            }));
+    }
+
+    /**
+     * Make forge not spew "dangerous alternative prefix" messages in this block.
+     * Adapted from QuackLib (https://github.com/therealfarfetchd/QuackLib/blob/1.12/src/main/kotlin/therealfarfetchd/quacklib/common/api/util/AutoRegistry.kt#L230-L242)
+     * @param op the operation to run while warnings are disabled
+     */
+    private void shutupForge(Runnable op) {
+        try {
+            Logger log = FMLLog.log;
+            Field privateConfigF = org.apache.logging.log4j.core.Logger.class.getDeclaredField("privateConfig");
+            privateConfigF.setAccessible(true);
+            Object privateConfig = privateConfigF.get(log);
+            Field intLevelF = privateConfig.getClass().getDeclaredField("intLevel");
+            intLevelF.setAccessible(true);
+            int intLevel = intLevelF.getInt(privateConfig);
+            intLevelF.set(privateConfig, 299);
+            try {
+                op.run();
+            } finally {
+                intLevelF.set(privateConfig, intLevel);
+            }
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @SubscribeEvent

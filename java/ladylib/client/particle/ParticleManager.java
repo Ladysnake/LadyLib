@@ -1,5 +1,6 @@
 package ladylib.client.particle;
 
+import ladylib.LLConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.renderer.ActiveRenderInfo;
@@ -19,12 +20,10 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.opengl.GL11;
 
 import java.util.*;
-import java.util.function.Supplier;
 
 /**
  * A particle manager that handles custom particles updates and rendering. <br/>
  * This particle manager makes use of a hard limit on the number of particles drawn to alleviate the load on the client framerate.
- * This limit can be controlled with {@link #setMaxParticlesConfig(Supplier)}.
  * <p>
  * Particles are classed by {@link IParticleDrawingStage}, with each drawing stage describing a specific rendering context.
  * Particles sharing the same drawing stage will be drawn as part of the same batch.
@@ -47,11 +46,6 @@ public class ParticleManager {
     /**Stores each currently active particle in a queue, depending on its drawing stage*/
     private final Map<IParticleDrawingStage, Queue<ISpecialParticle>> particles = new HashMap<>();
     private final Set<ResourceLocation> particleTextures = new HashSet<>();
-    private Supplier<Integer> maxParticles = () -> 300;
-
-    public void setMaxParticlesConfig(Supplier<Integer> maxParticles) {
-        this.maxParticles = maxParticles;
-    }
 
     /**
      * Convenience method that can be called at preinit to register particle textures to be added in the atlas. <br/>
@@ -85,7 +79,7 @@ public class ParticleManager {
         for (Queue<ISpecialParticle> particleQueue : particles.values()) {
             for (Iterator<ISpecialParticle> iterator = particleQueue.iterator(); iterator.hasNext(); ) {
                 // particles cost a lot less to update than to render so we can update more of them
-                if (++count > 3 * maxParticles.get()) break;
+                if (++count > 3 * LLConfig.maxParticles) break;
                 ISpecialParticle particle = iterator.next();
                 particle.updateParticle();
                 if (particle.isDead())
@@ -129,7 +123,7 @@ public class ParticleManager {
                 // add every particle in the drawing stage to the buffer
                 for (ISpecialParticle particle : particleStage.getValue()) {
                     // check that we don't render past the limit
-                    if (++particleCount > maxParticles.get()) {
+                    if (++particleCount > LLConfig.maxParticles) {
                         // upload whatever is currently in the buffer
                         tess.draw();
                         particleStage.getKey().clear();
@@ -153,7 +147,7 @@ public class ParticleManager {
 
     public void addParticle(ISpecialParticle p) {
         // If we can't even tick them, don't add them
-        if (particles.values().stream().mapToInt(Collection::size).sum() < maxParticles.get() * 3)
+        if (particles.values().stream().mapToInt(Collection::size).sum() < LLConfig.maxParticles * 3)
             particles.computeIfAbsent(p.getDrawStage(), i -> new ArrayDeque<>()).add(p);
     }
 
