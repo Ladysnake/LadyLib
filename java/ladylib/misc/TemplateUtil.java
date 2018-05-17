@@ -3,7 +3,6 @@ package ladylib.misc;
 import ladylib.LadyLib;
 import ladylib.client.ICustomLocation;
 import ladylib.registration.BlockRegistrar;
-import ladylib.registration.ItemRegistrar;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -12,7 +11,6 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.client.CustomModLoadingErrorDisplayException;
-import org.apache.commons.io.IOUtils;
 
 import javax.annotation.Nullable;
 import java.io.BufferedWriter;
@@ -72,8 +70,9 @@ public class TemplateUtil {
                 .map(TemplateUtil::generateBlockState)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-        if (!createdModelFiles.isEmpty())
-            throw new TemplateUtil.ModelStubsCreatedPleaseRestartTheGameException(createdModelFiles); // Because stupid forge prevents System.exit()
+        if (!createdModelFiles.isEmpty()) {
+            throw new ModelStubsCreatedPleaseRestartTheGameException(createdModelFiles); // Because stupid forge prevents System.exit()
+        }
     }
 
     @Nullable

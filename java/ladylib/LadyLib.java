@@ -17,9 +17,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nonnull;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 
 @Mod(
@@ -34,7 +40,7 @@ public class LadyLib {
     public static final String VERSION = "@VERSION@";
 
     public static final Logger LOGGER = LogManager.getLogger(MOD_NAME);
-    private static final Map<String, LLModContainer> allInstances = new HashMap<>();
+    private static final Map<String, LLibContainer> allInstances = new HashMap<>();
 
     @Mod.Instance
     public static LadyLib instance;
@@ -49,8 +55,9 @@ public class LadyLib {
     }
 
     public static void debug(Object message) {
-        if (isDevEnv())
+        if (isDevEnv()) {
             System.out.println(message);
+        }
     }
 
     @SideOnly(Side.CLIENT)
@@ -63,7 +70,7 @@ public class LadyLib {
      */
     @Mod.EventHandler
     public void preInit(@Nonnull FMLPreInitializationEvent event) {
-        registrar = new AutoRegistrar(this, event.getAsmData());
+        registrar = new AutoRegistrar(event.getAsmData());
         MinecraftForge.EVENT_BUS.register(registrar);
         MinecraftForge.EVENT_BUS.register(registrar.getItemRegistrar());
         MinecraftForge.EVENT_BUS.register(registrar.getBlockRegistrar());
@@ -82,7 +89,7 @@ public class LadyLib {
             for (ModContainer container : Loader.instance().getModList()) {
                 SetMultimap<String, ASMDataTable.ASMData> annotations = asmData.getAnnotationsFor(container);
                 if (container instanceof FMLModContainer) {
-                    parseSimpleFieldAnnotation.invoke(container, annotations, LLInject.class.getName(), (Function<ModContainer, Object>) mc -> getContainer(mc.getModId()));
+                    parseSimpleFieldAnnotation.invoke(container, annotations, LLInstance.class.getName(), (Function<ModContainer, Object>) mc -> getContainer(mc.getModId()));
                 }
             }
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
@@ -90,12 +97,12 @@ public class LadyLib {
         }
     }
 
-    public Collection<LLModContainer> getAllInstances() {
+    public Collection<LLibContainer> getAllInstances() {
         return allInstances.values();
     }
 
-    public LLModContainer getContainer(String modid) {
-        return allInstances.computeIfAbsent(modid, id -> new LLModContainer(Loader.instance().getIndexedModList().get(id)));
+    public LLibContainer getContainer(String modid) {
+        return allInstances.computeIfAbsent(modid, id -> new LLibContainer(Loader.instance().getIndexedModList().get(id)));
     }
 
     public ItemRegistrar getItemRegistrar() {
@@ -104,5 +111,14 @@ public class LadyLib {
 
     public BlockRegistrar getBlockRegistrar() {
         return registrar.getBlockRegistrar();
+    }
+
+    @Target(ElementType.FIELD)
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface LLInstance {
+        /**
+         * Optional owner modid, required if this annotation is on something that is not inside the main class of a mod container.
+         */
+        String owner() default "";
     }
 }

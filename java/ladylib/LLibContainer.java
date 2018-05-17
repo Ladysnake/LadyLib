@@ -8,12 +8,12 @@ import javax.annotation.Nonnull;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public class LLModContainer {
+public class LLibContainer {
     private ModContainer owner;
     private String ownerModId;
     private CreativeTabs creativeTab;
 
-    public LLModContainer(ModContainer owner) {
+    public LLibContainer(ModContainer owner) {
         this.owner = owner;
         this.ownerModId = owner.getModId();
     }

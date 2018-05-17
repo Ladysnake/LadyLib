@@ -33,14 +33,12 @@ public class ItemRegistrar {
         return (T) item.setRegistryName(name).setUnlocalizedName(item.getRegistryName().getResourceDomain() + "." + name);
     }
 
-    private final LadyLib ladyLib;
     /**
      * A map tracking all registered items and the associated info
      */
     private Map<Item, ItemInfo> allItems = new HashMap<>();
 
-    ItemRegistrar(LadyLib ladyLib) {
-        this.ladyLib = ladyLib;
+    ItemRegistrar() {
     }
 
     void addItem(@Nonnull Item item, AutoRegistryRef ref) {
@@ -65,7 +63,7 @@ public class ItemRegistrar {
         allItems.forEach((item, info) -> {
             event.getRegistry().register(item);
             if (info.listed)
-                item.setCreativeTab(ladyLib.getContainer(item.getRegistryName().getResourceDomain()).getCreativeTab());
+                item.setCreativeTab(LadyLib.instance.getContainer(item.getRegistryName().getResourceDomain()).getCreativeTab());
             for (String oreName : info.oreNames)
                 OreDictionary.registerOre(oreName, item);
         });

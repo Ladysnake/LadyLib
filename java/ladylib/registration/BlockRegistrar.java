@@ -29,7 +29,6 @@ import java.util.function.Function;
  */
 public class BlockRegistrar {
 
-    private final LadyLib ladyLib;
     private ItemRegistrar itemRegistrar;
     /**
      * A map tracking all registered blocks and their associated info
@@ -49,8 +48,7 @@ public class BlockRegistrar {
         return (T) block.setRegistryName(name).setUnlocalizedName(block.getRegistryName().getResourceDomain() + "." + name);
     }
 
-    BlockRegistrar(LadyLib ladyLib, ItemRegistrar itemRegistrar) {
-        this.ladyLib = ladyLib;
+    BlockRegistrar(ItemRegistrar itemRegistrar) {
         this.itemRegistrar = itemRegistrar;
     }
 
@@ -91,7 +89,7 @@ public class BlockRegistrar {
         // adds the block to the list to be registered later
         allBlocks.put(block, new BlockInfo(oreNames));
         if (listed) {
-            block.setCreativeTab(ladyLib.getContainer(block.getRegistryName().getResourceDomain()).getCreativeTab());
+            block.setCreativeTab(LadyLib.instance.getContainer(block.getRegistryName().getResourceDomain()).getCreativeTab());
         }
         // adds the corresponding item to the list of items to be registered as well
         T item = blockItemFunction.apply(block);
