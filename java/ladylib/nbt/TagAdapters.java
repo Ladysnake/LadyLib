@@ -13,20 +13,23 @@ public class TagAdapters {
     private static final Map<TypeToken<?>, NBTTypeAdapter> cache = new HashMap<>();
 
     static {
-        addPrimitiveFactory(boolean.class, Boolean.class, BaseTypeAdapters.BooleanAdapter::new);
-        addPrimitiveFactory(byte.class,    Byte.class,    BaseTypeAdapters.ByteAdapter::new);
-        addPrimitiveFactory(short.class,   Short.class,   BaseTypeAdapters.ShortAdapter::new);
-        addPrimitiveFactory(int.class,     Integer.class, BaseTypeAdapters.IntAdapter::new);
-        addPrimitiveFactory(float.class,   Float.class,   BaseTypeAdapters.FloatAdapter::new);
-        addPrimitiveFactory(long.class,    Long.class,    BaseTypeAdapters.LongAdapter::new);
-        addPrimitiveFactory(double.class,  Double.class,  BaseTypeAdapters.DoubleAdapter::new);
+        addPrimitiveFactory(boolean.class, Boolean.class, BaseNBTAdapters.BooleanAdapter::new);
+        addPrimitiveFactory(byte.class,    Byte.class,    BaseNBTAdapters.ByteAdapter::new);
+        addPrimitiveFactory(short.class,   Short.class,   BaseNBTAdapters.ShortAdapter::new);
+        addPrimitiveFactory(int.class,     Integer.class, BaseNBTAdapters.IntAdapter::new);
+        addPrimitiveFactory(float.class,   Float.class,   BaseNBTAdapters.FloatAdapter::new);
+        addPrimitiveFactory(long.class,    Long.class,    BaseNBTAdapters.LongAdapter::new);
+        addPrimitiveFactory(double.class,  Double.class,  BaseNBTAdapters.DoubleAdapter::new);
 
-        addFactory(String.class,     BaseTypeAdapters.StringAdapter::new);
-        addFactory(ItemStack.class,  BaseTypeAdapters.ItemStackAdapter::new);
-        addFactory(BlockPos.class,   BaseTypeAdapters.BlockPosAdapter::new);
-        addFactory(UUID.class,       BaseTypeAdapters.UUIDAdapter::new);
+        addFactory(String.class,     BaseNBTAdapters.StringAdapter::new);
+        addFactory(ItemStack.class,  BaseNBTAdapters.ItemStackAdapter::new);
+        addFactory(BlockPos.class,   BaseNBTAdapters.BlockPosAdapter::new);
+        addFactory(UUID.class,       BaseNBTAdapters.UUIDAdapter::new);
 
+        factories.add(new EnumNBTTypeAdapterFactory());
         factories.add(new SerializableNBTTypeAdapterFactory());
+        factories.add(new CollectionNBTTypeAdapterFactory());
+        factories.add(ReflectiveNBTAdapterFactory.INSTANCE);
     }
 
     private static <T> void addPrimitiveFactory(Class<T> primitive, Class<T> wrapper, Supplier<NBTTypeAdapter<T, ?>> factory) {

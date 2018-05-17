@@ -6,7 +6,7 @@ import net.minecraft.util.math.BlockPos;
 
 import java.util.UUID;
 
-public interface BaseTypeAdapters {
+public interface BaseNBTAdapters {
 
     class IntAdapter implements NBTTypeAdapter<Integer, NBTTagInt> {
 

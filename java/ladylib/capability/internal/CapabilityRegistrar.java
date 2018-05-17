@@ -21,10 +21,6 @@ import java.util.function.Predicate;
 
 public class CapabilityRegistrar {
 
-    public CapabilityRegistrar() {
-
-    }
-
     public void findRegistryHandlers(ASMDataTable asmData) {
         // find all classes that will be handled by this registrar
         Set<ASMDataTable.ASMData> allRegistryHandlers = asmData.getAll(AutoCapability.class.getName());

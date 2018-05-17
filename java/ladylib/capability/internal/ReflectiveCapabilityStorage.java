@@ -1,6 +1,7 @@
 package ladylib.capability.internal;
 
 import ladylib.LadyLib;
+import ladylib.nbt.NBTMutatingTypeAdapter;
 import ladylib.nbt.NBTTypeAdapter;
 import ladylib.nbt.TagAdapters;
 import net.minecraft.nbt.NBTBase;
@@ -58,6 +59,7 @@ public class ReflectiveCapabilityStorage<C> implements Capability.IStorage<C> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void readNBT(Capability capability, Object instance, EnumFacing side, NBTBase nbt) {
         if (!(nbt instanceof NBTTagCompound)) {
             throw new IllegalArgumentException("Expected a NBTTagCompound, got a " + NBTBase.getTagTypeName(nbt.getId()));
@@ -66,8 +68,13 @@ public class ReflectiveCapabilityStorage<C> implements Capability.IStorage<C> {
         for (FieldInfo fieldInfo : fieldInfos) {
             try {
                 NBTBase serialized = compound.getTag(fieldInfo.name);
-                @SuppressWarnings("unchecked") Object value = fieldInfo.adapter.fromNBT(serialized);
-                fieldInfo.setter.invoke(instance, value);
+                if (fieldInfo.adapter instanceof NBTMutatingTypeAdapter) {
+                    Object value = fieldInfo.getter.invoke(instance);
+                    fieldInfo.adapter.fromNBT(value, serialized);
+                } else if (fieldInfo.setter != null) {
+                    Object value = fieldInfo.adapter.fromNBT(serialized);
+                    fieldInfo.setter.invoke(instance, value);
+                }
             } catch (Throwable throwable) {
                 LadyLib.LOGGER.error("Could not read NBT from capability " + capability.getName(), throwable);
             }

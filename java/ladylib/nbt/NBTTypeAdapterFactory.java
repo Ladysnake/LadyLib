@@ -6,6 +6,6 @@ import net.minecraft.nbt.NBTBase;
 @FunctionalInterface
 public interface NBTTypeAdapterFactory<T, NBT extends NBTBase> {
 
-    NBTTypeAdapter<T, NBT> create(TypeToken field);
+    NBTTypeAdapter<T, NBT> create(TypeToken type);
 
 }
