@@ -123,6 +123,7 @@ public class AutoRegistrar {
     /**
      * Make forge not spew "dangerous alternative prefix" messages in this block.
      * Adapted from QuackLib (https://github.com/therealfarfetchd/QuackLib/blob/1.12/src/main/kotlin/therealfarfetchd/quacklib/common/api/util/AutoRegistry.kt#L230-L242)
+     * @author TheRealFarfetchd
      * @param op the operation to run while warnings are disabled
      */
     private void shutupForge(Runnable op) {
