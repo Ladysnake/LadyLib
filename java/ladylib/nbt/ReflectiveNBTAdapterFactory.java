@@ -6,10 +6,12 @@ import ladylib.capability.internal.CapabilityRegistrar;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import org.apache.logging.log4j.message.FormattedMessage;
+import sun.reflect.ReflectionFactory;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -42,7 +44,9 @@ public class ReflectiveNBTAdapterFactory implements NBTTypeAdapterFactory<Object
 
         public ReflectiveNBTAdapter(Class<?> clazz, MutatingReflectiveNBTAdapter<T> delegate) throws NoSuchMethodException, IllegalAccessException {
             this.delegate = delegate;
-            constructor = MethodHandles.lookup().findConstructor(clazz, MethodType.methodType(void.class));
+            Constructor temp = clazz.getDeclaredConstructor();
+            temp.setAccessible(true);
+            constructor = MethodHandles.lookup().unreflectConstructor(temp);
         }
 
         @Override

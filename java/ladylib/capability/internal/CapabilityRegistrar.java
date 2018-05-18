@@ -1,5 +1,6 @@
 package ladylib.capability.internal;
 
+import it.unimi.dsi.fastutil.ints.Int2IntFunction;
 import ladylib.LadyLib;
 import ladylib.capability.AutoCapability;
 import net.minecraft.entity.Entity;
@@ -14,10 +15,15 @@ import org.apache.logging.log4j.message.FormattedMessage;
 
 import java.lang.invoke.*;
 import java.lang.reflect.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.function.IntSupplier;
+import java.util.function.IntUnaryOperator;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 public class CapabilityRegistrar {
 
@@ -104,7 +110,7 @@ public class CapabilityRegistrar {
     }
 
     @SuppressWarnings("unchecked")
-    public static <L, T, R> R createFactory(Class<T> clazz, String invokedName, Class<L> lambdaType) {
+    public static <T> T createFactory(Class<?> clazz, String invokedName, Class<?> lambdaType) {
         try {
             MethodHandles.Lookup lookup = MethodHandles.lookup();
             MethodHandle handle = lookup.findConstructor(clazz, MethodType.methodType(void.class));
@@ -116,7 +122,7 @@ public class CapabilityRegistrar {
                     handle,
                     MethodType.methodType(clazz)
             );
-            return (R) metafactory.getTarget().invoke();
+            return (T) metafactory.getTarget().invoke();
         } catch (Throwable throwable) {
             throw new UnableToGetFactoryException(throwable);
         }

@@ -22,6 +22,7 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Contract;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -78,7 +79,7 @@ public class LadyLib {
      * @param src the object for which NBT representation is to be created
      * @return NBT representation of {@code src}.
      */
-    @Contract("null -> null; !null -> !null")
+    @Contract("null -> null;")
     public static NBTBase toNBT(Object src) {
         return src == null ? null : toNBT(src, src.getClass());
     }
@@ -98,7 +99,7 @@ public class LadyLib {
      * @return NBT representation of {@code src}
      */
     @SuppressWarnings("unchecked")
-    @Contract("null, _ -> null; !null, _ -> !null; !null, null -> fail")
+    @Contract("null, _ -> null; !null, null -> fail")
     public static NBTBase toNBT(Object src, Type typeOfSrc) {
         if (src == null) return null;
         NBTTypeAdapter adapter = TagAdapters.getNBTAdapter(TypeToken.get(typeOfSrc), false);
@@ -120,7 +121,6 @@ public class LadyLib {
      *                Type typeOfT = new TypeToken&lt;Collection&lt;Foo&gt;&gt;(){}.getType();
      *                </pre>
      * @return an object of type T from the NBT. Returns {@code null} if {@code nbt} is {@code null}.
-     * @since 1.3
      */
     @SuppressWarnings("unchecked")
     @Contract("null, _ -> null; !null, _ -> !null; !null, null -> fail")
@@ -130,7 +130,7 @@ public class LadyLib {
         return (T) adapter.fromNBT(nbt);
     }
 
-    @Nonnull
+    @Nullable
     @SuppressWarnings("unchecked")
     public static NBTBase serializeNBT(@Nonnull Object src) {
         NBTTypeAdapter adapter = TagAdapters.getNBTAdapter(TypeToken.get(src.getClass()), true);
@@ -138,7 +138,8 @@ public class LadyLib {
     }
 
     @SuppressWarnings("unchecked")
-    public static void deserializeNBT(@Nonnull Object target, @Nonnull NBTBase nbt) {
+    public static void deserializeNBT(@Nonnull Object target, NBTBase nbt) {
+        if (nbt == null) return;
         NBTTypeAdapter adapter = TagAdapters.getNBTAdapter(TypeToken.get(target.getClass()), true);
         adapter.fromNBT(target, nbt);
     }

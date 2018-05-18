@@ -34,8 +34,7 @@ public class EnumNBTTypeAdapterFactory implements NBTTypeAdapterFactory<Enum, NB
             try {
                 return Enum.valueOf(enumClass, cast(nbtTagString, NBTTagString.class).getString());
             } catch (IllegalArgumentException e) {
-                LadyLib.LOGGER.error("Failed to deserialize enum field", e);
-                return null;
+                throw new MalformedNBTException("Failed to deserialize enum field", e);
             }
         }
     }
