@@ -16,8 +16,8 @@ public interface BaseNBTAdapters {
         }
 
         @Override
-        public Integer fromNBT(NBTTagInt nbtTagInt) {
-            return nbtTagInt.getInt();
+        public Integer fromNBT(NBTBase nbt) {
+            return cast(nbt, NBTTagInt.class).getInt();
         }
     }
 
@@ -29,8 +29,8 @@ public interface BaseNBTAdapters {
         }
 
         @Override
-        public Double fromNBT(NBTTagDouble nbtTagDouble) {
-            return nbtTagDouble.getDouble();
+        public Double fromNBT(NBTBase nbt) {
+            return cast(nbt, NBTTagDouble.class).getDouble();
         }
     }
     class FloatAdapter implements NBTTypeAdapter<Float, NBTTagFloat> {
@@ -41,8 +41,8 @@ public interface BaseNBTAdapters {
         }
 
         @Override
-        public Float fromNBT(NBTTagFloat nbtTagFloat) {
-            return nbtTagFloat.getFloat();
+        public Float fromNBT(NBTBase nbt) {
+            return cast(nbt, NBTTagFloat.class).getFloat();
         }
     }
     class LongAdapter implements NBTTypeAdapter<Long, NBTTagLong> {
@@ -53,8 +53,8 @@ public interface BaseNBTAdapters {
         }
 
         @Override
-        public Long fromNBT(NBTTagLong nbtTagLong) {
-            return nbtTagLong.getLong();
+        public Long fromNBT(NBTBase nbt) {
+            return cast(nbt, NBTTagLong.class).getLong();
         }
     }
     class ShortAdapter implements NBTTypeAdapter<Short, NBTTagShort> {
@@ -65,8 +65,8 @@ public interface BaseNBTAdapters {
         }
 
         @Override
-        public Short fromNBT(NBTTagShort nbtTagShort) {
-            return nbtTagShort.getShort();
+        public Short fromNBT(NBTBase nbt) {
+            return cast(nbt, NBTTagShort.class).getShort();
         }
     }
     class ByteAdapter implements NBTTypeAdapter<Byte, NBTTagByte> {
@@ -77,8 +77,8 @@ public interface BaseNBTAdapters {
         }
 
         @Override
-        public Byte fromNBT(NBTTagByte nbtTagByte) {
-            return nbtTagByte.getByte();
+        public Byte fromNBT(NBTBase nbt) {
+            return cast(nbt, NBTTagByte.class).getByte();
         }
     }
     class BooleanAdapter implements NBTTypeAdapter<Boolean, NBTTagByte> {
@@ -89,8 +89,8 @@ public interface BaseNBTAdapters {
         }
 
         @Override
-        public Boolean fromNBT(NBTTagByte nbtTagByte) {
-            return nbtTagByte.getByte() == 1;
+        public Boolean fromNBT(NBTBase nbt) {
+            return cast(nbt, NBTTagByte.class).getByte() == 1;
         }
     }
     class StringAdapter implements NBTTypeAdapter<String, NBTTagString> {
@@ -101,8 +101,8 @@ public interface BaseNBTAdapters {
         }
 
         @Override
-        public String fromNBT(NBTTagString nbtTagString) {
-            return nbtTagString.getString();
+        public String fromNBT(NBTBase nbt) {
+            return cast(nbt, NBTTagString.class).getString();
         }
     }
     class ItemStackAdapter implements NBTTypeAdapter<ItemStack, NBTTagCompound> {
@@ -113,8 +113,8 @@ public interface BaseNBTAdapters {
         }
 
         @Override
-        public ItemStack fromNBT(NBTTagCompound nbtTagCompound) {
-            return new ItemStack(nbtTagCompound);
+        public ItemStack fromNBT(NBTBase nbt) {
+            return new ItemStack(cast(nbt, NBTTagCompound.class));
         }
     }
     class BlockPosAdapter implements NBTTypeAdapter<BlockPos, NBTTagLong> {
@@ -125,8 +125,8 @@ public interface BaseNBTAdapters {
         }
 
         @Override
-        public BlockPos fromNBT(NBTTagLong nbtTagLong) {
-            return BlockPos.fromLong(nbtTagLong.getLong());
+        public BlockPos fromNBT(NBTBase nbt) {
+            return BlockPos.fromLong(cast(nbt, NBTTagLong.class).getLong());
         }
     }
     class UUIDAdapter implements NBTTypeAdapter<UUID, NBTTagString> {
@@ -137,8 +137,8 @@ public interface BaseNBTAdapters {
         }
 
         @Override
-        public UUID fromNBT(NBTTagString nbtTagString) {
-            String serialized = nbtTagString.getString();
+        public UUID fromNBT(NBTBase nbt) {
+            String serialized = cast(nbt, NBTTagString.class).getString();
             // avoid IllegalArgumentException when the NBT is invalid
             return serialized.isEmpty() ? new UUID(0,0) : UUID.fromString(serialized);
         }

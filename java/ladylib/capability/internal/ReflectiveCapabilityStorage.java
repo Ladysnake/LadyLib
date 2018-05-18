@@ -74,6 +74,8 @@ public class ReflectiveCapabilityStorage<C> implements Capability.IStorage<C> {
                 } else if (fieldInfo.setter != null) {
                     Object value = fieldInfo.adapter.fromNBT(serialized);
                     fieldInfo.setter.invoke(instance, value);
+                } else {
+                    LadyLib.LOGGER.warn("Could not write to final field {} in capability instance {}", fieldInfo.name, instance);
                 }
             } catch (Throwable throwable) {
                 LadyLib.LOGGER.error("Could not read NBT from capability " + capability.getName(), throwable);

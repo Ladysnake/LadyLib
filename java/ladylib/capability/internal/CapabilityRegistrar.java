@@ -131,7 +131,7 @@ public class CapabilityRegistrar {
     }
 
     public static class UnableToGetFactoryException extends RuntimeException {
-        UnableToGetFactoryException(Throwable cause) {
+        public UnableToGetFactoryException(Throwable cause) {
             super(cause);
         }
     }

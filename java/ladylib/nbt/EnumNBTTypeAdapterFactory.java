@@ -8,7 +8,7 @@ import net.minecraft.nbt.NBTTagString;
 public class EnumNBTTypeAdapterFactory implements NBTTypeAdapterFactory<Enum, NBTBase> {
     @SuppressWarnings("unchecked")
     @Override
-    public NBTTypeAdapter<Enum, NBTBase> create(TypeToken type) {
+    public NBTTypeAdapter<Enum, NBTBase> create(TypeToken type, boolean allowMutating) {
         Class enumClass = type.getRawType();
         if (!Enum.class.isAssignableFrom(enumClass)) {
             return null;
@@ -30,9 +30,9 @@ public class EnumNBTTypeAdapterFactory implements NBTTypeAdapterFactory<Enum, NB
         }
 
         @Override
-        public E fromNBT(NBTTagString nbtTagString) {
+        public E fromNBT(NBTBase nbtTagString) {
             try {
-                return Enum.valueOf(enumClass, nbtTagString.getString());
+                return Enum.valueOf(enumClass, cast(nbtTagString, NBTTagString.class).getString());
             } catch (IllegalArgumentException e) {
                 LadyLib.LOGGER.error("Failed to deserialize enum field", e);
                 return null;

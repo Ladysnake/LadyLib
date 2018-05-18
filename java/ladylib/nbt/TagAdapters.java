@@ -2,15 +2,17 @@ package ladylib.nbt;
 
 import com.google.gson.reflect.TypeToken;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTBase;
 import net.minecraft.util.math.BlockPos;
 
+import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.function.Supplier;
 
 public class TagAdapters {
     private static final List<NBTTypeAdapterFactory> factories = new ArrayList<>();
-    private static final Map<TypeToken<?>, NBTTypeAdapter> cache = new HashMap<>();
+    private static final Map<TypeToken<?>, NBTAdapterEntry> cache = new HashMap<>();
 
     static {
         addPrimitiveFactory(boolean.class, Boolean.class, BaseNBTAdapters.BooleanAdapter::new);
@@ -28,33 +30,63 @@ public class TagAdapters {
 
         factories.add(new EnumNBTTypeAdapterFactory());
         factories.add(new SerializableNBTTypeAdapterFactory());
+        factories.add(new RegistryEntryNBTAdapterFactory());
+        factories.add(new ImmutableCollectionNBTAdapterFactory());
         factories.add(new CollectionNBTTypeAdapterFactory());
         factories.add(ReflectiveNBTAdapterFactory.INSTANCE);
     }
 
     private static <T> void addPrimitiveFactory(Class<T> primitive, Class<T> wrapper, Supplier<NBTTypeAdapter<T, ?>> factory) {
-        factories.add(type -> type.getRawType() == primitive || type.getRawType() == wrapper ? factory.get() : null);
+        factories.add((type, allowMutating) -> type.getRawType() == primitive || type.getRawType() == wrapper ? factory.get() : null);
     }
 
     private static <T> void addFactory(Class<T> primitive, Supplier<NBTTypeAdapter<T, ?>> factory) {
-        factories.add(type -> type.getRawType() == primitive ? factory.get() : null);
+        factories.add((type, allowMutating) -> type.getRawType() == primitive ? factory.get() : null);
     }
 
     public static NBTTypeAdapter getNBTAdapter(Field field) {
-        return getNBTAdapter(TypeToken.get(field.getGenericType()));
+        return getNBTAdapter(TypeToken.get(field.getGenericType()), true);
     }
 
-    public static NBTTypeAdapter getNBTAdapter(TypeToken type) {
-        return cache.computeIfAbsent(type,
-                tt -> {
-                    for (NBTTypeAdapterFactory factory : factories) {
-                        NBTTypeAdapter candidate = factory.create(tt);
-                        if (candidate != null) {
-                            return candidate;
+    @SuppressWarnings("unchecked")
+    public static <T, NBT extends NBTBase> NBTTypeAdapter<T, NBT> getNBTAdapter(TypeToken<T> type, boolean allowMutating) {
+        return cache.computeIfAbsent(type, NBTAdapterEntry::new).computeTypeAdapter(allowMutating);
+
+    }
+
+    public static class NBTAdapterEntry {
+        private TypeToken type;
+        private NBTTypeAdapter typeAdapter;
+        private NBTMutatingTypeAdapter mutatingTypeAdapter;
+
+        public NBTAdapterEntry(TypeToken type) {
+            this.type = type;
+        }
+
+        @Nonnull
+        public NBTTypeAdapter computeTypeAdapter(boolean allowMutating) {
+            if (allowMutating && mutatingTypeAdapter != null) {
+                return mutatingTypeAdapter;
+            }
+            if (typeAdapter != null) {
+                return typeAdapter;
+            }
+            for (NBTTypeAdapterFactory factory : factories) {
+                NBTTypeAdapter candidate = factory.create(type, allowMutating);
+                if (candidate != null) {
+                    if (candidate instanceof NBTMutatingTypeAdapter) {
+                        if (!allowMutating) {
+                            throw new IllegalStateException("A factory returned a mutating type adapter despite them not being allowed");
                         }
+                        this.mutatingTypeAdapter = (NBTMutatingTypeAdapter) candidate;
+                    } else {
+                        this.typeAdapter = candidate;
                     }
-                    throw new IllegalArgumentException("LadyLib does not know how to serialize " + tt + " as NBT");
-                });
+                    return candidate;
+                }
+            }
+            throw new IllegalArgumentException("LadyLib does not know how to serialize " + type + " as NBT");
+        }
     }
 
 }

@@ -1,0 +1,13 @@
+[
+  {
+    "modid": "ladylib",
+    "name": "LadyLib",
+    "description": "A library for Ladysnake's minecraft mods",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "authorList": [
+      "Pyrofab"
+    ],
+    "credits": "The modding community from which I have taken code and advice for this project."
+  }
+]
