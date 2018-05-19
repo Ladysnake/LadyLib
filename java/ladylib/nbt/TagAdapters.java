@@ -23,6 +23,7 @@ public class TagAdapters {
         addPrimitiveFactory(long.class,    Long.class,    BaseNBTAdapters.LongAdapter::new);
         addPrimitiveFactory(double.class,  Double.class,  BaseNBTAdapters.DoubleAdapter::new);
 
+        addFactory(NBTBase.class,    BaseNBTAdapters.NBTAdapter::new);
         addFactory(String.class,     BaseNBTAdapters.StringAdapter::new);
         addFactory(ItemStack.class,  BaseNBTAdapters.ItemStackAdapter::new);
         addFactory(BlockPos.class,   BaseNBTAdapters.BlockPosAdapter::new);
@@ -33,6 +34,7 @@ public class TagAdapters {
         factories.add(new RegistryEntryNBTAdapterFactory());
         factories.add(new ImmutableCollectionNBTAdapterFactory());
         factories.add(new CollectionNBTTypeAdapterFactory());
+        factories.add(new MapNBTTypeAdapterFactory());
         factories.add(ReflectiveNBTAdapterFactory.INSTANCE);
     }
 
@@ -41,7 +43,11 @@ public class TagAdapters {
     }
 
     private static <T> void addFactory(Class<T> primitive, Supplier<NBTTypeAdapter<T, ?>> factory) {
-        factories.add((type, allowMutating) -> type.getRawType() == primitive ? factory.get() : null);
+        factories.add((type, allowMutating) -> primitive.isAssignableFrom(type.getRawType()) ? factory.get() : null);
+    }
+
+    public static void addAdapterFactory(NBTTypeAdapterFactory factory) {
+        factories.add(0, factory);
     }
 
     public static NBTTypeAdapter getNBTAdapter(Field field) {

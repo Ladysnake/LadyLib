@@ -1,6 +1,5 @@
 package ladylib.capability.internal;
 
-import it.unimi.dsi.fastutil.ints.Int2IntFunction;
 import ladylib.LadyLib;
 import ladylib.capability.AutoCapability;
 import net.minecraft.entity.Entity;
@@ -15,15 +14,10 @@ import org.apache.logging.log4j.message.FormattedMessage;
 
 import java.lang.invoke.*;
 import java.lang.reflect.*;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.function.IntSupplier;
-import java.util.function.IntUnaryOperator;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 public class CapabilityRegistrar {
 

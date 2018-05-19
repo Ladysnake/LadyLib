@@ -1,7 +1,6 @@
 package ladylib.nbt;
 
 import com.google.gson.reflect.TypeToken;
-import ladylib.LadyLib;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagString;
 
@@ -10,8 +9,11 @@ public class EnumNBTTypeAdapterFactory implements NBTTypeAdapterFactory<Enum, NB
     @Override
     public NBTTypeAdapter<Enum, NBTBase> create(TypeToken type, boolean allowMutating) {
         Class enumClass = type.getRawType();
-        if (!Enum.class.isAssignableFrom(enumClass)) {
+        if (!Enum.class.isAssignableFrom(enumClass) || enumClass == Enum.class) {
             return null;
+        }
+        if (!enumClass.isEnum()) {
+            enumClass = enumClass.getSuperclass(); // handle anonymous subclasses
         }
         return new EnumNBTTypeAdapter(enumClass);
     }

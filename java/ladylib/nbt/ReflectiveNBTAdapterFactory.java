@@ -6,11 +6,9 @@ import ladylib.capability.internal.CapabilityRegistrar;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import org.apache.logging.log4j.message.FormattedMessage;
-import sun.reflect.ReflectionFactory;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -90,8 +88,6 @@ public class ReflectiveNBTAdapterFactory implements NBTTypeAdapterFactory<Object
 
         @Override
         public NBTTagCompound toNBT(T instance) {
-            // return null if nothing needs saving
-            if (fieldEntries.isEmpty()) return null;
             NBTTagCompound compound = new NBTTagCompound();
             for (FieldEntry fieldEntry : fieldEntries) {
                 try {

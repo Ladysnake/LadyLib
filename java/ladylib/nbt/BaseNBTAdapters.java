@@ -8,6 +8,19 @@ import java.util.UUID;
 
 public interface BaseNBTAdapters {
 
+    class NBTAdapter implements NBTTypeAdapter<NBTBase, NBTBase> {
+
+        @Override
+        public NBTBase toNBT(NBTBase value) {
+            return value;
+        }
+
+        @Override
+        public NBTBase fromNBT(NBTBase nbt) {
+            return nbt;
+        }
+    }
+
     class IntAdapter implements NBTTypeAdapter<Integer, NBTTagInt> {
 
         @Override

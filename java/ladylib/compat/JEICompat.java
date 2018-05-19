@@ -1,8 +1,6 @@
 package ladylib.compat;
 
 import ladylib.LadyLib;
-import ladylib.registration.AutoRegistrar;
-import ladylib.registration.ItemRegistrar;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.IModRegistry;
 import mezz.jei.api.JEIPlugin;

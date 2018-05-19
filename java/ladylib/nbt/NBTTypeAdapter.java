@@ -13,6 +13,10 @@ public interface NBTTypeAdapter<T, NBT extends NBTBase> {
     T fromNBT(NBTBase nbt);
 
     default NBT cast(NBTBase nbt, Class<NBT> clazz) {
+        return castNBT(nbt, clazz);
+    }
+
+    static <NBT extends NBTBase> NBT castNBT(NBTBase nbt, Class<NBT> clazz) {
         if (clazz.isInstance(nbt)) {
             return clazz.cast(nbt);
         }

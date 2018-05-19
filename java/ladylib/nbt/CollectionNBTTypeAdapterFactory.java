@@ -20,7 +20,7 @@ public class CollectionNBTTypeAdapterFactory implements NBTTypeAdapterFactory<Co
         if (!Collection.class.isAssignableFrom(rawType)) {
             return null;
         }
-        NBTTypeAdapter elementAdapter = getElementTypeAdapter(type);
+        NBTTypeAdapter elementAdapter = getElementTypeAdapter(type, 0);
 
         if (allowMutating) {
             @SuppressWarnings("unchecked") NBTTypeAdapter<Collection, NBTTagList> ret =
@@ -47,14 +47,14 @@ public class CollectionNBTTypeAdapterFactory implements NBTTypeAdapterFactory<Co
         return ret;
     }
 
-    static NBTTypeAdapter getElementTypeAdapter(TypeToken type) {
+    static NBTTypeAdapter getElementTypeAdapter(TypeToken type, int index) {
         Type collectionType = type.getType();
         Type elementType = Object.class;
         if (collectionType instanceof WildcardType) {
-            collectionType = ((WildcardType) collectionType).getUpperBounds()[0];
+            collectionType = ((WildcardType) collectionType).getUpperBounds()[index];
         }
         if (collectionType instanceof ParameterizedType) {
-            elementType = ((ParameterizedType) collectionType).getActualTypeArguments()[0];
+            elementType = ((ParameterizedType) collectionType).getActualTypeArguments()[index];
         }
 
         // cannot support mutating type adapters for the collection's elements

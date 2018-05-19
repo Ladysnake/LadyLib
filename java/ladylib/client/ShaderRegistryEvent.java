@@ -1,10 +1,6 @@
 package ladylib.client;
 
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.common.FMLContainer;
-import net.minecraftforge.fml.common.InjectedModContainer;
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.IContextSetter;
 import org.apache.commons.lang3.tuple.Pair;

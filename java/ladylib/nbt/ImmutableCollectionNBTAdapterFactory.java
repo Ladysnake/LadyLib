@@ -7,7 +7,6 @@ import ladylib.capability.internal.CapabilityRegistrar;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagList;
 
-import java.util.Collection;
 import java.util.function.Supplier;
 
 import static ladylib.nbt.CollectionNBTTypeAdapterFactory.getElementTypeAdapter;
@@ -19,7 +18,7 @@ public class ImmutableCollectionNBTAdapterFactory implements NBTTypeAdapterFacto
         if (!ImmutableCollection.class.isAssignableFrom(rawType)) {
             return null;
         }
-        NBTTypeAdapter elementAdapter = getElementTypeAdapter(type);
+        NBTTypeAdapter elementAdapter = getElementTypeAdapter(type, 0);
         try {
             Class<?> builder = Class.forName(rawType.getName() + "$Builder");
             Supplier builderFactory = CapabilityRegistrar.createFactory(builder, "get", Supplier.class);
