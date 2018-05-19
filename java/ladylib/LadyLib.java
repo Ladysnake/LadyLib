@@ -1,11 +1,14 @@
 package ladylib;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.reflect.TypeToken;
 import ladylib.client.ClientHandler;
 import ladylib.client.particle.ParticleManager;
+import ladylib.nbt.MalformedNBTException;
 import ladylib.nbt.NBTTypeAdapter;
 import ladylib.nbt.TagAdapters;
+import ladylib.networking.HTTPRequestHelper;
 import ladylib.registration.AutoRegistrar;
 import ladylib.registration.BlockRegistrar;
 import ladylib.registration.ItemRegistrar;
@@ -14,6 +17,7 @@ import net.minecraft.nbt.NBTBase;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.*;
 import net.minecraftforge.fml.common.discovery.ASMDataTable;
+import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -124,8 +128,9 @@ public class LadyLib {
      */
     @SuppressWarnings("unchecked")
     @Contract("null, _ -> null; !null, _ -> !null; !null, null -> fail")
-    public static <T> T fromNBT(NBTBase nbt, Type typeOfT) {
+    public static <T> T fromNBT(NBTBase nbt, Type typeOfT) throws MalformedNBTException {
         if (nbt == null) return null;
+        Preconditions.checkNotNull(typeOfT);
         NBTTypeAdapter adapter = TagAdapters.getNBTAdapter(TypeToken.get(typeOfT), false);
         return (T) adapter.fromNBT(nbt);
     }
@@ -138,7 +143,7 @@ public class LadyLib {
     }
 
     @SuppressWarnings("unchecked")
-    public static void deserializeNBT(@Nonnull Object target, NBTBase nbt) {
+    public static void deserializeNBT(@Nonnull Object target, NBTBase nbt) throws MalformedNBTException {
         if (nbt == null) return;
         NBTTypeAdapter adapter = TagAdapters.getNBTAdapter(TypeToken.get(target.getClass()), true);
         adapter.fromNBT(target, nbt);
@@ -164,6 +169,12 @@ public class LadyLib {
         }
         registrar.autoRegisterTileEntities(event.getAsmData());
         injectContainers(event.getAsmData());
+    }
+
+    @Mod.EventHandler
+    public void init(@Nonnull FMLInitializationEvent event) {
+        HTTPRequestHelper.INSTANCE.start();
+        HTTPRequestHelper.getJSON("https://ladysnake.glitch.me/gaspunk/users", System.out::println);
     }
 
     private void injectContainers(ASMDataTable asmData) {
