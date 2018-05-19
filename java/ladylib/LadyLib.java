@@ -173,8 +173,7 @@ public class LadyLib {
 
     @Mod.EventHandler
     public void init(@Nonnull FMLInitializationEvent event) {
-        HTTPRequestHelper.INSTANCE.start();
-        HTTPRequestHelper.getJSON("https://ladysnake.glitch.me/gaspunk/users", System.out::println);
+
     }
 
     private void injectContainers(ASMDataTable asmData) {
