@@ -3,9 +3,7 @@ package ladylib.networking;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 
-import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -27,6 +25,8 @@ public class HTTPRequestHelper {
             runnable -> new Thread(runnable, "LadyLib HTTP Helper")
     );
 
+    private static final int MAX_HTTP_REDIRECTS = Integer.getInteger("http.maxRedirects", 20);
+
     /**
      * Load JSON-encoded data from the server using a GET HTTP request.
      * <p>
@@ -36,16 +36,12 @@ public class HTTPRequestHelper {
      * Do note that the callback will be called on a different thread and can be called at any time after it
      * was passed to this method. There is also a chance that it may not be called at all, for a number of reasons,
      * such as 404s, I/O exceptions and unexpected input.
-     * <p>
-     * Request treatment starts during {@link FMLInitializationEvent mod initialization}. After that,
-     * pending requests will be processed at regular intervals.
-     * </p>
      *
      * @param url     A string containing the URL to which the request is sent.
      * @param success A callback function that is executed if the request succeeds.
      * @see #getJSON(URL)
      */
-    public static void getJSON(@Nonnull String url, @Nonnull JsonCallback success) {
+    public static void getJSON(String url, JsonCallback success) {
         try {
             getJSON(new URL(url)).thenAccept(success);
         } catch (MalformedURLException e) {
@@ -70,31 +66,27 @@ public class HTTPRequestHelper {
      *                  }).thenAccept(MyObject::doSomething);
      * }</pre>
      * <p>
-     * <p>
-     * Request treatment starts during {@link FMLInitializationEvent mod initialization}. After that,
-     * pending requests will be processed at regular intervals.
-     * </p>
      *
-     * @param url A string containing the URL to which the request is sent.
+     * @param url A URL to which the request is sent.
      * @return a CompletableFuture running the JSON GET request
-     * @see #getJSON(URL)
+     * @see #getJSON(String, JsonCallback)
      * @see CompletableFuture
      */
-    public static CompletableFuture<JsonElement> getJSON(@Nonnull URL url) {
+    public static CompletableFuture<JsonElement> getJSON(URL url) {
         return CompletableFuture.supplyAsync(() -> requestJSON(url), THREAD_POOL);
     }
 
     private static JsonElement requestJSON(URL url) {
         try {
-            URLConnection rewardPage = url.openConnection();
-            if (rewardPage instanceof HttpURLConnection) {
-                int code = ((HttpURLConnection) rewardPage).getResponseCode();
+            URLConnection page = openUrlConnection(url);
+            if (page instanceof HttpURLConnection) {
+                int code = ((HttpURLConnection) page).getResponseCode();
                 if (code <= 200 || code > 299) {
                     throw new RuntimeException("Got a bad response code from the server (code " + code + ")");
                 }
             }
-            rewardPage.connect();
-            try (Reader in = new InputStreamReader(rewardPage.getInputStream())) {
+            page.connect();
+            try (Reader in = new InputStreamReader(page.getInputStream())) {
                 return GSON.fromJson(in, JsonElement.class);
             }
         } catch (IOException e) {
@@ -104,7 +96,38 @@ public class HTTPRequestHelper {
         }
     }
 
+    /**
+     * Opens a connection to given URL while following redirects
+     *
+     * @param url the URL to fetch
+     * @return an opened connection that may have been redirected
+     * @throws IOException if an I/O exception occurs or that there are too many redirects
+     */
+    public static URLConnection openUrlConnection(URL url) throws IOException {
+        URL currentUrl = url;
+        for (int redirects = 0; redirects < MAX_HTTP_REDIRECTS; redirects++) {
+            URLConnection c = currentUrl.openConnection();
+            if (c instanceof HttpURLConnection) {
+                HttpURLConnection huc = (HttpURLConnection) c;
+                huc.setInstanceFollowRedirects(false);
+                int responseCode = huc.getResponseCode();
+                if (responseCode >= 300 && responseCode <= 399) {
+                    try {
+                        String loc = huc.getHeaderField("Location");
+                        currentUrl = new URL(currentUrl, loc);
+                        continue;
+                    } finally {
+                        huc.disconnect();
+                    }
+                }
+            }
+
+            return c;
+        }
+        throw new IOException("Too many redirects while trying to fetch " + url);
+    }
+
     @FunctionalInterface
-    public interface JsonCallback extends Consumer<JsonElement> {}
+    public interface JsonCallback extends Consumer<JsonElement> { }
 
 }
