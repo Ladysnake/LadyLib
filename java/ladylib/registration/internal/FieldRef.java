@@ -1,4 +1,4 @@
-package ladylib.registration;
+package ladylib.registration.internal;
 
 import ladylib.LadyLib;
 import net.minecraft.util.ResourceLocation;

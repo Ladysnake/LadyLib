@@ -38,13 +38,6 @@ public class ItemRegistrar {
      */
     private Map<Item, ItemInfo> allItems = new HashMap<>();
 
-    ItemRegistrar() {
-    }
-
-    void addItem(@Nonnull Item item, AutoRegistryRef ref) {
-        addItem(item, ref.isListed(), ref.getOreNames());
-    }
-
     /**
      * Adds an item to the list
      *

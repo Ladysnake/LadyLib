@@ -1,7 +1,7 @@
 package ladylib.nbt;
 
 import com.google.gson.reflect.TypeToken;
-import ladylib.capability.internal.CapabilityRegistrar;
+import ladylib.misc.ReflectionUtil;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -32,7 +32,7 @@ public class MapNBTTypeAdapterFactory implements NBTTypeAdapterFactory<Map, NBTT
         }
         Supplier<Map> supplier;
         if (!Modifier.isAbstract(rawType.getModifiers())) {
-            supplier = CapabilityRegistrar.createFactory(rawType, "get", Supplier.class);
+            supplier = ReflectionUtil.createFactory(rawType, "get", Supplier.class);
         } else if (SortedMap.class.isAssignableFrom(rawType)) {
             supplier = TreeMap::new;
         } else {
@@ -43,7 +43,7 @@ public class MapNBTTypeAdapterFactory implements NBTTypeAdapterFactory<Map, NBTT
         return ret;
     }
 
-    public abstract static class MapBaseAdapter<K, V> implements NBTTypeAdapter<Map<K, V>, NBTTagList> {
+    public abstract static class MapBaseAdapter<K, V> extends AbstractNBTTypeAdapter<Map<K, V>, NBTTagList> {
         protected static final String KEY_TAG = "key";
         protected static final String VALUE_TAG = "value";
         protected final NBTTypeAdapter<K, NBTBase> keyAdapter;
@@ -52,6 +52,21 @@ public class MapNBTTypeAdapterFactory implements NBTTypeAdapterFactory<Map, NBTT
         public MapBaseAdapter(NBTTypeAdapter<K, NBTBase> keyAdapter, NBTTypeAdapter<V, NBTBase> valueAdapter) {
             this.keyAdapter = keyAdapter;
             this.valueAdapter = valueAdapter;
+        }
+
+        @Override
+        public Map<K,V> fromNBT(Map<K,V> value, NBTBase nbt) {
+            cast(nbt, NBTTagList.class).ifPresent(list -> {
+                value.clear();
+                for (NBTBase nbtBase : list) {
+                    NBTTypeAdapter.castNBT(nbtBase, NBTTagCompound.class).ifPresent(entry -> {
+                        K k = keyAdapter.fromNBT(entry.getTag(KEY_TAG));
+                        V v = valueAdapter.fromNBT(entry.getTag(VALUE_TAG));
+                        value.put(k, v);
+                    });
+                }
+            });
+            return value;
         }
 
         @Override
@@ -71,18 +86,6 @@ public class MapNBTTypeAdapterFactory implements NBTTypeAdapterFactory<Map, NBTT
         public MapNBTMutatingTypeAdapter(NBTTypeAdapter<K, NBTBase> keyAdapter, NBTTypeAdapter<V, NBTBase> valueAdapter) {
             super(keyAdapter, valueAdapter);
         }
-
-        @Override
-        public Map<K,V> fromNBT(Map<K,V> value, NBTBase list) {
-            value.clear();
-            for (NBTBase nbtBase : cast(list, NBTTagList.class)) {
-                NBTTagCompound entry = NBTTypeAdapter.castNBT(nbtBase, NBTTagCompound.class);
-                K k = keyAdapter.fromNBT(entry.getTag(KEY_TAG));
-                V v = valueAdapter.fromNBT(entry.getTag(VALUE_TAG));
-                value.put(k, v);
-            }
-            return value;
-        }
     }
 
     public static class MapNBTTypeAdapter<K,V> extends MapNBTTypeAdapterFactory.MapBaseAdapter<K,V> implements NBTTypeAdapter<Map<K,V>, NBTTagList> {
@@ -94,15 +97,13 @@ public class MapNBTTypeAdapterFactory implements NBTTypeAdapterFactory<Map, NBTT
         }
 
         @Override
+        public Map<K, V> fromNBT(Map<K, V> value, NBTBase nbt) {
+            return fromNBT(nbt);
+        }
+
+        @Override
         public Map<K,V> fromNBT(NBTBase list) {
-            Map<K,V> ret = mapSupplier.get();
-            for (NBTBase nbtBase : cast(list, NBTTagList.class)) {
-                NBTTagCompound entry = NBTTypeAdapter.castNBT(nbtBase, NBTTagCompound.class);
-                K k = keyAdapter.fromNBT(entry.getTag(KEY_TAG));
-                V v = valueAdapter.fromNBT(entry.getTag(VALUE_TAG));
-                ret.put(k, v);
-            }
-            return ret;
+            return super.fromNBT(mapSupplier.get(), list);
         }
     }
 }

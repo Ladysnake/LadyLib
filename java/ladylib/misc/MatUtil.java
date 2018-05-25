@@ -1,10 +1,12 @@
 package ladylib.misc;
 
+import ladylib.client.shader.ShaderUtil;
+
 import java.nio.FloatBuffer;
 import java.util.Arrays;
 
 /**
- * A helper class to deal with matrices. Mainly used by {@link ladylib.client.ShaderUtil}
+ * A helper class to deal with matrices. Mainly used by {@link ShaderUtil}
  */
 public class MatUtil {
     public static void invertMat4(float[] matOut, float[] m) {

@@ -14,8 +14,17 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface AutoCapability {
 
-    Class<?> type() default Object.class;
+    /**
+     * The capability interface implemented by the annotated class, or <code>void</code>
+     * if the class itself should be used for capability registration.
+     */
+    Class<?> value() default void.class;
 
+    /**
+     * The storage class for this capability implementation.
+     * If left to <code>Capability.IStorage</code>, a default storage will be created
+     * using LadyLib's NBT serialization system.
+     */
     Class<? extends Capability.IStorage> storage() default Capability.IStorage.class;
 
     /**

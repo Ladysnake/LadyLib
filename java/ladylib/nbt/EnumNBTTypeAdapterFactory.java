@@ -4,10 +4,10 @@ import com.google.gson.reflect.TypeToken;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagString;
 
-public class EnumNBTTypeAdapterFactory implements NBTTypeAdapterFactory<Enum, NBTBase> {
+public class EnumNBTTypeAdapterFactory implements NBTTypeAdapterFactory<Enum, NBTTagString> {
     @SuppressWarnings("unchecked")
     @Override
-    public NBTTypeAdapter<Enum, NBTBase> create(TypeToken type, boolean allowMutating) {
+    public NBTTypeAdapter<Enum, NBTTagString> create(TypeToken type, boolean allowMutating) {
         Class enumClass = type.getRawType();
         if (!Enum.class.isAssignableFrom(enumClass) || enumClass == Enum.class) {
             return null;
@@ -15,14 +15,15 @@ public class EnumNBTTypeAdapterFactory implements NBTTypeAdapterFactory<Enum, NB
         if (!enumClass.isEnum()) {
             enumClass = enumClass.getSuperclass(); // handle anonymous subclasses
         }
-        return new EnumNBTTypeAdapter(enumClass);
+        return new EnumNBTTypeAdapter(type, enumClass);
     }
 
-    public static class EnumNBTTypeAdapter<E extends Enum<E>> implements NBTTypeAdapter<E, NBTTagString> {
+    public static class EnumNBTTypeAdapter<E extends Enum<E>> extends AbstractNBTTypeAdapter<E, NBTTagString> {
 
         private final Class<E> enumClass;
 
-        public EnumNBTTypeAdapter(Class<E> enumClass) {
+        public EnumNBTTypeAdapter(TypeToken<E> tt, Class<E> enumClass) {
+            super(tt);
             this.enumClass = enumClass;
         }
 
@@ -34,9 +35,10 @@ public class EnumNBTTypeAdapterFactory implements NBTTypeAdapterFactory<Enum, NB
         @Override
         public E fromNBT(NBTBase nbtTagString) {
             try {
-                return Enum.valueOf(enumClass, cast(nbtTagString, NBTTagString.class).getString());
+                return castAnd(nbtTagString, NBTTagString.class, nbt -> Enum.valueOf(enumClass, nbt.getString()));
             } catch (IllegalArgumentException e) {
-                throw new MalformedNBTException("Failed to deserialize enum field", e);
+                TypeToken<E> typeToken = TypeToken.get(enumClass);
+                return TagAdapters.getDefaultValue(typeToken).orElseThrow(() -> new NBTDeserializationException("Failed to deserialize enum field", e));
             }
         }
     }

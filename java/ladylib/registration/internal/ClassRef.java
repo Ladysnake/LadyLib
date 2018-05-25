@@ -1,4 +1,4 @@
-package ladylib.registration;
+package ladylib.registration.internal;
 
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.registries.IForgeRegistry;

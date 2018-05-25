@@ -1,4 +1,4 @@
-package ladylib.client;
+package ladylib.client.shader;
 
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.eventhandler.Event;
@@ -18,8 +18,14 @@ public class ShaderRegistryEvent extends Event implements IContextSetter {
     }
 
     /**
-     * Convenience method to register a shader with the fragment and vertex shaders having the same name <br/>
-     * The corresponding program will be created and linked during the next ResourceManager reloading
+     * Convenience method to register a shader with the fragment and vertex shaders having the same name <br>
+     * The corresponding program will be created and linked during the next ResourceManager reloading.
+     *
+     * <p>
+     *     <u>Example:</u> Using the identifier <tt>gaspunk:gas_overlay</tt> will register a shader using
+     *     the file <tt>assets/gaspunk/shaders/gas_overlay.vsh</tt> as its vertex shader and
+     *     <tt>assets/gaspunk/shaders/gas_overlay.fsh</tt> as its fragment shader.
+     * </p>
      *
      * @param identifier the common name or relative location of both shaders, minus the file extension
      */
@@ -32,7 +38,7 @@ public class ShaderRegistryEvent extends Event implements IContextSetter {
     }
 
     /**
-     * Registers a shader with two shaders having the same name
+     * Registers a shader using the given vertex and fragment. <br>
      * The corresponding program will be created and linked during the next ResourceManager reloading
      *
      * @param identifier a unique resource location that will be used to load this shader

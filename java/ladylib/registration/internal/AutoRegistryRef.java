@@ -1,9 +1,10 @@
-package ladylib.registration;
+package ladylib.registration.internal;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import ladylib.LadyLib;
+import ladylib.registration.AutoRegister;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
@@ -17,7 +18,7 @@ import java.lang.reflect.Method;
 import java.util.Optional;
 
 abstract class AutoRegistryRef<T extends AnnotatedElement> {
-    protected static final LoadingCache<Class<?>, Optional<MethodHandle>> UNLOCALIZED_NAMES_CACHE = CacheBuilder.newBuilder()
+    static final LoadingCache<Class<?>, Optional<MethodHandle>> UNLOCALIZED_NAMES_CACHE = CacheBuilder.newBuilder()
             .build(CacheLoader.from(type -> {
                 if (type == null) return Optional.empty();
                 try {
@@ -38,8 +39,8 @@ abstract class AutoRegistryRef<T extends AnnotatedElement> {
                 return Optional.empty();
             }));
 
-    protected T referenced;
-    protected String modId;
+    T referenced;
+    String modId;
     private boolean listed;
     private boolean makeItemBlock;
     private String[] oldNames;

@@ -1,14 +1,18 @@
-package ladylib.client;
+package ladylib.client.shader;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import ladylib.LadyLib;
 import ladylib.misc.MatUtil;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.resources.IReloadableResourceManager;
 import net.minecraft.client.resources.IResourceManager;
+import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.relauncher.Side;
@@ -19,6 +23,7 @@ import org.lwjgl.opengl.ARBShaderObjects;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
 
+import javax.annotation.Nullable;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,16 +45,21 @@ public class ShaderUtil {
     private static final Object2IntMap<ResourceLocation> linkedShaders = new Object2IntOpenHashMap<>();
     private static boolean initialized = false;
 
+    private static Framebuffer framebufferLL;
+
     private static boolean shouldNotUseShaders() {
         return !OpenGlHelper.shadersSupported;
     }
 
     /**
-     * Subscribes this class to minecraft's resource manager to reload shaders like normal assets.
+     * Subscribes this class to Minecraft's resource manager to reload shaders like normal assets.
      */
-    static void init() {
+    public static void init() {
         if (!initialized) {
-            ((IReloadableResourceManager) Minecraft.getMinecraft().getResourceManager()).registerReloadListener(ShaderUtil::loadShaders);
+            Minecraft mc = Minecraft.getMinecraft();
+            ((IReloadableResourceManager) mc.getResourceManager()).registerReloadListener(ShaderUtil::loadShaders);
+            framebufferLL = new Framebuffer(mc.displayWidth, mc.displayHeight, true);
+            framebufferLL.setFramebufferColor(0.0F, 0.0F, 0.0F, 0.0F);
             initialized = true;
         }
     }
@@ -74,7 +84,7 @@ public class ShaderUtil {
      * @param fragmentLocation the name or relative location of the fragment shader
      * @return the reference to the initialized program
      */
-    private static int loadShader(IResourceManager resourceManager, ResourceLocation vertexLocation, ResourceLocation fragmentLocation) {
+    private static int loadShader(IResourceManager resourceManager, @Nullable ResourceLocation vertexLocation, @Nullable ResourceLocation fragmentLocation) {
 
         // program creation
         int program = OpenGlHelper.glCreateProgram();
@@ -98,6 +108,50 @@ public class ShaderUtil {
         OpenGlHelper.glLinkProgram(program);
 
         return program;
+    }
+
+    /**
+     * Renders Minecraft's main framebuffer using the current shader.
+     * <p>
+     *     Note that the shader will be reverted automatically during the operation.
+     *     Calling this method with no shader bound will not have any apparent result.
+     * </p>
+     * FIXME I don't know how framebuffers work
+     */
+    public static void renderMainWithShaders() {
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        GlStateManager.disableBlend();
+        GlStateManager.disableDepth();
+        GlStateManager.disableAlpha();
+        GlStateManager.disableFog();
+        GlStateManager.disableLighting();
+        GlStateManager.disableColorMaterial();
+        GlStateManager.enableTexture2D();
+        GlStateManager.bindTexture(0);
+
+        Framebuffer framebufferIn = Minecraft.getMinecraft().getFramebuffer();
+        Framebuffer framebufferOut = framebufferLL;
+        framebufferIn.unbindFramebuffer();
+        float f = framebufferOut.framebufferTextureWidth;
+        float f1 = framebufferOut.framebufferTextureHeight;
+        GlStateManager.viewport(0, 0, (int)f, (int)f1);
+
+        framebufferOut.framebufferClear();
+        framebufferOut.bindFramebuffer(false);
+        GlStateManager.depthMask(false);
+        GlStateManager.colorMask(true, true, true, true);
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder bufferbuilder = tessellator.getBuffer();
+        bufferbuilder.begin(7, DefaultVertexFormats.POSITION_COLOR);
+        bufferbuilder.pos(0.0D, (double)f1, 500.0D).color(255, 255, 255, 255).endVertex();
+        bufferbuilder.pos((double)f, (double)f1, 500.0D).color(255, 255, 255, 255).endVertex();
+        bufferbuilder.pos((double)f, 0.0D, 500.0D).color(255, 255, 255, 255).endVertex();
+        bufferbuilder.pos(0.0D, 0.0D, 500.0D).color(255, 255, 255, 255).endVertex();
+        tessellator.draw();
+        GlStateManager.depthMask(true);
+        GlStateManager.colorMask(true, true, true, true);
+        framebufferOut.unbindFramebuffer();
+        framebufferIn.unbindFramebufferTexture();
     }
 
     /**
@@ -156,6 +210,7 @@ public class ShaderUtil {
             switch (values.length) {
                 case 1:
                     GL20.glUniform1f(uniform, values[0]);
+                    break;
                 case 2:
                     GL20.glUniform2f(uniform, values[0], values[1]);
                     break;
@@ -186,7 +241,20 @@ public class ShaderUtil {
     }
 
     /**
-     * Binds any number of additional textures to be used by the current shader
+     * Binds any number of additional textures to be used by the current shader.
+     * <p>
+     * The default texture (0) is unaffected.
+     * Shaders can access these textures by using uniforms named "textureN" with N
+     * being the index of the additional texture, starting at 1.
+     * </p>
+     *
+     * <u>Example:</u> The call {@code bindAdditionalTextures(rl1, rl2, rl3)} will let the shader
+     * access those textures via the uniforms <pre>{@code
+     * uniform sampler2D texture;   // the texture that's currently being drawn
+     * uniform sampler2D texture1;  // the texture designated by rl1
+     * uniform sampler2D texture2;  // the texture designated by rl2
+     * uniform sampler2D texture3;  // the texture designated by rl3
+     * }</pre>
      */
     public static void bindAdditionalTextures(ResourceLocation... textures) {
         for (int i = 0; i < textures.length; i++) {

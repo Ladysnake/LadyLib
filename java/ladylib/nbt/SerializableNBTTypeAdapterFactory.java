@@ -1,7 +1,7 @@
 package ladylib.nbt;
 
 import com.google.gson.reflect.TypeToken;
-import ladylib.capability.internal.CapabilityRegistrar;
+import ladylib.misc.ReflectionUtil;
 import net.minecraft.nbt.NBTBase;
 import net.minecraftforge.common.util.INBTSerializable;
 
@@ -16,7 +16,7 @@ public class SerializableNBTTypeAdapterFactory implements NBTTypeAdapterFactory<
         Class<?> rawType = type.getRawType();
         if (!INBTSerializable.class.isAssignableFrom(rawType)) return null;
         Supplier<INBTSerializable<NBTBase>> constructor =
-                CapabilityRegistrar.createFactory(rawType, "get", Supplier.class);
+                ReflectionUtil.createFactory(rawType, "get", Supplier.class);
         Type elementType = Object.class;
         Type nbtType = type.getType();
         if (nbtType instanceof WildcardType) {
@@ -28,7 +28,7 @@ public class SerializableNBTTypeAdapterFactory implements NBTTypeAdapterFactory<
         return new SerializableNBTTypeAdapter<>(constructor, TypeToken.get(elementType).getRawType());
     }
 
-    public static class SerializableNBTTypeAdapter<T extends INBTSerializable<NBT>, NBT extends NBTBase> implements NBTTypeAdapter<T, NBT> {
+    public static class SerializableNBTTypeAdapter<T extends INBTSerializable<NBT>, NBT extends NBTBase> extends AbstractNBTTypeAdapter<T, NBT> {
         private final Supplier<T> constructor;
         private final Class<NBT> nbtClass;
 
@@ -46,9 +46,11 @@ public class SerializableNBTTypeAdapterFactory implements NBTTypeAdapterFactory<
 
         @Override
         public T fromNBT(NBTBase nbt) {
-            T value = constructor.get();
-            value.deserializeNBT(cast(nbt, nbtClass));
-            return value;
+            return castAnd(nbt, nbtClass, tag -> {
+                T value = constructor.get();
+                value.deserializeNBT(tag);
+                return value;
+            });
         }
     }
 }

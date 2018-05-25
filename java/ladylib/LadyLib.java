@@ -5,15 +5,17 @@ import com.google.common.collect.SetMultimap;
 import com.google.gson.reflect.TypeToken;
 import ladylib.client.ClientHandler;
 import ladylib.client.particle.ParticleManager;
-import ladylib.nbt.MalformedNBTException;
+import ladylib.nbt.NBTDeserializationException;
 import ladylib.nbt.NBTTypeAdapter;
 import ladylib.nbt.TagAdapters;
-import ladylib.networking.HTTPRequestHelper;
-import ladylib.registration.AutoRegistrar;
+import ladylib.nbt.internal.DefaultValuesSearch;
 import ladylib.registration.BlockRegistrar;
 import ladylib.registration.ItemRegistrar;
+import ladylib.registration.internal.AutoRegistrar;
+import net.minecraft.init.Blocks;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraft.nbt.NBTBase;
+import net.minecraft.nbt.NBTTagString;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.*;
 import net.minecraftforge.fml.common.discovery.ASMDataTable;
@@ -103,11 +105,15 @@ public class LadyLib {
      * @return NBT representation of {@code src}
      */
     @SuppressWarnings("unchecked")
-    @Contract("null, _ -> null; !null, null -> fail")
     public static NBTBase toNBT(Object src, Type typeOfSrc) {
-        if (src == null) return null;
         NBTTypeAdapter adapter = TagAdapters.getNBTAdapter(TypeToken.get(typeOfSrc), false);
         return adapter.toNBT(src);
+    }
+
+    @Nullable
+    @Contract("null, _ -> null; !null, _ -> !null; !null, null -> fail")
+    public static <T> T fromNBT(@Nullable NBTBase nbt, Class<T> typeOfT) throws NBTDeserializationException {
+        return fromNBT(nbt, (Type) typeOfT);
     }
 
     /**
@@ -117,9 +123,9 @@ public class LadyLib {
      * @param <T>     the type of the desired object
      * @param nbt     the root of the NBT data structure from which the object is to
      *                be deserialized
-     * @param typeOfT The specific genericized type of src. If src is not of generic type,
-     *                you can simply pass its class. Otherwise, you can obtain this type by using the
-     *                {@link com.google.gson.reflect.TypeToken} class. For example, to get the type for
+     * @param typeOfT The specific genericized type of src. You can obtain this type by using the
+     *                {@link com.google.gson.reflect.TypeToken} class. <br>
+     *                For example, to get the type for
      *                {@code Collection<Foo>}, you should use:
      *                <pre>
      *                Type typeOfT = new TypeToken&lt;Collection&lt;Foo&gt;&gt;(){}.getType();
@@ -127,8 +133,9 @@ public class LadyLib {
      * @return an object of type T from the NBT. Returns {@code null} if {@code nbt} is {@code null}.
      */
     @SuppressWarnings("unchecked")
+    @Nullable
     @Contract("null, _ -> null; !null, _ -> !null; !null, null -> fail")
-    public static <T> T fromNBT(NBTBase nbt, Type typeOfT) throws MalformedNBTException {
+    public static <T> T fromNBT(@Nullable NBTBase nbt, Type typeOfT) throws NBTDeserializationException {
         if (nbt == null) return null;
         Preconditions.checkNotNull(typeOfT);
         NBTTypeAdapter adapter = TagAdapters.getNBTAdapter(TypeToken.get(typeOfT), false);
@@ -143,7 +150,7 @@ public class LadyLib {
     }
 
     @SuppressWarnings("unchecked")
-    public static void deserializeNBT(@Nonnull Object target, NBTBase nbt) throws MalformedNBTException {
+    public static void deserializeNBT(@Nonnull Object target, NBTBase nbt) throws NBTDeserializationException {
         if (nbt == null) return;
         NBTTypeAdapter adapter = TagAdapters.getNBTAdapter(TypeToken.get(target.getClass()), true);
         adapter.fromNBT(target, nbt);
@@ -159,7 +166,8 @@ public class LadyLib {
      */
     @Mod.EventHandler
     public void preInit(@Nonnull FMLPreInitializationEvent event) {
-        registrar = new AutoRegistrar(event.getAsmData());
+        ASMDataTable dataTable = event.getAsmData();
+        registrar = new AutoRegistrar(dataTable);
         MinecraftForge.EVENT_BUS.register(registrar);
         MinecraftForge.EVENT_BUS.register(registrar.getItemRegistrar());
         MinecraftForge.EVENT_BUS.register(registrar.getBlockRegistrar());
@@ -167,13 +175,17 @@ public class LadyLib {
             clientHandler = new ClientHandler();
             clientHandler.clientInit();
         }
-        registrar.autoRegisterTileEntities(event.getAsmData());
-        injectContainers(event.getAsmData());
+        registrar.autoRegisterTileEntities(dataTable);
+        injectContainers(dataTable);
+        DefaultValuesSearch.searchDefaultValues(dataTable);
+
+        NBTTagString nbtTagString = new NBTTagString();
+        LadyLib.fromNBT(nbtTagString, int.class);
     }
 
     @Mod.EventHandler
     public void init(@Nonnull FMLInitializationEvent event) {
-
+        LadyLib.toNBT(Blocks.PLANKS);
     }
 
     private void injectContainers(ASMDataTable asmData) {

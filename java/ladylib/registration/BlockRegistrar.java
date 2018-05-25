@@ -43,17 +43,13 @@ public class BlockRegistrar {
      * @return block
      */
     @Nonnull
-    @SuppressWarnings({"unchecked", "ConstantConditions"})
     public static <T extends Block> T name(@Nonnull T block, @Nonnull String name) {
-        return (T) block.setRegistryName(name).setUnlocalizedName(block.getRegistryName().getResourceDomain() + "." + name);
+        block.setRegistryName(name).setUnlocalizedName(block.getRegistryName().getResourceDomain() + "." + name);
+        return block;
     }
 
-    BlockRegistrar(ItemRegistrar itemRegistrar) {
+    public BlockRegistrar(ItemRegistrar itemRegistrar) {
         this.itemRegistrar = itemRegistrar;
-    }
-
-    void addBlock(Block block, AutoRegistryRef ref) {
-        addBlock(block, ref.isListed(), ref.isMakeItemBlock(), ref.getOreNames());
     }
 
     /**
@@ -93,7 +89,8 @@ public class BlockRegistrar {
         }
         // adds the corresponding item to the list of items to be registered as well
         T item = blockItemFunction.apply(block);
-        if (item != null && item != Items.AIR)
+        Objects.requireNonNull(item);
+        if (item != Items.AIR)
             itemRegistrar.addItem(item, listed);
         // returns the obtained item in case I want to do something with it
         return item;

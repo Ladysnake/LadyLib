@@ -2,6 +2,7 @@ package ladylib.capability.internal;
 
 import ladylib.LadyLib;
 import ladylib.capability.AutoCapability;
+import ladylib.misc.ReflectionUtil;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
@@ -12,7 +13,6 @@ import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.fml.common.discovery.ASMDataTable;
 import org.apache.logging.log4j.message.FormattedMessage;
 
-import java.lang.invoke.*;
 import java.lang.reflect.*;
 import java.util.Map;
 import java.util.Set;
@@ -21,7 +21,7 @@ import java.util.function.Predicate;
 
 public class CapabilityRegistrar {
 
-    public void findRegistryHandlers(ASMDataTable asmData) {
+    public void findCapabilityImplementations(ASMDataTable asmData) {
         // find all classes that will be handled by this registrar
         Set<ASMDataTable.ASMData> allRegistryHandlers = asmData.getAll(AutoCapability.class.getName());
         CapabilityEventHandler handler = new CapabilityEventHandler();
@@ -35,7 +35,7 @@ public class CapabilityRegistrar {
                 try {
                     Class<?> clazz = Class.forName(className, false, getClass().getClassLoader());
                     createRegisterCapability(clazz, providers, handler);
-                } catch (IllegalArgumentException | UnableToGetFactoryException | ClassNotFoundException e) {
+                } catch (IllegalArgumentException | ReflectionUtil.UnableToGetFactoryException | ClassNotFoundException e) {
                     LadyLib.LOGGER.error(new FormattedMessage("Could not register a capability for the class {}", className), e);
                 }
             }
@@ -46,7 +46,7 @@ public class CapabilityRegistrar {
     }
 
     private <T> void createRegisterCapability(Class<T> clazz, Map<String, Capability<?>> providers, CapabilityEventHandler handler) {
-        Callable<T> factory = createFactory(clazz, "call", Callable.class);
+        Callable<T> factory = ReflectionUtil.createFactory(clazz, "call", Callable.class);
         Capability.IStorage<T> storage = createStorage(clazz);
         CapabilityManager.INSTANCE.register(clazz, storage, factory);
         AutoCapability annotation = clazz.getAnnotation(AutoCapability.class);
@@ -103,36 +103,11 @@ public class CapabilityRegistrar {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public static <T> T createFactory(Class<?> clazz, String invokedName, Class<?> lambdaType) {
-        try {
-            MethodHandles.Lookup lookup = MethodHandles.lookup();
-            MethodHandle handle = lookup.findConstructor(clazz, MethodType.methodType(void.class));
-            CallSite metafactory = LambdaMetafactory.metafactory(
-                    lookup,
-                    invokedName,
-                    MethodType.methodType(lambdaType),
-                    MethodType.methodType(Object.class),
-                    handle,
-                    MethodType.methodType(clazz)
-            );
-            return (T) metafactory.getTarget().invoke();
-        } catch (Throwable throwable) {
-            throw new UnableToGetFactoryException(throwable);
-        }
-    }
-
     private <T> Capability.IStorage<T> createStorage(Class<T> capClass) {
         try {
             return new ReflectiveCapabilityStorage<>(capClass);
         } catch (IllegalAccessException e) {
             throw new UnableToCreateStorageException(e);
-        }
-    }
-
-    public static class UnableToGetFactoryException extends RuntimeException {
-        public UnableToGetFactoryException(Throwable cause) {
-            super(cause);
         }
     }
 

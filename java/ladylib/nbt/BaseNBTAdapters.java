@@ -6,22 +6,36 @@ import net.minecraft.util.math.BlockPos;
 
 import java.util.UUID;
 
+/**
+ * Default adapters for standard NBT objects
+ */
 public interface BaseNBTAdapters {
 
-    class NBTAdapter implements NBTTypeAdapter<NBTBase, NBTBase> {
+    @DefaultValue({byte.class, Byte.class})
+    byte DEFAULT_BYTE = 0;
 
-        @Override
-        public NBTBase toNBT(NBTBase value) {
-            return value;
-        }
+    @DefaultValue({short.class, Short.class})
+    short DEFAULT_SHORT = 0;
 
-        @Override
-        public NBTBase fromNBT(NBTBase nbt) {
-            return nbt;
-        }
-    }
+    @DefaultValue({int.class, Integer.class})
+    int DEFAULT_INT = 0;
 
-    class IntAdapter implements NBTTypeAdapter<Integer, NBTTagInt> {
+    @DefaultValue({float.class, Float.class})
+    float DEFAULT_FLOAT = 0F;
+
+    @DefaultValue({long.class, Long.class})
+    long DEFAULT_LONG = 0L;
+
+    @DefaultValue({double.class, Double.class})
+    double DEFAULT_DOUBLE = 0D;
+
+    @DefaultValue({boolean.class, Boolean.class})
+    boolean DEFAULT_BOOLEAN = false;
+
+    @DefaultValue(String.class)
+    String DEFAULT = "";
+
+    class IntAdapter extends AbstractNBTTypeAdapter<Integer, NBTTagInt> {
 
         @Override
         public NBTTagInt toNBT(Integer value) {
@@ -30,12 +44,11 @@ public interface BaseNBTAdapters {
 
         @Override
         public Integer fromNBT(NBTBase nbt) {
-            return cast(nbt, NBTTagInt.class).getInt();
+            return castAnd(nbt, NBTTagInt.class, NBTTagInt::getInt);
         }
     }
 
-    class DoubleAdapter implements NBTTypeAdapter<Double, NBTTagDouble> {
-
+    class DoubleAdapter extends AbstractNBTTypeAdapter<Double, NBTTagDouble> {
         @Override
         public NBTTagDouble toNBT(Double value) {
             return new NBTTagDouble(value);
@@ -43,10 +56,11 @@ public interface BaseNBTAdapters {
 
         @Override
         public Double fromNBT(NBTBase nbt) {
-            return cast(nbt, NBTTagDouble.class).getDouble();
+            return castAnd(nbt, NBTTagDouble.class, NBTTagDouble::getDouble);
         }
     }
-    class FloatAdapter implements NBTTypeAdapter<Float, NBTTagFloat> {
+
+    class FloatAdapter extends AbstractNBTTypeAdapter<Float, NBTTagFloat> {
 
         @Override
         public NBTTagFloat toNBT(Float value) {
@@ -55,11 +69,11 @@ public interface BaseNBTAdapters {
 
         @Override
         public Float fromNBT(NBTBase nbt) {
-            return cast(nbt, NBTTagFloat.class).getFloat();
+            return castAnd(nbt, NBTTagFloat.class, NBTTagFloat::getFloat);
         }
     }
-    class LongAdapter implements NBTTypeAdapter<Long, NBTTagLong> {
 
+    class LongAdapter extends AbstractNBTTypeAdapter<Long, NBTTagLong> {
         @Override
         public NBTTagLong toNBT(Long value) {
             return new NBTTagLong(value);
@@ -67,11 +81,11 @@ public interface BaseNBTAdapters {
 
         @Override
         public Long fromNBT(NBTBase nbt) {
-            return cast(nbt, NBTTagLong.class).getLong();
+            return castAnd(nbt, NBTTagLong.class, NBTTagLong::getLong);
         }
     }
-    class ShortAdapter implements NBTTypeAdapter<Short, NBTTagShort> {
 
+    class ShortAdapter extends AbstractNBTTypeAdapter<Short, NBTTagShort> {
         @Override
         public NBTTagShort toNBT(Short value) {
             return new NBTTagShort(value);
@@ -79,11 +93,11 @@ public interface BaseNBTAdapters {
 
         @Override
         public Short fromNBT(NBTBase nbt) {
-            return cast(nbt, NBTTagShort.class).getShort();
+            return castAnd(nbt, NBTTagShort.class, NBTTagShort::getShort);
         }
     }
-    class ByteAdapter implements NBTTypeAdapter<Byte, NBTTagByte> {
 
+    class ByteAdapter extends AbstractNBTTypeAdapter<Byte, NBTTagByte> {
         @Override
         public NBTTagByte toNBT(Byte value) {
             return new NBTTagByte(value);
@@ -91,10 +105,11 @@ public interface BaseNBTAdapters {
 
         @Override
         public Byte fromNBT(NBTBase nbt) {
-            return cast(nbt, NBTTagByte.class).getByte();
+            return castAnd(nbt, NBTTagByte.class, NBTTagByte::getByte);
         }
     }
-    class BooleanAdapter implements NBTTypeAdapter<Boolean, NBTTagByte> {
+
+    class BooleanAdapter extends AbstractNBTTypeAdapter<Boolean, NBTTagByte> {
 
         @Override
         public NBTTagByte toNBT(Boolean value) {
@@ -103,10 +118,11 @@ public interface BaseNBTAdapters {
 
         @Override
         public Boolean fromNBT(NBTBase nbt) {
-            return cast(nbt, NBTTagByte.class).getByte() == 1;
+            return castAnd(nbt, NBTTagByte.class, tag -> tag.getByte() == 1);
         }
     }
-    class StringAdapter implements NBTTypeAdapter<String, NBTTagString> {
+
+    class StringAdapter extends AbstractNBTTypeAdapter<String, NBTTagString> {
 
         @Override
         public NBTTagString toNBT(String value) {
@@ -115,10 +131,14 @@ public interface BaseNBTAdapters {
 
         @Override
         public String fromNBT(NBTBase nbt) {
-            return cast(nbt, NBTTagString.class).getString();
+            return castAnd(nbt, NBTTagString.class, NBTTagString::getString);
         }
     }
-    class ItemStackAdapter implements NBTTypeAdapter<ItemStack, NBTTagCompound> {
+
+    class ItemStackAdapter extends AbstractNBTTypeAdapter<ItemStack, NBTTagCompound> {
+
+        @DefaultValue(ItemStack.class)
+        public static final ItemStack DEFAULT = ItemStack.EMPTY;
 
         @Override
         public NBTTagCompound toNBT(ItemStack value) {
@@ -127,10 +147,14 @@ public interface BaseNBTAdapters {
 
         @Override
         public ItemStack fromNBT(NBTBase nbt) {
-            return new ItemStack(cast(nbt, NBTTagCompound.class));
+            return castAnd(nbt, NBTTagCompound.class, ItemStack::new);
         }
     }
-    class BlockPosAdapter implements NBTTypeAdapter<BlockPos, NBTTagLong> {
+
+    class BlockPosAdapter extends AbstractNBTTypeAdapter<BlockPos, NBTTagLong> {
+
+        @DefaultValue(BlockPos.class)
+        public static final BlockPos DEFAULT = BlockPos.ORIGIN;
 
         @Override
         public NBTTagLong toNBT(BlockPos value) {
@@ -139,10 +163,14 @@ public interface BaseNBTAdapters {
 
         @Override
         public BlockPos fromNBT(NBTBase nbt) {
-            return BlockPos.fromLong(cast(nbt, NBTTagLong.class).getLong());
+            return castAnd(nbt, NBTTagLong.class, tag -> BlockPos.fromLong(tag.getLong()));
         }
     }
-    class UUIDAdapter implements NBTTypeAdapter<UUID, NBTTagString> {
+
+    class UUIDAdapter extends AbstractNBTTypeAdapter<UUID, NBTTagString> {
+
+        @DefaultValue(UUID.class)
+        public static final UUID DEFAULT = new UUID(0, 0);
 
         @Override
         public NBTTagString toNBT(UUID value) {
@@ -151,9 +179,11 @@ public interface BaseNBTAdapters {
 
         @Override
         public UUID fromNBT(NBTBase nbt) {
-            String serialized = cast(nbt, NBTTagString.class).getString();
             // avoid IllegalArgumentException when the NBT is invalid
-            return serialized.isEmpty() ? new UUID(0,0) : UUID.fromString(serialized);
+            return castAnd(nbt, NBTTagString.class, tag -> {
+                String serialized = tag.getString();
+                return serialized.isEmpty() ? new UUID(0, 0) : UUID.fromString(serialized);
+            });
         }
     }
 }

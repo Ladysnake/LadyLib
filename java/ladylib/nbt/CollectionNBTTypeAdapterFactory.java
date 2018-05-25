@@ -2,7 +2,7 @@ package ladylib.nbt;
 
 import com.google.gson.reflect.TypeToken;
 import ladylib.LadyLib;
-import ladylib.capability.internal.CapabilityRegistrar;
+import ladylib.misc.ReflectionUtil;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagList;
 
@@ -29,7 +29,7 @@ public class CollectionNBTTypeAdapterFactory implements NBTTypeAdapterFactory<Co
         }
         Supplier<Collection> supplier;
         if (!Modifier.isAbstract(rawType.getModifiers())) {
-            supplier = CapabilityRegistrar.createFactory(rawType, "get", Supplier.class);
+            supplier = ReflectionUtil.createFactory(rawType, "get", Supplier.class);
         } else if (List.class.isAssignableFrom(rawType)) {
             supplier = ArrayList::new;
         } else if (SortedSet.class.isAssignableFrom(rawType)) {
@@ -61,11 +61,22 @@ public class CollectionNBTTypeAdapterFactory implements NBTTypeAdapterFactory<Co
         return TagAdapters.getNBTAdapter(TypeToken.get(elementType), false);
     }
 
-    public abstract static class CollectionBaseAdapter<E> implements NBTTypeAdapter<Collection<E>, NBTTagList> {
+    public abstract static class CollectionBaseAdapter<E> extends AbstractNBTTypeAdapter<Collection<E>, NBTTagList> {
         protected final NBTTypeAdapter<E, NBTBase> elementAdapter;
 
         protected CollectionBaseAdapter(NBTTypeAdapter<E, NBTBase> elementAdapter) {
             this.elementAdapter = elementAdapter;
+        }
+
+        @Override
+        public Collection<E> fromNBT(Collection<E> value, NBTBase nbt) {
+            cast(nbt, NBTTagList.class).ifPresent(list -> {
+                value.clear();
+                for (NBTBase nbtBase : list) {
+                    value.add(elementAdapter.fromNBT(nbtBase));
+                }
+            });
+            return value;
         }
 
         @Override
@@ -83,15 +94,6 @@ public class CollectionNBTTypeAdapterFactory implements NBTTypeAdapterFactory<Co
         public CollectionNBTMutatingTypeAdapter(NBTTypeAdapter<E, NBTBase> elementAdapter) {
             super(elementAdapter);
         }
-
-        @Override
-        public Collection<E> fromNBT(Collection<E> value, NBTBase list) {
-            value.clear();
-            for (NBTBase nbtBase : cast(list, NBTTagList.class)) {
-                value.add(elementAdapter.fromNBT(nbtBase));
-            }
-            return value;
-        }
     }
 
     public static class CollectionNBTTypeAdapter<E> extends CollectionBaseAdapter<E> implements NBTTypeAdapter<Collection<E>, NBTTagList> {
@@ -103,12 +105,13 @@ public class CollectionNBTTypeAdapterFactory implements NBTTypeAdapterFactory<Co
         }
 
         @Override
+        public Collection<E> fromNBT(Collection<E> value, NBTBase nbt) {
+            return fromNBT(nbt);
+        }
+
+        @Override
         public Collection<E> fromNBT(NBTBase list) {
-            Collection<E> ret = collectionSupplier.get();
-            for (NBTBase nbtBase : cast(list, NBTTagList.class)) {
-                ret.add(elementAdapter.fromNBT(nbtBase));
-            }
-            return ret;
+            return super.fromNBT(collectionSupplier.get(), list);
         }
     }
 }

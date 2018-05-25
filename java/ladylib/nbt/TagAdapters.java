@@ -13,6 +13,7 @@ import java.util.function.Supplier;
 public class TagAdapters {
     private static final List<NBTTypeAdapterFactory> factories = new ArrayList<>();
     private static final Map<TypeToken<?>, NBTAdapterEntry> cache = new HashMap<>();
+    static final Map<TypeToken<?>, Supplier<?>> defaultValues = new HashMap<>();
 
     static {
         addPrimitiveFactory(boolean.class, Boolean.class, BaseNBTAdapters.BooleanAdapter::new);
@@ -23,12 +24,12 @@ public class TagAdapters {
         addPrimitiveFactory(long.class,    Long.class,    BaseNBTAdapters.LongAdapter::new);
         addPrimitiveFactory(double.class,  Double.class,  BaseNBTAdapters.DoubleAdapter::new);
 
-        addFactory(NBTBase.class,    BaseNBTAdapters.NBTAdapter::new);
         addFactory(String.class,     BaseNBTAdapters.StringAdapter::new);
         addFactory(ItemStack.class,  BaseNBTAdapters.ItemStackAdapter::new);
         addFactory(BlockPos.class,   BaseNBTAdapters.BlockPosAdapter::new);
         addFactory(UUID.class,       BaseNBTAdapters.UUIDAdapter::new);
 
+        factories.add(new NBTSelfTypeAdapterFactory());
         factories.add(new EnumNBTTypeAdapterFactory());
         factories.add(new SerializableNBTTypeAdapterFactory());
         factories.add(new RegistryEntryNBTAdapterFactory());
@@ -39,11 +40,13 @@ public class TagAdapters {
     }
 
     private static <T> void addPrimitiveFactory(Class<T> primitive, Class<T> wrapper, Supplier<NBTTypeAdapter<T, ?>> factory) {
-        factories.add((type, allowMutating) -> type.getRawType() == primitive || type.getRawType() == wrapper ? factory.get() : null);
+        final NBTTypeAdapter<T, ?> instance = factory.get();
+        factories.add((type, allowMutating) -> type.getRawType() == primitive || type.getRawType() == wrapper ? instance : null);
     }
 
-    private static <T> void addFactory(Class<T> primitive, Supplier<NBTTypeAdapter<T, ?>> factory) {
-        factories.add((type, allowMutating) -> primitive.isAssignableFrom(type.getRawType()) ? factory.get() : null);
+    private static <T> void addFactory(Class<T> clazz, Supplier<NBTTypeAdapter<T, ?>> factory) {
+        final NBTTypeAdapter<T, ?> instance = factory.get();
+        factories.add((type, allowMutating) -> clazz == type.getRawType() ? instance : null);
     }
 
     public static void addAdapterFactory(NBTTypeAdapterFactory factory) {
@@ -57,7 +60,15 @@ public class TagAdapters {
     @SuppressWarnings("unchecked")
     public static <T, NBT extends NBTBase> NBTTypeAdapter<T, NBT> getNBTAdapter(TypeToken<T> type, boolean allowMutating) {
         return cache.computeIfAbsent(type, NBTAdapterEntry::new).computeTypeAdapter(allowMutating);
+    }
 
+    public static <T> void setDefaultValue(TypeToken<T> type, Supplier<T> defaultProvider) {
+        defaultValues.put(type, defaultProvider);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> Optional<T> getDefaultValue(TypeToken<T> type) {
+        return Optional.ofNullable(defaultValues.get(type)).map(s -> (T) s.get());
     }
 
     public static class NBTAdapterEntry {

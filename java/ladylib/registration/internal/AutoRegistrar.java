@@ -1,7 +1,11 @@
-package ladylib.registration;
+package ladylib.registration.internal;
 
 import com.google.common.collect.ImmutableList;
 import ladylib.capability.internal.CapabilityRegistrar;
+import ladylib.registration.AutoRegister;
+import ladylib.registration.AutoRegisterTile;
+import ladylib.registration.BlockRegistrar;
+import ladylib.registration.ItemRegistrar;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.tileentity.TileEntity;
@@ -38,7 +42,7 @@ public class AutoRegistrar {
         this.blockRegistrar = new BlockRegistrar(itemRegistrar);
         this.capRegistrar = new CapabilityRegistrar();
         findRegistryHandlers(asmData);
-        capRegistrar.findRegistryHandlers(asmData);
+        capRegistrar.findCapabilityImplementations(asmData);
     }
 
     private void findRegistryHandlers(ASMDataTable asmData) {
@@ -71,11 +75,13 @@ public class AutoRegistrar {
                 @SuppressWarnings("unchecked") Class<? extends TileEntity> teClass =
                         (Class<? extends TileEntity>) Class.forName(className, true, getClass().getClassLoader());
                 String name = (String) data.getAnnotationInfo().get("name");
-                if (name == null || name.isEmpty())
+                if (name == null || name.isEmpty()) {
                     name = teClass.getSimpleName().toLowerCase(Locale.ENGLISH);
+                }
                 GameRegistry.registerTileEntity(teClass, modId + ":" + name);
-                if (FMLCommonHandler.instance().getSide() == Side.CLIENT)
+                if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
                     ClientRegistrar.registerTESR(teClass, (Type) data.getAnnotationInfo().get("renderer"));
+                }
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
@@ -98,7 +104,7 @@ public class AutoRegistrar {
 
     @SubscribeEvent
     @SuppressWarnings("unchecked")
-    public void onRegistryRegister(RegistryEvent.Register event) {
+    void onRegistryRegister(RegistryEvent.Register event) {
         shutupForge(() -> references.stream()
             // Only register for the right event, incidentally filters out entries with no corresponding registry
             .filter(ref -> ref.isValidForRegistry(event.getRegistry()))
@@ -111,13 +117,14 @@ public class AutoRegistrar {
                 }
                 // items and blocks have additional registration behaviours
                 if (value instanceof Item) {
-                    itemRegistrar.addItem((Item) value, ref);
+                    itemRegistrar.addItem((Item) value, ref.isListed(), ref.getOreNames());
                 } else if (value instanceof Block) {
-                    blockRegistrar.addBlock((Block) value, ref);
+                    blockRegistrar.addBlock((Block) value, ref.isListed(), ref.isMakeItemBlock(), ref.getOreNames());
                 } else {
                     event.getRegistry().register(value);
                 }
-            }));
+            })
+        );
     }
 
     /**
@@ -148,7 +155,7 @@ public class AutoRegistrar {
 
     @SubscribeEvent
     @SuppressWarnings("unchecked")
-    public void onRegistryMissingMappings(RegistryEvent.MissingMappings event) {
+    void onRegistryMissingMappings(RegistryEvent.MissingMappings event) {
         ImmutableList<RegistryEvent.MissingMappings.Mapping> mappings = event.getMappings();
         Map<ResourceLocation, IForgeRegistryEntry> remaps = remappings.get(event.getRegistry().getRegistrySuperType());
         if (remaps == null) return;

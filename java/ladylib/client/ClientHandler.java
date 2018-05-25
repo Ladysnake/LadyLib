@@ -1,6 +1,7 @@
 package ladylib.client;
 
 import ladylib.client.particle.ParticleManager;
+import ladylib.client.shader.ShaderUtil;
 import net.minecraftforge.common.MinecraftForge;
 
 import javax.annotation.Nonnull;

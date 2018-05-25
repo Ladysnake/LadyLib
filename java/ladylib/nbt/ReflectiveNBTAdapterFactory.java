@@ -2,14 +2,15 @@ package ladylib.nbt;
 
 import com.google.gson.reflect.TypeToken;
 import ladylib.LadyLib;
-import ladylib.capability.internal.CapabilityRegistrar;
+import ladylib.misc.ReflectionUtil;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import org.apache.logging.log4j.message.FormattedMessage;
 
+import javax.annotation.Nullable;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Constructor;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -23,28 +24,30 @@ public class ReflectiveNBTAdapterFactory implements NBTTypeAdapterFactory<Object
         return (NBTTypeAdapter<T, NBTTagCompound>) create(TypeToken.get(type), true);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public NBTTypeAdapter<Object, NBTTagCompound> create(TypeToken type, boolean allowMutating) {
         try {
             MutatingReflectiveNBTAdapter<Object> ret = new MutatingReflectiveNBTAdapter<>(type.getRawType());
             if (!allowMutating) {
-                return new ReflectiveNBTAdapter<>(type.getRawType(), ret);
+                return new ReflectiveNBTAdapter<>(type, ret);
             }
             return ret;
         } catch (NoSuchMethodException | IllegalAccessException e) {
-            throw new CapabilityRegistrar.UnableToGetFactoryException(e);
+            throw new ReflectionUtil.UnableToGetFactoryException(e);
         }
     }
 
     public static class ReflectiveNBTAdapter<T> implements NBTTypeAdapter<T, NBTTagCompound> {
         private final MutatingReflectiveNBTAdapter<T> delegate;
         private final MethodHandle constructor;
+        private final TypeToken<T> type;
 
-        public ReflectiveNBTAdapter(Class<?> clazz, MutatingReflectiveNBTAdapter<T> delegate) throws NoSuchMethodException, IllegalAccessException {
+        public ReflectiveNBTAdapter(TypeToken<T> type, MutatingReflectiveNBTAdapter<T> delegate) throws NoSuchMethodException, IllegalAccessException {
             this.delegate = delegate;
-            Constructor temp = clazz.getDeclaredConstructor();
-            temp.setAccessible(true);
-            constructor = MethodHandles.lookup().unreflectConstructor(temp);
+            Class<? super T> tClass = type.getRawType();
+            constructor = ReflectionUtil.getTrustedLookup(tClass).findConstructor(tClass, MethodType.methodType(void.class));
+            this.type = type;
         }
 
         @Override
@@ -58,7 +61,7 @@ public class ReflectiveNBTAdapterFactory implements NBTTypeAdapterFactory<Object
                 @SuppressWarnings("unchecked") T ret = (T) constructor.invoke();
                 return delegate.fromNBT(ret, nbtTagCompound);
             } catch (Throwable throwable) {
-                throw new RuntimeException(throwable);
+                return TagAdapters.getDefaultValue(type).orElseThrow(() -> new NBTDeserializationException("Unable to deserialize object of type " + type + " and no default value exists", throwable));
             }
         }
     }
@@ -105,20 +108,23 @@ public class ReflectiveNBTAdapterFactory implements NBTTypeAdapterFactory<Object
         @SuppressWarnings("unchecked")
         public T fromNBT(T instance, NBTBase nbt) {
             for (FieldEntry fieldEntry : fieldEntries) {
-                try {
-                    NBTBase serialized = cast(nbt, NBTTagCompound.class).getTag(fieldEntry.name);
-                    if (fieldEntry.adapter instanceof NBTMutatingTypeAdapter) {
-                        T value = (T) fieldEntry.getter.invoke(instance);
-                        fieldEntry.adapter.fromNBT(value, serialized);
-                    } else if (fieldEntry.setter != null) {
-                        T value = (T) fieldEntry.adapter.fromNBT(serialized);
-                        fieldEntry.setter.invoke(instance, value);
-                    } else {
-                        LadyLib.LOGGER.warn("Could not write to final field {} in {}", fieldEntry.name, instance);
+                NBTTypeAdapter.castNBT(nbt, NBTTagCompound.class).ifPresent(compound -> {
+                    try {
+                        NBTBase serialized = compound.getTag(fieldEntry.name);
+                        if (fieldEntry.adapter instanceof NBTMutatingTypeAdapter) {
+                            T value = (T) fieldEntry.getter.invoke(instance);
+                            fieldEntry.adapter.fromNBT(value, serialized);
+                        } else if (fieldEntry.setter != null) {
+                            T value = (T) fieldEntry.adapter.fromNBT(serialized);
+                            fieldEntry.setter.invoke(instance, value);
+                        } else {
+                            LadyLib.LOGGER.warn("Could not write to final field {} in {}", fieldEntry.name, instance);
+                        }
+
+                    } catch (Throwable throwable) {
+                        throw new NBTDeserializationException("Could not read NBT for " + instance, throwable);
                     }
-                } catch (Throwable throwable) {
-                    LadyLib.LOGGER.error(new FormattedMessage("Could not read NBT for {} ", instance), throwable);
-                }
+                });
             }
             return instance;
         }
@@ -129,7 +135,7 @@ public class ReflectiveNBTAdapterFactory implements NBTTypeAdapterFactory<Object
         private final MethodHandle getter, setter;
         private final NBTTypeAdapter adapter;
 
-        private FieldEntry(String name, MethodHandle getter, MethodHandle setter, NBTTypeAdapter adapter) {
+        private FieldEntry(String name, MethodHandle getter, @Nullable MethodHandle setter, NBTTypeAdapter adapter) {
             this.name = name;
             this.getter = getter;
             this.setter = setter;
