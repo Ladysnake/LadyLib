@@ -55,10 +55,11 @@ public class AutoRegistrar {
             boolean isClass = className.equals(annotationTarget);
             try {
                 Class<?> clazz = Class.forName(data.getClassName(), false, getClass().getClassLoader());
-                if (isClass)
+                if (isClass) {
                     scanClassForFields(modId, clazz);
-                else
+                } else {
                     references.add(new FieldRef(modId, clazz.getDeclaredField(annotationTarget)));
+                }
             } catch (ClassNotFoundException | NoSuchFieldException e) {
                 e.printStackTrace();
             }
@@ -158,7 +159,9 @@ public class AutoRegistrar {
     void onRegistryMissingMappings(RegistryEvent.MissingMappings event) {
         ImmutableList<RegistryEvent.MissingMappings.Mapping> mappings = event.getMappings();
         Map<ResourceLocation, IForgeRegistryEntry> remaps = remappings.get(event.getRegistry().getRegistrySuperType());
-        if (remaps == null) return;
+        if (remaps == null) {
+            return;
+        }
         for (RegistryEvent.MissingMappings.Mapping mapping : mappings) {
             if (remaps.containsKey(mapping.key)) {
                 mapping.remap(remaps.get(mapping.key));

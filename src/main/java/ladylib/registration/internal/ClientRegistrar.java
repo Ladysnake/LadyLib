@@ -12,11 +12,15 @@ import org.objectweb.asm.Type;
  */
 public class ClientRegistrar {
     static <T extends TileEntity> void registerTESR(Class<T> tileClass, Type tesrType) {
-        if (tesrType == null) return;
+        if (tesrType == null) {
+            return;
+        }
         try {
             @SuppressWarnings("unchecked") Class<? extends TileEntitySpecialRenderer<T>> tesrClass =
                     (Class<? extends TileEntitySpecialRenderer<T>>) Class.forName(tesrType.getClassName(), true, Loader.instance().getModClassLoader());
-            if (tesrClass.equals(TileEntitySpecialRenderer.class)) return;
+            if (tesrClass.equals(TileEntitySpecialRenderer.class)) {
+                return;
+            }
             TileEntitySpecialRenderer<T> tesr = tesrClass.newInstance();
             ClientRegistry.bindTileEntitySpecialRenderer(tileClass, tesr);
         } catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {

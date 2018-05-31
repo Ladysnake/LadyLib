@@ -27,7 +27,9 @@ public class ReflectiveCapabilityStorage<C> implements Capability.IStorage<C> {
         for (Field field : fields) {
             int modifiers = field.getModifiers();
             // do not save transient fields
-            if (Modifier.isTransient(modifiers) || Modifier.isStatic(modifiers)) continue;
+            if (Modifier.isTransient(modifiers) || Modifier.isStatic(modifiers)) {
+                continue;
+            }
 
             field.setAccessible(true);
             MethodHandle getter = lookup.unreflectGetter(field);
@@ -44,7 +46,9 @@ public class ReflectiveCapabilityStorage<C> implements Capability.IStorage<C> {
     @Override
     public NBTBase writeNBT(Capability capability, Object instance, EnumFacing side) {
         // return null if nothing needs saving
-        if (fieldInfos.isEmpty()) return null;
+        if (fieldInfos.isEmpty()) {
+            return null;
+        }
         NBTTagCompound compound = new NBTTagCompound();
         for (FieldInfo fieldInfo : fieldInfos) {
             try {

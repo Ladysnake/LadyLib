@@ -70,8 +70,9 @@ public class ShaderUtil {
      * @param resourceManager Minecraft's resource manager
      */
     private static void loadShaders(IResourceManager resourceManager) {
-        if (shouldNotUseShaders())
+        if (shouldNotUseShaders()) {
             return;
+        }
         Map<ResourceLocation, Pair<ResourceLocation, ResourceLocation>> registeredShaders = new HashMap<>();
         MinecraftForge.EVENT_BUS.post(new ShaderRegistryEvent(registeredShaders));
         registeredShaders.forEach((rl, sh) -> linkedShaders.put(rl, loadShader(resourceManager, sh.getLeft(), sh.getRight())));
@@ -169,8 +170,9 @@ public class ShaderUtil {
      * @param program the reference to the desired shader (0 to remove any current shader)
      */
     public static void useShader(int program) {
-        if (shouldNotUseShaders())
+        if (shouldNotUseShaders()) {
             return;
+        }
 
         prevProgram = GlStateManager.glGetInteger(GL20.GL_CURRENT_PROGRAM);
         OpenGlHelper.glUseProgram(program);
@@ -185,12 +187,14 @@ public class ShaderUtil {
      * @param value       an int value for this uniform
      */
     public static void setUniform(String uniformName, int value) {
-        if (shouldNotUseShaders() || currentProgram == 0)
+        if (shouldNotUseShaders() || currentProgram == 0) {
             return;
+        }
 
         int uniform = GL20.glGetUniformLocation(currentProgram, uniformName);
-        if (uniform != -1)
+        if (uniform != -1) {
             GL20.glUniform1i(uniform, value);
+        }
     }
 
     /**
@@ -202,8 +206,9 @@ public class ShaderUtil {
      * @param values      between 1 and 4 float values
      */
     public static void setUniform(String uniformName, float... values) {
-        if (shouldNotUseShaders())
+        if (shouldNotUseShaders()) {
             return;
+        }
 
         int uniform = GL20.glGetUniformLocation(currentProgram, uniformName);
         if (uniform != -1) {
@@ -231,8 +236,9 @@ public class ShaderUtil {
      * @param mat4        a raw array of float values
      */
     public static void setUniform(String uniformName, FloatBuffer mat4) {
-        if (shouldNotUseShaders())
+        if (shouldNotUseShaders()) {
             return;
+        }
 
         int uniform = GL20.glGetUniformLocation(currentProgram, uniformName);
         if (uniform != -1) {
@@ -322,8 +328,9 @@ public class ShaderUtil {
         try (InputStream in = resourceManager.getResource(fileLocation).getInputStream();
              BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"))) {
             String line;
-            while ((line = reader.readLine()) != null)
+            while ((line = reader.readLine()) != null) {
                 source.append(line).append('\n');
+            }
         } catch (IOException exc) {
             LadyLib.LOGGER.error(exc);
         } catch (NullPointerException e) {

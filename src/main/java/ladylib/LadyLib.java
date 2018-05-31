@@ -92,7 +92,7 @@ public class LadyLib {
 
     /**
      * This method serializes the specified object, including those of generic types, into its
-     * equivalent Json representation. This method must be used if the specified object is a generic
+     * equivalent NBT representation. This method must be used if the specified object is a generic
      * type. For non-generic objects, use {@link #toNBT(Object)} instead.
      *
      * @param src       the object for which NBT representation is to be created
@@ -136,7 +136,9 @@ public class LadyLib {
     @Nullable
     @Contract("null, _ -> null; !null, _ -> !null; !null, null -> fail")
     public static <T> T fromNBT(@Nullable NBTBase nbt, Type typeOfT) throws NBTDeserializationException {
-        if (nbt == null) return null;
+        if (nbt == null) {
+            return null;
+        }
         Preconditions.checkNotNull(typeOfT);
         NBTTypeAdapter adapter = TagAdapters.getNBTAdapter(TypeToken.get(typeOfT), false);
         return (T) adapter.fromNBT(nbt);
@@ -151,7 +153,9 @@ public class LadyLib {
 
     @SuppressWarnings("unchecked")
     public static void deserializeNBT(@Nonnull Object target, NBTBase nbt) throws NBTDeserializationException {
-        if (nbt == null) return;
+        if (nbt == null) {
+            return;
+        }
         NBTTypeAdapter adapter = TagAdapters.getNBTAdapter(TypeToken.get(target.getClass()), true);
         adapter.fromNBT(target, nbt);
     }
@@ -161,9 +165,6 @@ public class LadyLib {
         return instance.clientHandler.getParticleManager();
     }
 
-    /**
-     * Call this during {@link net.minecraftforge.fml.common.event.FMLPreInitializationEvent}
-     */
     @Mod.EventHandler
     public void preInit(@Nonnull FMLPreInitializationEvent event) {
         ASMDataTable dataTable = event.getAsmData();

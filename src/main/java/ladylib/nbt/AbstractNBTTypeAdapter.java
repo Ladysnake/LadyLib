@@ -50,5 +50,4 @@ public abstract class AbstractNBTTypeAdapter<T, NBT extends NBTBase> implements 
                 );
     }
 
-
 }

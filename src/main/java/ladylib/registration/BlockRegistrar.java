@@ -42,6 +42,7 @@ public class BlockRegistrar {
      * @param name the name that will be used as registry name resource path and unlocalized name
      * @return block
      */
+    @SuppressWarnings("ConstantConditions")
     @Nonnull
     public static <T extends Block> T name(@Nonnull T block, @Nonnull String name) {
         block.setRegistryName(name).setUnlocalizedName(block.getRegistryName().getResourceDomain() + "." + name);
@@ -64,9 +65,11 @@ public class BlockRegistrar {
         final Function<Block, Item> itemGen;
         if (makeItemBlock)
             // a default function generating a default ItemBlock and giving it the block's own registry name
+        {
             itemGen = (b -> new ItemBlock(b).setRegistryName(Objects.requireNonNull(b.getRegistryName())));
-        else
+        } else {
             itemGen = b -> Items.AIR;
+        }
         addBlock(block, itemGen, listed, oreNames);
     }
 
@@ -90,8 +93,9 @@ public class BlockRegistrar {
         // adds the corresponding item to the list of items to be registered as well
         T item = blockItemFunction.apply(block);
         Objects.requireNonNull(item);
-        if (item != Items.AIR)
+        if (item != Items.AIR) {
             itemRegistrar.addItem(item, listed);
+        }
         // returns the obtained item in case I want to do something with it
         return item;
     }
@@ -103,8 +107,9 @@ public class BlockRegistrar {
     void registerBlocks(RegistryEvent.Register<Block> event) {
         allBlocks.forEach((block, info) -> {
             event.getRegistry().register(block);
-            for (String oreName : info.oreNames)
+            for (String oreName : info.oreNames) {
                 OreDictionary.registerOre(oreName, block);
+            }
         });
     }
 

@@ -42,13 +42,15 @@ public class ItemUtil {
      * @return The remainder of the old stack after being converted
      */
     public static ItemStack turnItemIntoAnother(ItemStack fromStack, EntityLivingBase bearer, ItemStack toStack, boolean affectCreative) {
-        if (!affectCreative && bearer instanceof EntityPlayer && ((EntityPlayer) bearer).isCreative())
+        if (!affectCreative && bearer instanceof EntityPlayer && ((EntityPlayer) bearer).isCreative()) {
             return fromStack;
+        }
         fromStack.shrink(toStack.getCount());
         if (bearer instanceof EntityPlayer) {
             StatBase stat = StatList.getObjectUseStats(fromStack.getItem());
-            if (stat != null)
+            if (stat != null) {
                 ((EntityPlayer)bearer).addStat(stat);
+            }
         }
 
         if (fromStack.isEmpty()) {

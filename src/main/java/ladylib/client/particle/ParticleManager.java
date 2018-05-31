@@ -64,8 +64,9 @@ public class ParticleManager {
 
     @SubscribeEvent
     public void onGameTick(TickEvent.ClientTickEvent event) {
-        if (event.phase == TickEvent.Phase.START)
+        if (event.phase == TickEvent.Phase.START) {
             updateParticles();
+        }
     }
 
     @SubscribeEvent
@@ -79,11 +80,14 @@ public class ParticleManager {
         for (Queue<ISpecialParticle> particleQueue : particles.values()) {
             for (Iterator<ISpecialParticle> iterator = particleQueue.iterator(); iterator.hasNext(); ) {
                 // particles cost a lot less to update than to render so we can update more of them
-                if (++count > 3 * LLConfig.maxParticles) break;
+                if (++count > 3 * LLConfig.maxParticles) {
+                    break;
+                }
                 ISpecialParticle particle = iterator.next();
                 particle.updateParticle();
-                if (particle.isDead())
+                if (particle.isDead()) {
                     iterator.remove();
+                }
             }
         }
     }
@@ -147,8 +151,9 @@ public class ParticleManager {
 
     public void addParticle(ISpecialParticle p) {
         // If we can't even tick them, don't add them
-        if (particles.values().stream().mapToInt(Collection::size).sum() < LLConfig.maxParticles * 3)
+        if (particles.values().stream().mapToInt(Collection::size).sum() < LLConfig.maxParticles * 3) {
             particles.computeIfAbsent(p.getDrawStage(), i -> new ArrayDeque<>()).add(p);
+        }
     }
 
 }

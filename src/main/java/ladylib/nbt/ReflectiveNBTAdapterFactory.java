@@ -76,7 +76,9 @@ public class ReflectiveNBTAdapterFactory implements NBTTypeAdapterFactory<Object
             for (Field field : fields) {
                 int modifiers = field.getModifiers();
                 // do not save transient fields
-                if (Modifier.isTransient(modifiers) || Modifier.isStatic(modifiers)) continue;
+                if (Modifier.isTransient(modifiers) || Modifier.isStatic(modifiers)) {
+                    continue;
+                }
 
                 field.setAccessible(true);
                 MethodHandle getter = lookup.unreflectGetter(field);

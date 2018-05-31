@@ -15,7 +15,9 @@ import java.lang.reflect.Type;
 public class RegistryEntryNBTAdapterFactory implements NBTTypeAdapterFactory<IForgeRegistryEntry, NBTTagString> {
     @Override
     public NBTTypeAdapter<IForgeRegistryEntry, NBTTagString> create(TypeToken type, boolean allowMutating) {
-        if (!IForgeRegistryEntry.class.isAssignableFrom(type.getRawType())) return null;
+        if (!IForgeRegistryEntry.class.isAssignableFrom(type.getRawType())) {
+            return null;
+        }
         @SuppressWarnings("unchecked") IForgeRegistry registry = RegistryManager.ACTIVE.getRegistry(getRegistryType(type.getRawType()));
         if (registry == null) {
             return null;

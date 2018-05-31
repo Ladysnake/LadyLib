@@ -59,7 +59,9 @@ public class CapabilityRegistrar {
     private <T> void addAttachHandlers(Capability<T> capability, Class<T> capClass, Callable<T> factory, CapabilityEventHandler handler) {
         for (Method method : capClass.getMethods()) {
             AutoCapability.AttachCapabilityCheckHandler checker = method.getAnnotation(AutoCapability.AttachCapabilityCheckHandler.class);
-            if (checker == null) continue;
+            if (checker == null) {
+                continue;
+            }
 
             ResourceLocation key = new ResourceLocation(checker.value());
             if (!Modifier.isStatic(method.getModifiers())) {

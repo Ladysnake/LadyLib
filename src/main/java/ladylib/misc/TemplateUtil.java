@@ -40,8 +40,12 @@ public class TemplateUtil {
      * @param srcRoot the location of the <tt>resources</tt> directory in which the files will be generated
      */
     public static void generateStubModels(String modid, String srcRoot) {
-        if (!LadyLib.isDevEnv()) return;
-        if (srcRoot == null) srcRoot = "../src/main/resources";
+        if (!LadyLib.isDevEnv()) {
+            return;
+        }
+        if (srcRoot == null) {
+            srcRoot = "../src/main/resources";
+        }
 
         TemplateUtil.srcRoot = srcRoot;
         List<String> createdModelFiles = LadyLib.instance.getItemRegistrar().getAllItems().stream()
@@ -51,8 +55,9 @@ public class TemplateUtil {
                 .map(TemplateUtil::generateItemModel)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-        if (!createdModelFiles.isEmpty())
-            throw new TemplateUtil.ModelStubsCreatedPleaseRestartTheGameException(createdModelFiles); // Because stupid forge prevents System.exit()
+        if (!createdModelFiles.isEmpty()) {
+            throw new ModelStubsCreatedPleaseRestartTheGameException(createdModelFiles); // Because stupid forge prevents System.exit()
+        }
     }
 
     /**
@@ -61,8 +66,12 @@ public class TemplateUtil {
      * @param srcRoot the location of the <tt>resources</tt> directory in which the files will be generated
      */
     public static void generateStubBlockstates(BlockRegistrar blockRegistrar, String srcRoot) {
-        if (!LadyLib.isDevEnv()) return;
-        if (srcRoot == null) srcRoot = "../src/main/resources";
+        if (!LadyLib.isDevEnv()) {
+            return;
+        }
+        if (srcRoot == null) {
+            srcRoot = "../src/main/resources";
+        }
 
         TemplateUtil.srcRoot = srcRoot;
         List<String> createdModelFiles = blockRegistrar.getAllBlocks().stream()
@@ -78,7 +87,9 @@ public class TemplateUtil {
     @Nullable
     private static String generateItemModel(ResourceLocation loc) {
         // it would be bad if stubs were generated in a random minecraft folder
-        if (!LadyLib.isDevEnv()) return null;
+        if (!LadyLib.isDevEnv()) {
+            return null;
+        }
 
         String domain = loc.getResourceDomain();
         String fileName = loc.getResourcePath() + ".json";
@@ -90,7 +101,9 @@ public class TemplateUtil {
     @Nullable
     private static String generateBlockState(ResourceLocation loc) {
         // it would be bad if stubs were generated in a random minecraft folder
-        if (!LadyLib.isDevEnv()) return null;
+        if (!LadyLib.isDevEnv()) {
+            return null;
+        }
 
         String domain = loc.getResourceDomain();
         String fileName = loc.getResourcePath() + ".json";
@@ -111,8 +124,9 @@ public class TemplateUtil {
             return null;
         }
         try (Scanner scan = new Scanner(in)) {
-            if (modelPath.getParent().toFile().mkdirs())
+            if (modelPath.getParent().toFile().mkdirs()) {
                 LadyLib.LOGGER.info("Created directories for " + modelPath.getParent());
+            }
             try (BufferedWriter out = Files.newBufferedWriter(modelPath, StandardOpenOption.CREATE_NEW)) {
                 while (scan.hasNextLine()) {
                     out.append(scan.nextLine().replaceAll(DOMAIN_TOKEN, textureName).replaceAll(NAME_TOKEN, textureName)).append('\n');

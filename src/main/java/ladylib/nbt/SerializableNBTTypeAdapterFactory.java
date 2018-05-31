@@ -14,7 +14,9 @@ public class SerializableNBTTypeAdapterFactory implements NBTTypeAdapterFactory<
     @Override
     public NBTTypeAdapter<INBTSerializable<NBTBase>, NBTBase> create(TypeToken type, boolean allowMutating) {
         Class<?> rawType = type.getRawType();
-        if (!INBTSerializable.class.isAssignableFrom(rawType)) return null;
+        if (!INBTSerializable.class.isAssignableFrom(rawType)) {
+            return null;
+        }
         Supplier<INBTSerializable<NBTBase>> constructor =
                 ReflectionUtil.createFactory(rawType, "get", Supplier.class);
         Type elementType = Object.class;

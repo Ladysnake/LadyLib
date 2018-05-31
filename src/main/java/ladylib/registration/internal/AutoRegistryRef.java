@@ -20,18 +20,23 @@ import java.util.Optional;
 abstract class AutoRegistryRef<T extends AnnotatedElement> {
     static final LoadingCache<Class<?>, Optional<MethodHandle>> UNLOCALIZED_NAMES_CACHE = CacheBuilder.newBuilder()
             .build(CacheLoader.from(type -> {
-                if (type == null) return Optional.empty();
+                if (type == null) {
+                    return Optional.empty();
+                }
                 try {
                     Method m;
                     // Items and blocks have different obfuscated names for their setUnlocalizedName method
-                    if (Item.class.isAssignableFrom(type))
+                    if (Item.class.isAssignableFrom(type)) {
                         m = ReflectionHelper.findMethod(Item.class, "setUnlocalizedName", "func_77655_b", String.class);
-                    else if (Block.class.isAssignableFrom(type))
+                    } else if (Block.class.isAssignableFrom(type)) {
                         m = ReflectionHelper.findMethod(Block.class, "setUnlocalizedName", "func_149663_c", String.class);
-                    else    // If it has a setUnlocalizedName method, it is not from vanilla so not obfuscated
+                    } else    // If it has a setUnlocalizedName method, it is not from vanilla so not obfuscated
+                    {
                         m = type.getMethod("setUnlocalizedName", String.class);
-                    if (m != null)
+                    }
+                    if (m != null) {
                         return Optional.of(MethodHandles.lookup().unreflect(m));
+                    }
                 } catch (NoSuchMethodException ignored) {
                 } catch (IllegalAccessException e) {
                     LadyLib.LOGGER.error("Error while getting a getUnlocalizedName handle", e);

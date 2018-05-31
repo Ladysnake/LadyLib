@@ -22,14 +22,16 @@ public enum DrawingStages implements IParticleDrawingStage {
     @Override
     public void prepareRender() {
         GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, destFactor);
-        if (this.renderThroughBlocks)
+        if (this.renderThroughBlocks) {
             GlStateManager.disableDepth();
+        }
     }
 
     @Override
     public void clear() {
-        if (this.renderThroughBlocks)
+        if (this.renderThroughBlocks) {
             GlStateManager.enableDepth();
+        }
     }
 
 }

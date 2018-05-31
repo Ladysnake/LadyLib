@@ -28,9 +28,10 @@ import java.util.stream.Stream;
  */
 public class ItemRegistrar {
 
-    @SuppressWarnings({"unchecked", "ConstantConditions"})
+    @SuppressWarnings({"ConstantConditions"})
     public static <T extends Item> T name(T item, String name) {
-        return (T) item.setRegistryName(name).setUnlocalizedName(item.getRegistryName().getResourceDomain() + "." + name);
+        item.setRegistryName(name).setUnlocalizedName(item.getRegistryName().getResourceDomain() + "." + name);
+        return item;
     }
 
     /**
@@ -55,10 +56,12 @@ public class ItemRegistrar {
     void registerItems(RegistryEvent.Register<Item> event) {
         allItems.forEach((item, info) -> {
             event.getRegistry().register(item);
-            if (info.listed)
+            if (info.listed) {
                 item.setCreativeTab(LadyLib.instance.getContainer(item.getRegistryName().getResourceDomain()).getCreativeTab());
-            for (String oreName : info.oreNames)
+            }
+            for (String oreName : info.oreNames) {
                 OreDictionary.registerOre(oreName, item);
+            }
         });
     }
 
@@ -73,9 +76,12 @@ public class ItemRegistrar {
     @SideOnly(Side.CLIENT)
     public static void registerRender(Item item) {
         if (item instanceof ICustomLocation)    // let the item handle its model registration
+        {
             ((ICustomLocation) item).registerRender();
-        else    // use the standard procedure
+        } else    // use the standard procedure
+        {
             registerRender(item, new ModelResourceLocation(Objects.requireNonNull(item.getRegistryName()).toString()));
+        }
     }
 
     @SideOnly(Side.CLIENT)
@@ -93,7 +99,7 @@ public class ItemRegistrar {
                 .map(Map.Entry::getKey);
     }
 
-    class ItemInfo {
+    static class ItemInfo {
         /**
          * whether the item should be invisible in the creative and JEI tabs
          */
