@@ -28,12 +28,6 @@ public @interface AutoCapability {
     Class<? extends Capability.IStorage> storage() default Capability.IStorage.class;
 
     /**
-     * If set to false, LadyLib will not attempt to attach this capability during {@link net.minecraftforge.event.AttachCapabilitiesEvent}
-     * @see AttachCapabilityCheckHandler
-     */
-    boolean attachAutomatically() default true;
-
-    /**
      * A method annotated with this will be called when a {@link net.minecraftforge.event.AttachCapabilitiesEvent}
      * of the relevant type is fired.
      * The method should have no parameter.
@@ -50,9 +44,7 @@ public @interface AutoCapability {
      * </pre>
      * </p>
      *
-     * <p>
-     * <strong> A checker method is required whenever attachAutomatically is set to true (the default)</strong>
-     * </p>
+     * If no check handler exists, the capability will not be attached automatically.
      *
      * @see #value()
      */

@@ -35,6 +35,7 @@ public @interface AutoRegister {
     @Target(ElementType.FIELD)
     @Retention(RetentionPolicy.RUNTIME)
     @interface Ignore {
+        ;
     }
 
     /**
@@ -44,6 +45,7 @@ public @interface AutoRegister {
     @Target(ElementType.FIELD)
     @Retention(RetentionPolicy.RUNTIME)
     @interface Unlisted {
+        ;
     }
 
     /**
@@ -54,6 +56,7 @@ public @interface AutoRegister {
     @Target(ElementType.FIELD)
     @Retention(RetentionPolicy.RUNTIME)
     @interface NoItem {
+        ;
     }
 
     /**

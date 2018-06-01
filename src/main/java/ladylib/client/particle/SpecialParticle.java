@@ -10,6 +10,9 @@ import net.minecraft.world.World;
 
 import javax.annotation.Nonnull;
 
+/**
+ * A base implementation of {@link ISpecialParticle} using vanilla particle as a base
+ */
 public class SpecialParticle extends Particle implements ISpecialParticle {
     @Nonnull
     protected IParticleDrawingStage drawStage = DrawingStages.NORMAL;

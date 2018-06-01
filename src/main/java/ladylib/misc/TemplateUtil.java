@@ -39,7 +39,7 @@ public class TemplateUtil {
      *
      * @param srcRoot the location of the <tt>resources</tt> directory in which the files will be generated
      */
-    public static void generateStubModels(String modid, String srcRoot) {
+    public static void generateStubModels(String modid, @Nullable String srcRoot) {
         if (!LadyLib.isDevEnv()) {
             return;
         }
@@ -56,16 +56,18 @@ public class TemplateUtil {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         if (!createdModelFiles.isEmpty()) {
-            throw new ModelStubsCreatedPleaseRestartTheGameException(createdModelFiles); // Because stupid forge prevents System.exit()
+            throw new ModelStubsCreatedPleaseRestartTheGameException(createdModelFiles); // Because forge prevents System.exit()
         }
     }
 
     /**
-     * Call that anytime between item registration and model registration
+     * Call that anytime between item registration and model registration. <br>
+     * If srcRoot is <code>null</code>, the path <tt>../src/main/resources</tt>
+     * will be used by default.
      *
      * @param srcRoot the location of the <tt>resources</tt> directory in which the files will be generated
      */
-    public static void generateStubBlockstates(BlockRegistrar blockRegistrar, String srcRoot) {
+    public static void generateStubBlockstates(BlockRegistrar blockRegistrar, @Nullable String srcRoot) {
         if (!LadyLib.isDevEnv()) {
             return;
         }
@@ -76,6 +78,7 @@ public class TemplateUtil {
         TemplateUtil.srcRoot = srcRoot;
         List<String> createdModelFiles = blockRegistrar.getAllBlocks().stream()
                 .map(Block::getRegistryName)
+                .filter(Objects::nonNull)
                 .map(TemplateUtil::generateBlockState)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
@@ -86,7 +89,7 @@ public class TemplateUtil {
 
     @Nullable
     private static String generateItemModel(ResourceLocation loc) {
-        // it would be bad if stubs were generated in a random minecraft folder
+        // it would be bad if stubs were generated in a random minecraft folder in prod
         if (!LadyLib.isDevEnv()) {
             return null;
         }
@@ -100,7 +103,7 @@ public class TemplateUtil {
 
     @Nullable
     private static String generateBlockState(ResourceLocation loc) {
-        // it would be bad if stubs were generated in a random minecraft folder
+        // it would be bad if stubs were generated in a random minecraft folder in prod
         if (!LadyLib.isDevEnv()) {
             return null;
         }
@@ -112,6 +115,7 @@ public class TemplateUtil {
         return getStubModel(STUB_BLOCKSTATE, fileName, textureName, modelPath);
     }
 
+    @Nullable
     private static String getStubModel(ResourceLocation stubModel, String fileName, String textureName, Path modelPath) {
         InputStream in;
         try {

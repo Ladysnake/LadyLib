@@ -1,20 +1,20 @@
 package ladylib.client;
 
-import ladylib.client.particle.ParticleManager;
+import ladylib.client.particle.LLParticleManager;
 import ladylib.client.shader.ShaderUtil;
 import net.minecraftforge.common.MinecraftForge;
 
 import javax.annotation.Nonnull;
 
 public class ClientHandler implements IClientHandler {
-    private ParticleManager particleManager;
+    private LLParticleManager particleManager;
 
     public ClientHandler() {
-        particleManager = new ParticleManager();
+        particleManager = new LLParticleManager();
     }
 
     /**
-     * Initializes client-only helpers like {@link ShaderUtil} or {@link ParticleManager}
+     * Initializes client-only helpers like {@link ShaderUtil} or {@link LLParticleManager}
      */
     public void clientInit() {
         ShaderUtil.init();
@@ -22,7 +22,7 @@ public class ClientHandler implements IClientHandler {
     }
 
     @Nonnull
-    public ParticleManager getParticleManager() {
+    public LLParticleManager getParticleManager() {
         return particleManager;
     }
 }

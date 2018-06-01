@@ -2,6 +2,7 @@ package ladylib.nbt;
 
 import net.minecraft.nbt.NBTBase;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
@@ -13,11 +14,13 @@ import java.util.Optional;
  */
 public interface NBTTypeAdapter<T, NBT extends NBTBase> {
 
+    @Nullable
     NBT toNBT(T value);
 
     /**
      * Implementations of this method that mutate the input value should always implement {@link NBTMutatingTypeAdapter}
      */
+    @Nullable
     default T fromNBT(T value, NBTBase nbt) {
         return fromNBT(nbt);
     }
@@ -30,6 +33,7 @@ public interface NBTTypeAdapter<T, NBT extends NBTBase> {
      * @return a new object created using the given nbt
      * @throws NBTDeserializationException if the operation fails, because no default type is available or otherwise.
      */
+    @Nullable
     T fromNBT(NBTBase nbt);
 
     /**

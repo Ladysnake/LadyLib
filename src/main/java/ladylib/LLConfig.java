@@ -9,6 +9,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 @Config(modid = LadyLib.MOD_ID)
 @Mod.EventBusSubscriber(modid = LadyLib.MOD_ID)
 public class LLConfig {
+    @Config.Comment("The maximum amount of particles that should be displayed on the screen at the same time")
     public static int maxParticles = 300;
 
     @SubscribeEvent

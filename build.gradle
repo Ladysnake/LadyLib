@@ -21,22 +21,6 @@ archivesBaseName = modBaseName
 
 sourceCompatibility = 1.8
 
-/* * * * LadyLib-specific integration * * * */
-ext.ladylibJava = "./java"
-ext.ladylibResources = "./resources"
-
-sourceSets {
-    main {
-        java {
-            srcDir project.ladylibJava
-        }
-        resources {
-            srcDir project.ladylibResources
-        }
-    }
-}
-
-/* * * * * * * * * * * * * * * * * * * * * * */
 
 minecraft {
     version = project.forgeVersion

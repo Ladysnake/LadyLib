@@ -7,6 +7,7 @@ import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import org.apache.logging.log4j.message.FormattedMessage;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -24,8 +25,9 @@ public class ReflectiveNBTAdapterFactory implements NBTTypeAdapterFactory<Object
         return (NBTTypeAdapter<T, NBTTagCompound>) create(TypeToken.get(type), true);
     }
 
-    @SuppressWarnings("unchecked")
+    @Nonnull    // this factory is the fallback, it can only fail
     @Override
+    @SuppressWarnings("unchecked")
     public NBTTypeAdapter<Object, NBTTagCompound> create(TypeToken type, boolean allowMutating) {
         try {
             MutatingReflectiveNBTAdapter<Object> ret = new MutatingReflectiveNBTAdapter<>(type.getRawType());
@@ -98,7 +100,9 @@ public class ReflectiveNBTAdapterFactory implements NBTTypeAdapterFactory<Object
                 try {
                     @SuppressWarnings("unchecked") T value = (T) fieldEntry.getter.invoke(instance);
                     @SuppressWarnings("unchecked") NBTBase serialized = fieldEntry.adapter.toNBT(value);
-                    compound.setTag(fieldEntry.name, serialized);
+                    if (serialized != null) {
+                        compound.setTag(fieldEntry.name, serialized);
+                    }
                 } catch (Throwable throwable) {
                     LadyLib.LOGGER.error(new FormattedMessage("Could not write NBT for {} ", instance), throwable);
                 }

@@ -7,12 +7,17 @@ import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 
 import javax.annotation.Nonnull;
 
-public class SimpleProvider<T> implements ICapabilitySerializable<NBTBase> {
+/**
+ * A capability provider that can wrap any capability instance
+ * as long as it is handled by the capability's default storage
+ * @param <C> the capability type
+ */
+public class SimpleProvider<C> implements ICapabilitySerializable<NBTBase> {
 
-    private Capability<T> capability;
-    private T instance;
+    private Capability<C> capability;
+    private C instance;
 
-    public SimpleProvider(Capability<T> capability, T instance) {
+    public SimpleProvider(Capability<C> capability, C instance) {
         this.capability = capability;
         this.instance = instance;
     }

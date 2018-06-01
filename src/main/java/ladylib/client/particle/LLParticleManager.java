@@ -41,7 +41,7 @@ import java.util.*;
  * @see IParticleDrawingStage
  */
 @SideOnly(Side.CLIENT)
-public class ParticleManager {
+public class LLParticleManager {
 
     /**Stores each currently active particle in a queue, depending on its drawing stage*/
     private final Map<IParticleDrawingStage, Queue<ISpecialParticle>> particles = new HashMap<>();

@@ -1,10 +1,10 @@
 package ladylib.client;
 
-import ladylib.client.particle.ParticleManager;
+import ladylib.client.particle.LLParticleManager;
 
 import javax.annotation.Nonnull;
 
 public interface IClientHandler {
     @Nonnull
-    ParticleManager getParticleManager();
+    LLParticleManager getParticleManager();
 }

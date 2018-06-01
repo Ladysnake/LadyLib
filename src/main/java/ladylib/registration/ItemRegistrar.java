@@ -75,11 +75,11 @@ public class ItemRegistrar {
 
     @SideOnly(Side.CLIENT)
     public static void registerRender(Item item) {
-        if (item instanceof ICustomLocation)    // let the item handle its model registration
-        {
+        if (item instanceof ICustomLocation) {
+            // let the item handle its model registration
             ((ICustomLocation) item).registerRender();
-        } else    // use the standard procedure
-        {
+        } else {
+            // use the standard procedure
             registerRender(item, new ModelResourceLocation(Objects.requireNonNull(item.getRegistryName()).toString()));
         }
     }

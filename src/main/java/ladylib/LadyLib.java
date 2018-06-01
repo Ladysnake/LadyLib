@@ -4,7 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.reflect.TypeToken;
 import ladylib.client.ClientHandler;
-import ladylib.client.particle.ParticleManager;
+import ladylib.client.particle.LLParticleManager;
 import ladylib.nbt.NBTDeserializationException;
 import ladylib.nbt.NBTTypeAdapter;
 import ladylib.nbt.TagAdapters;
@@ -12,7 +12,6 @@ import ladylib.nbt.internal.DefaultValuesSearch;
 import ladylib.registration.BlockRegistrar;
 import ladylib.registration.ItemRegistrar;
 import ladylib.registration.internal.AutoRegistrar;
-import net.minecraft.init.Blocks;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagString;
@@ -25,10 +24,10 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.Contract;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.PrintStream;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -53,6 +52,7 @@ public class LadyLib {
     public static final String VERSION = "@VERSION@";
 
     public static final Logger LOGGER = LogManager.getLogger(MOD_NAME);
+    private static final PrintStream DEBUG_STREAM = new TracingPrintStream(LogManager.getLogger("DEBUG"), System.out);
     private static final Map<String, LLibContainer> allInstances = new HashMap<>();
 
     @Mod.Instance
@@ -63,13 +63,23 @@ public class LadyLib {
     @SideOnly(Side.CLIENT)
     private ClientHandler clientHandler;
 
+    /**
+     * Checks if the current minecraft instance is running in a development environment. <br>
+     * Specifically, checks whether the environment is obfuscated or not.
+     * @return true if the current environment is deobfuscated
+     */
     public static boolean isDevEnv() {
         return (Boolean) Launch.blackboard.get("fml.deobfuscatedEnvironment");
     }
 
+    /**
+     * Prints a message if and only if the game is currently running in a development environment
+     * @param message the message to print
+     */
     public static void debug(Object message) {
         if (isDevEnv()) {
-            System.out.println(message);
+            // use a dedicated print stream to accurately display the call origin
+            DEBUG_STREAM.println(message);
         }
     }
 
@@ -85,8 +95,8 @@ public class LadyLib {
      * @param src the object for which NBT representation is to be created
      * @return NBT representation of {@code src}.
      */
-    @Contract("null -> null;")
-    public static NBTBase toNBT(Object src) {
+    @Nullable
+    public static NBTBase toNBT(@Nullable Object src) {
         return src == null ? null : toNBT(src, src.getClass());
     }
 
@@ -104,16 +114,30 @@ public class LadyLib {
      *                  </pre>
      * @return NBT representation of {@code src}
      */
+    @Nullable
     @SuppressWarnings("unchecked")
     public static NBTBase toNBT(Object src, Type typeOfSrc) {
         NBTTypeAdapter adapter = TagAdapters.getNBTAdapter(TypeToken.get(typeOfSrc), false);
         return adapter.toNBT(src);
     }
 
+    /**
+     * This method deserializes the NBT read from the specified parse tree into an object of the
+     * specified type. It is not suitable to use if the specified class is a generic type since it
+     * will not have the generic type information because of the Type Erasure feature of Java.
+     * Therefore, this method should not be used if the desired type is a generic type. Note that
+     * this method works fine if the any of the fields of the specified object are generics, just the
+     * object itself should not be a generic type. For the cases when the object is of generic type,
+     * invoke {@link #fromNBT(NBTBase, Type)}.
+     * @param <T> the type of the desired object
+     * @param nbt     the root of the NBT data structure from which the object is to
+     *                be deserialized
+     * @param classOfT The class of T
+     * @return an object of type T from the NBT. Returns {@code null} if {@code NBT} is {@code null}.
+     */
     @Nullable
-    @Contract("null, _ -> null; !null, _ -> !null; !null, null -> fail")
-    public static <T> T fromNBT(@Nullable NBTBase nbt, Class<T> typeOfT) throws NBTDeserializationException {
-        return fromNBT(nbt, (Type) typeOfT);
+    public static <T> T fromNBT(@Nullable NBTBase nbt, Class<T> classOfT) throws NBTDeserializationException {
+        return fromNBT(nbt, (Type) classOfT);
     }
 
     /**
@@ -132,9 +156,8 @@ public class LadyLib {
      *                </pre>
      * @return an object of type T from the NBT. Returns {@code null} if {@code nbt} is {@code null}.
      */
-    @SuppressWarnings("unchecked")
     @Nullable
-    @Contract("null, _ -> null; !null, _ -> !null; !null, null -> fail")
+    @SuppressWarnings("unchecked")
     public static <T> T fromNBT(@Nullable NBTBase nbt, Type typeOfT) throws NBTDeserializationException {
         if (nbt == null) {
             return null;
@@ -152,7 +175,7 @@ public class LadyLib {
     }
 
     @SuppressWarnings("unchecked")
-    public static void deserializeNBT(@Nonnull Object target, NBTBase nbt) throws NBTDeserializationException {
+    public static void deserializeNBT(@Nonnull Object target, @Nullable NBTBase nbt) throws NBTDeserializationException {
         if (nbt == null) {
             return;
         }
@@ -160,11 +183,17 @@ public class LadyLib {
         adapter.fromNBT(target, nbt);
     }
 
+    /**
+     * @return LadyLib's custom particle manager
+     */
     @SideOnly(Side.CLIENT)
-    public static ParticleManager getParticleManager() {
+    public static LLParticleManager getParticleManager() {
         return instance.clientHandler.getParticleManager();
     }
 
+    /**
+     * LadyLib pre-initialization
+     */
     @Mod.EventHandler
     public void preInit(@Nonnull FMLPreInitializationEvent event) {
         ASMDataTable dataTable = event.getAsmData();
@@ -184,13 +213,20 @@ public class LadyLib {
         LadyLib.fromNBT(nbtTagString, int.class);
     }
 
+    /**
+     * LadyLib initialization
+     */
     @Mod.EventHandler
     public void init(@Nonnull FMLInitializationEvent event) {
-        LadyLib.toNBT(Blocks.PLANKS);
+
     }
 
+    /**
+     * Injects LLibContainer into their respective instance fields
+     */
     private void injectContainers(ASMDataTable asmData) {
         try {
+            // hook into forge's already existing mechanism
             Method parseSimpleFieldAnnotation = FMLModContainer.class.getDeclaredMethod("parseSimpleFieldAnnotation", SetMultimap.class, String.class, Function.class);
             parseSimpleFieldAnnotation.setAccessible(true);
             for (ModContainer container : Loader.instance().getModList()) {
@@ -204,27 +240,53 @@ public class LadyLib {
         }
     }
 
+    /**
+     * @return the list of every mod wrapper created by LadyLib
+     */
     public Collection<LLibContainer> getAllInstances() {
         return allInstances.values();
     }
 
+    /**
+     * Gets LadyLib's wrapper container used to provide mod-specific behaviour.
+     * @param modid the mod id owning the container
+     * @return the mod's container
+     */
     public LLibContainer getContainer(String modid) {
         return allInstances.computeIfAbsent(modid, id -> new LLibContainer(Loader.instance().getIndexedModList().get(id)));
     }
 
+    /**
+     * Gets LadyLib's {@link ItemRegistrar item registrar}.
+     * The item registrar offers various methods to make item registration easier.
+     */
     public ItemRegistrar getItemRegistrar() {
         return registrar.getItemRegistrar();
     }
 
+    /**
+     * Gets LadyLib's {@link BlockRegistrar block registrar}.
+     * The block registrar offers various methods to make block registration easier.
+     */
     public BlockRegistrar getBlockRegistrar() {
         return registrar.getBlockRegistrar();
     }
 
+    /**
+     * Populate the annotated field with the LadyLib mod wrapper instance based on the specified ModId.
+     * This can be used to retrieve instances of other mods.
+     */
     @Target(ElementType.FIELD)
     @Retention(RetentionPolicy.RUNTIME)
     public @interface LLInstance {
         /**
-         * Optional owner modid, required if this annotation is on something that is not inside the main class of a mod container.
+         * The id of the mod which wrapper object is to be injected into this field
+         */
+        String value() default "";
+
+        /**
+         * Optional owner mod id, required if this annotation is on something
+         * that is not inside the main class of a mod container.
          */
         String owner() default "";
     }

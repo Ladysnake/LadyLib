@@ -55,9 +55,9 @@ public class CapabilityEventHandler {
         private final ResourceLocation key;
         private final Predicate<C> predicate;
         private final Capability<T> capability;
-        private final Callable<T> instanceFactory;
+        private final Callable<? extends T> instanceFactory;
 
-        ProviderInfo(ResourceLocation key, Predicate<C> predicate, Capability<T> capability, Callable<T> instanceFactory) {
+        ProviderInfo(ResourceLocation key, Predicate<C> predicate, Capability<T> capability, Callable<? extends T> instanceFactory) {
             this.key = key;
             this.predicate = predicate;
             this.capability = capability;

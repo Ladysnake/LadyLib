@@ -12,12 +12,14 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public interface ICustomLocation {
 
     /**
+     * Called by the default implementation of {@link #registerRender()}.
      * @return a path to the model json file for this item
      */
     ModelResourceLocation getModelLocation();
 
     /**
-     * Called by {@link ladylib.registration.ItemRegistrar#registerRender(Item)}
+     * Called by {@link ladylib.registration.ItemRegistrar#registerRender(Item)}.
+     * Use this to register the item's render.
      */
     @SideOnly(Side.CLIENT)
     default void registerRender() {

@@ -63,9 +63,8 @@ public class BlockRegistrar {
      */
     public void addBlock(@Nonnull Block block, boolean listed, boolean makeItemBlock, @Nonnull String... oreNames) {
         final Function<Block, Item> itemGen;
-        if (makeItemBlock)
+        if (makeItemBlock) {
             // a default function generating a default ItemBlock and giving it the block's own registry name
-        {
             itemGen = (b -> new ItemBlock(b).setRegistryName(Objects.requireNonNull(b.getRegistryName())));
         } else {
             itemGen = b -> Items.AIR;

@@ -1,13 +1,13 @@
 package ladylib.client.particle;
 
 /**
- * Defines a drawing stage for the {@link ParticleManager}.
+ * Defines a drawing stage for the {@link LLParticleManager}.
  * <p>
  * Particles sharing a drawing stage will be rendered in the same batch.
  * </p>
  *
  * @see ISpecialParticle
- * @see ParticleManager
+ * @see LLParticleManager
  * @see DrawingStages
  */
 public interface IParticleDrawingStage {

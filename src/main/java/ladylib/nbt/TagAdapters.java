@@ -1,9 +1,11 @@
 package ladylib.nbt;
 
 import com.google.gson.reflect.TypeToken;
+import ladylib.LadyLib;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.util.math.BlockPos;
+import org.apache.logging.log4j.message.FormattedMessage;
 
 import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
@@ -13,7 +15,7 @@ import java.util.function.Supplier;
 public class TagAdapters {
     private static final List<NBTTypeAdapterFactory> factories = new ArrayList<>();
     private static final Map<TypeToken<?>, NBTAdapterEntry> cache = new HashMap<>();
-    static final Map<TypeToken<?>, Supplier<?>> defaultValues = new HashMap<>();
+    private static final Map<TypeToken<?>, Supplier<?>> defaultValues = new HashMap<>();
 
     static {
         addPrimitiveFactory(boolean.class, Boolean.class, BaseNBTAdapters.BooleanAdapter::new);
@@ -36,6 +38,7 @@ public class TagAdapters {
         factories.add(new ImmutableCollectionNBTAdapterFactory());
         factories.add(new CollectionNBTTypeAdapterFactory());
         factories.add(new MapNBTTypeAdapterFactory());
+        factories.add(new CapabilityNBTTypeAdapterFactory());
         factories.add(ReflectiveNBTAdapterFactory.INSTANCE);
     }
 
@@ -89,11 +92,17 @@ public class TagAdapters {
                 return typeAdapter;
             }
             for (NBTTypeAdapterFactory factory : factories) {
-                NBTTypeAdapter candidate = factory.create(type, allowMutating);
+                NBTTypeAdapter candidate;
+                try {
+                    candidate = factory.create(type, allowMutating);
+                } catch (Exception e) {
+                    LadyLib.LOGGER.error(new FormattedMessage("Factory {} threw an exception", factory), e);
+                    continue;
+                }
                 if (candidate != null) {
                     if (candidate instanceof NBTMutatingTypeAdapter) {
                         if (!allowMutating) {
-                            throw new IllegalStateException("A factory returned a mutating type adapter despite them not being allowed");
+                            throw new IllegalStateException("A factory returned a mutating type adapter despite them not being allowed to");
                         }
                         this.mutatingTypeAdapter = (NBTMutatingTypeAdapter) candidate;
                     } else {
