@@ -1,4 +1,4 @@
-package ladylib.networking;
+package ladylib.networking.http;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
