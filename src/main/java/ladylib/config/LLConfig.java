@@ -1,5 +1,6 @@
-package ladylib;
+package ladylib.config;
 
+import ladylib.LadyLib;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;

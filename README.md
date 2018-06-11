@@ -14,6 +14,8 @@ The other is as a proper gradle dependency through [jitpack](https://jitpack.io/
 * Annotation-based registration
 * Helper methods for registration (because the two aren't mutually exclusive)
 * Generation of stub model files
+* NBT Serialization based on [Gson](https://github.com/google/gson)
+* Simplified capabilities
 * Extremely customizable particles
 * A framework for shaders usage
 * Actual documentation (yes, I count that as a feature)
