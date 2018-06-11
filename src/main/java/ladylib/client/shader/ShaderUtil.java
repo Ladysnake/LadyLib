@@ -33,6 +33,10 @@ import java.nio.FloatBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
+import static net.minecraft.client.renderer.OpenGlHelper.glGetProgramInfoLog;
+import static net.minecraft.client.renderer.OpenGlHelper.glGetProgrami;
+import static org.lwjgl.opengl.GL20.*;
+
 /**
  * A class offering several utility methods to create, use and configure shaders
  */
@@ -88,27 +92,52 @@ public class ShaderUtil {
     private static int loadShader(IResourceManager resourceManager, @Nullable ResourceLocation vertexLocation, @Nullable ResourceLocation fragmentLocation) {
 
         // program creation
-        int program = OpenGlHelper.glCreateProgram();
+        int programId = OpenGlHelper.glCreateProgram();
+
+        int vertexShaderId = 0;
+        int fragmentShaderId = 0;
 
         // vertex shader creation
         if (vertexLocation != null) {
-            int vertexShader = OpenGlHelper.glCreateShader(OpenGlHelper.GL_VERTEX_SHADER);
-            ARBShaderObjects.glShaderSourceARB(vertexShader, fromFile(resourceManager, vertexLocation));
-            OpenGlHelper.glCompileShader(vertexShader);
-            OpenGlHelper.glAttachShader(program, vertexShader);
+            vertexShaderId = OpenGlHelper.glCreateShader(OpenGlHelper.GL_VERTEX_SHADER);
+            ARBShaderObjects.glShaderSourceARB(vertexShaderId, fromFile(resourceManager, vertexLocation));
+            OpenGlHelper.glCompileShader(vertexShaderId);
+            OpenGlHelper.glAttachShader(programId, vertexShaderId);
         }
 
         // fragment shader creation
         if (fragmentLocation != null) {
-            int fragmentShader = OpenGlHelper.glCreateShader(OpenGlHelper.GL_FRAGMENT_SHADER);
-            ARBShaderObjects.glShaderSourceARB(fragmentShader, fromFile(resourceManager, fragmentLocation));
-            OpenGlHelper.glCompileShader(fragmentShader);
-            OpenGlHelper.glAttachShader(program, fragmentShader);
+            fragmentShaderId = OpenGlHelper.glCreateShader(OpenGlHelper.GL_FRAGMENT_SHADER);
+            ARBShaderObjects.glShaderSourceARB(fragmentShaderId, fromFile(resourceManager, fragmentLocation));
+            OpenGlHelper.glCompileShader(fragmentShaderId);
+            OpenGlHelper.glAttachShader(programId, fragmentShaderId);
         }
 
-        OpenGlHelper.glLinkProgram(program);
+        OpenGlHelper.glLinkProgram(programId);
+        // check potential linkage errors
+        if (glGetProgrami(programId, GL_LINK_STATUS) == 0) {
+            throw new RuntimeException("Error linking Shader code: " + glGetProgramInfoLog(programId, 1024));
+        }
 
-        return program;
+        // free up the vertex and fragment shaders
+        if (vertexShaderId != 0) {
+            glDetachShader(programId, vertexShaderId);
+        }
+        if (fragmentShaderId != 0) {
+            glDetachShader(programId, fragmentShaderId);
+        }
+
+        // validate the program
+        // this may fail even when it works fine so only show the message in a dev environment
+        if (LadyLib.isDevEnv()) {
+            glValidateProgram(programId);
+            if (glGetProgrami(programId, GL_VALIDATE_STATUS) == 0) {
+                System.err.println("Warning validating Shader code:" + glGetProgramInfoLog(programId, 1024));
+            }
+        }
+
+
+        return programId;
     }
 
     /**
