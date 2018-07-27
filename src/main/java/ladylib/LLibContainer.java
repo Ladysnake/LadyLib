@@ -36,7 +36,7 @@ public class LLibContainer {
         CreativeTabs ret = new CreativeTabs(owner.getName()) {
             @Nonnull
             @Override
-            public ItemStack getTabIconItem() {
+            public ItemStack createIcon() {
                 return icon.get();
             }
         };

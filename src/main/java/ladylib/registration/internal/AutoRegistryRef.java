@@ -25,14 +25,14 @@ abstract class AutoRegistryRef<T extends AnnotatedElement> {
                 }
                 try {
                     Method m;
-                    // Items and blocks have different obfuscated names for their setUnlocalizedName method
+                    // Items and blocks have different obfuscated names for their setTranslationKey method
                     if (Item.class.isAssignableFrom(type)) {
-                        m = ReflectionHelper.findMethod(Item.class, "setUnlocalizedName", "func_77655_b", String.class);
+                        m = ReflectionHelper.findMethod(Item.class, "setTranslationKey", "func_77655_b", String.class);
                     } else if (Block.class.isAssignableFrom(type)) {
-                        m = ReflectionHelper.findMethod(Block.class, "setUnlocalizedName", "func_149663_c", String.class);
-                    } else    // If it has a setUnlocalizedName method, it is not from vanilla so not obfuscated
+                        m = ReflectionHelper.findMethod(Block.class, "setTranslationKey", "func_149663_c", String.class);
+                    } else    // If it has a setTranslationKey method, it is not from vanilla so not obfuscated
                     {
-                        m = type.getMethod("setUnlocalizedName", String.class);
+                        m = type.getMethod("setTranslationKey", String.class);
                     }
                     if (m != null) {
                         return Optional.of(MethodHandles.lookup().unreflect(m));

@@ -32,8 +32,8 @@ public class ShaderRegistryEvent extends Event implements IContextSetter {
     public void registerShader(ResourceLocation identifier) {
         registerShader(
                 identifier,
-                new ResourceLocation(identifier.getResourceDomain(), ShaderUtil.SHADER_LOCATION_PREFIX + identifier.getResourcePath() + ".vsh"),
-                new ResourceLocation(identifier.getResourceDomain(), ShaderUtil.SHADER_LOCATION_PREFIX + identifier.getResourcePath() + ".fsh")
+                new ResourceLocation(identifier.getNamespace(), ShaderUtil.SHADER_LOCATION_PREFIX + identifier.getPath() + ".vsh"),
+                new ResourceLocation(identifier.getNamespace(), ShaderUtil.SHADER_LOCATION_PREFIX + identifier.getPath() + ".fsh")
         );
     }
 

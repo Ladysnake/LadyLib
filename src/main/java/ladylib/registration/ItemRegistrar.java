@@ -30,7 +30,7 @@ public class ItemRegistrar {
 
     @SuppressWarnings({"ConstantConditions"})
     public static <T extends Item> T name(T item, String name) {
-        item.setRegistryName(name).setUnlocalizedName(item.getRegistryName().getResourceDomain() + "." + name);
+        item.setRegistryName(name).setTranslationKey(item.getRegistryName().getNamespace() + "." + name);
         return item;
     }
 
@@ -57,7 +57,7 @@ public class ItemRegistrar {
         allItems.forEach((item, info) -> {
             event.getRegistry().register(item);
             if (info.listed) {
-                item.setCreativeTab(LadyLib.instance.getContainer(item.getRegistryName().getResourceDomain()).getCreativeTab());
+                item.setCreativeTab(LadyLib.instance.getContainer(item.getRegistryName().getNamespace()).getCreativeTab());
             }
             for (String oreName : info.oreNames) {
                 OreDictionary.registerOre(oreName, item);

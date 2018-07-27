@@ -49,7 +49,7 @@ public class TemplateUtil {
 
         TemplateUtil.srcRoot = srcRoot;
         List<String> createdModelFiles = LadyLib.instance.getItemRegistrar().getAllItems().stream()
-                .filter(item -> modid.equals(item.getRegistryName().getResourceDomain()))
+                .filter(item -> modid.equals(item.getRegistryName().getNamespace()))
                 .filter(itemIn -> !(itemIn instanceof ItemBlock) && !(itemIn instanceof ICustomLocation))
                 .map(Item::getRegistryName)
                 .map(TemplateUtil::generateItemModel)
@@ -94,9 +94,9 @@ public class TemplateUtil {
             return null;
         }
 
-        String domain = loc.getResourceDomain();
-        String fileName = loc.getResourcePath() + ".json";
-        String textureName = loc.getResourceDomain() + ":items/" + loc.getResourcePath();
+        String domain = loc.getNamespace();
+        String fileName = loc.getPath() + ".json";
+        String textureName = loc.getNamespace() + ":items/" + loc.getPath();
         Path modelPath = Paths.get(srcRoot, "assets", domain, "models", "item", fileName);
         return getStubModel(STUB_ITEM_MODEL, fileName, textureName, modelPath);
     }
@@ -108,9 +108,9 @@ public class TemplateUtil {
             return null;
         }
 
-        String domain = loc.getResourceDomain();
-        String fileName = loc.getResourcePath() + ".json";
-        String textureName = loc.getResourceDomain() + ":blocks/" + loc.getResourcePath();
+        String domain = loc.getNamespace();
+        String fileName = loc.getPath() + ".json";
+        String textureName = loc.getNamespace() + ":blocks/" + loc.getPath();
         Path modelPath = Paths.get(srcRoot, "assets", domain, "blockstates", fileName);
         return getStubModel(STUB_BLOCKSTATE, fileName, textureName, modelPath);
     }
@@ -121,7 +121,7 @@ public class TemplateUtil {
         try {
             in = Minecraft.getMinecraft().getResourceManager().getResource(stubModel).getInputStream();
         } catch (IOException e) {
-            in = TemplateUtil.class.getResourceAsStream("/assets/ladylib/" + stubModel.getResourcePath());
+            in = TemplateUtil.class.getResourceAsStream("/assets/ladylib/" + stubModel.getPath());
         }
         if (in == null) {
             LadyLib.LOGGER.error("The model stub file {} could not be found.", stubModel);

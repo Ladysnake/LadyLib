@@ -45,7 +45,7 @@ public class BlockRegistrar {
     @SuppressWarnings("ConstantConditions")
     @Nonnull
     public static <T extends Block> T name(@Nonnull T block, @Nonnull String name) {
-        block.setRegistryName(name).setUnlocalizedName(block.getRegistryName().getResourceDomain() + "." + name);
+        block.setRegistryName(name).setTranslationKey(block.getRegistryName().getNamespace() + "." + name);
         return block;
     }
 
@@ -87,7 +87,7 @@ public class BlockRegistrar {
         // adds the block to the list to be registered later
         allBlocks.put(block, new BlockInfo(oreNames));
         if (listed) {
-            block.setCreativeTab(LadyLib.instance.getContainer(block.getRegistryName().getResourceDomain()).getCreativeTab());
+            block.setCreativeTab(LadyLib.instance.getContainer(block.getRegistryName().getNamespace()).getCreativeTab());
         }
         // adds the corresponding item to the list of items to be registered as well
         T item = blockItemFunction.apply(block);
