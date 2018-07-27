@@ -5,19 +5,22 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import ladylib.LadyLib;
 import ladylib.misc.MatUtil;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.EntityRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.resources.IReloadableResourceManager;
 import net.minecraft.client.resources.IResourceManager;
-import net.minecraft.client.shader.Framebuffer;
+import net.minecraft.client.shader.Shader;
+import net.minecraft.client.shader.ShaderGroup;
+import net.minecraft.entity.Entity;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.message.FormattedMessage;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.ARBShaderObjects;
 import org.lwjgl.opengl.GL11;
@@ -45,14 +48,16 @@ public class ShaderUtil {
 
     private static int prevProgram = 0, currentProgram = 0;
     static final String SHADER_LOCATION_PREFIX = "shaders/";
+    private static final Map<ResourceLocation, ShaderGroup> screenShaders = new HashMap<>();
+    private static boolean resetScreenShaders;
+    private static int oldDisplayWidth = Minecraft.getMinecraft().displayWidth;
+    private static int oldDisplayHeight = Minecraft.getMinecraft().displayHeight;
 
     private static final Object2IntMap<ResourceLocation> linkedShaders = new Object2IntOpenHashMap<>();
     private static boolean initialized = false;
 
-    private static Framebuffer framebufferLL;
-
-    private static boolean shouldNotUseShaders() {
-        return !OpenGlHelper.shadersSupported;
+    private static boolean shouldUseShaders() {
+        return OpenGlHelper.shadersSupported;
     }
 
     /**
@@ -62,126 +67,8 @@ public class ShaderUtil {
         if (!initialized) {
             Minecraft mc = Minecraft.getMinecraft();
             ((IReloadableResourceManager) mc.getResourceManager()).registerReloadListener(ShaderUtil::loadShaders);
-            framebufferLL = new Framebuffer(mc.displayWidth, mc.displayHeight, true);
-            framebufferLL.setFramebufferColor(0.0F, 0.0F, 0.0F, 0.0F);
             initialized = true;
         }
-    }
-
-    /**
-     * Loads and links all registered shaders
-     *
-     * @param resourceManager Minecraft's resource manager
-     */
-    private static void loadShaders(IResourceManager resourceManager) {
-        if (shouldNotUseShaders()) {
-            return;
-        }
-        Map<ResourceLocation, Pair<ResourceLocation, ResourceLocation>> registeredShaders = new HashMap<>();
-        MinecraftForge.EVENT_BUS.post(new ShaderRegistryEvent(registeredShaders));
-        registeredShaders.forEach((rl, sh) -> linkedShaders.put(rl, loadShader(resourceManager, sh.getLeft(), sh.getRight())));
-    }
-
-    /**
-     * Initializes a program with one or two shaders
-     *
-     * @param vertexLocation   the name or relative location of the vertex shader
-     * @param fragmentLocation the name or relative location of the fragment shader
-     * @return the reference to the initialized program
-     */
-    private static int loadShader(IResourceManager resourceManager, @Nullable ResourceLocation vertexLocation, @Nullable ResourceLocation fragmentLocation) {
-
-        // program creation
-        int programId = OpenGlHelper.glCreateProgram();
-
-        int vertexShaderId = 0;
-        int fragmentShaderId = 0;
-
-        // vertex shader creation
-        if (vertexLocation != null) {
-            vertexShaderId = OpenGlHelper.glCreateShader(OpenGlHelper.GL_VERTEX_SHADER);
-            ARBShaderObjects.glShaderSourceARB(vertexShaderId, fromFile(resourceManager, vertexLocation));
-            OpenGlHelper.glCompileShader(vertexShaderId);
-            OpenGlHelper.glAttachShader(programId, vertexShaderId);
-        }
-
-        // fragment shader creation
-        if (fragmentLocation != null) {
-            fragmentShaderId = OpenGlHelper.glCreateShader(OpenGlHelper.GL_FRAGMENT_SHADER);
-            ARBShaderObjects.glShaderSourceARB(fragmentShaderId, fromFile(resourceManager, fragmentLocation));
-            OpenGlHelper.glCompileShader(fragmentShaderId);
-            OpenGlHelper.glAttachShader(programId, fragmentShaderId);
-        }
-
-        OpenGlHelper.glLinkProgram(programId);
-        // check potential linkage errors
-        if (glGetProgrami(programId, GL_LINK_STATUS) == 0) {
-            throw new RuntimeException("Error linking Shader code: " + glGetProgramInfoLog(programId, 1024));
-        }
-
-        // free up the vertex and fragment shaders
-        if (vertexShaderId != 0) {
-            glDetachShader(programId, vertexShaderId);
-        }
-        if (fragmentShaderId != 0) {
-            glDetachShader(programId, fragmentShaderId);
-        }
-
-        // validate the program
-        // this may fail even when it works fine so only show the message in a dev environment
-        if (LadyLib.isDevEnv()) {
-            glValidateProgram(programId);
-            if (glGetProgrami(programId, GL_VALIDATE_STATUS) == 0) {
-                System.err.println("Warning validating Shader code:" + glGetProgramInfoLog(programId, 1024));
-            }
-        }
-
-
-        return programId;
-    }
-
-    /**
-     * Renders Minecraft's main framebuffer using the current shader.
-     * <p>
-     *     Note that the shader will be reverted automatically during the operation.
-     *     Calling this method with no shader bound will not have any apparent result.
-     * </p>
-     * FIXME I don't know how framebuffers work
-     */
-    public static void renderMainWithShaders() {
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-        GlStateManager.disableBlend();
-        GlStateManager.disableDepth();
-        GlStateManager.disableAlpha();
-        GlStateManager.disableFog();
-        GlStateManager.disableLighting();
-        GlStateManager.disableColorMaterial();
-        GlStateManager.enableTexture2D();
-        GlStateManager.bindTexture(0);
-
-        Framebuffer framebufferIn = Minecraft.getMinecraft().getFramebuffer();
-        Framebuffer framebufferOut = framebufferLL;
-        framebufferIn.unbindFramebuffer();
-        float f = framebufferOut.framebufferTextureWidth;
-        float f1 = framebufferOut.framebufferTextureHeight;
-        GlStateManager.viewport(0, 0, (int)f, (int)f1);
-
-        framebufferOut.framebufferClear();
-        framebufferOut.bindFramebuffer(false);
-        GlStateManager.depthMask(false);
-        GlStateManager.colorMask(true, true, true, true);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuffer();
-        bufferbuilder.begin(7, DefaultVertexFormats.POSITION_COLOR);
-        bufferbuilder.pos(0.0D, (double)f1, 500.0D).color(255, 255, 255, 255).endVertex();
-        bufferbuilder.pos((double)f, (double)f1, 500.0D).color(255, 255, 255, 255).endVertex();
-        bufferbuilder.pos((double)f, 0.0D, 500.0D).color(255, 255, 255, 255).endVertex();
-        bufferbuilder.pos(0.0D, 0.0D, 500.0D).color(255, 255, 255, 255).endVertex();
-        tessellator.draw();
-        GlStateManager.depthMask(true);
-        GlStateManager.colorMask(true, true, true, true);
-        framebufferOut.unbindFramebuffer();
-        framebufferIn.unbindFramebufferTexture();
     }
 
     /**
@@ -199,7 +86,7 @@ public class ShaderUtil {
      * @param program the reference to the desired shader (0 to remove any current shader)
      */
     public static void useShader(int program) {
-        if (shouldNotUseShaders()) {
+        if (!shouldUseShaders()) {
             return;
         }
 
@@ -216,7 +103,7 @@ public class ShaderUtil {
      * @param value       an int value for this uniform
      */
     public static void setUniform(String uniformName, int value) {
-        if (shouldNotUseShaders() || currentProgram == 0) {
+        if (!shouldUseShaders() || currentProgram == 0) {
             return;
         }
 
@@ -235,7 +122,7 @@ public class ShaderUtil {
      * @param values      between 1 and 4 float values
      */
     public static void setUniform(String uniformName, float... values) {
-        if (shouldNotUseShaders()) {
+        if (!shouldUseShaders()) {
             return;
         }
 
@@ -265,7 +152,7 @@ public class ShaderUtil {
      * @param mat4        a raw array of float values
      */
     public static void setUniform(String uniformName, FloatBuffer mat4) {
-        if (shouldNotUseShaders()) {
+        if (!shouldUseShaders()) {
             return;
         }
 
@@ -343,6 +230,156 @@ public class ShaderUtil {
      */
     public static void revert() {
         useShader(prevProgram);
+    }
+
+    /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+      Screen shaders, shaders that are applied during post processing
+    * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+    /**
+     * Enables a screen shader.
+     * <p>
+     *     Once such a shader is enabled, it will keep displaying until it is disabled or the game is quit.
+     * <p>
+     *     The location should point to a JSON file describing a shader in the vanilla Minecraft format.
+     *     Following vanilla's convention, it should be in <tt>yourmod:shaders/post/</tt>.
+     *     See vanilla shaders for examples.
+     * <p>
+     *     Unlike shaders enabled through {@link EntityRenderer#loadEntityShader(Entity)}, multiple shaders can
+     *     be enabled at once.
+     * @param location the location of the shader to load.
+     * @see #disableScreenShader(ResourceLocation) 
+     */
+    public static void enableScreenShader(ResourceLocation location) {
+        if (shouldUseShaders() && !screenShaders.containsKey(location)) {
+            try {
+                Minecraft mc = Minecraft.getMinecraft();
+                resetScreenShaders = true;
+                screenShaders.put(location, new ShaderGroup(mc.getTextureManager(), mc.getResourceManager(), mc.getFramebuffer(), location));
+            } catch (IOException e) {
+                LadyLib.LOGGER.error(new FormattedMessage("Could not enable screen shader {}", location), e);
+            }
+        }
+    }
+
+    /**
+     * Disables a screen shader.
+     * <p>
+     *     Calling this method when the shader has not been enabled has no effect.
+     * @param location the location used to load the shader
+     * @see #enableScreenShader(ResourceLocation)
+     */
+    public static void disableScreenShader(ResourceLocation location) {
+        if (screenShaders.containsKey(location)) {
+            screenShaders.remove(location).deleteShaderGroup();
+        }
+    }
+
+    @SubscribeEvent
+    public static void renderScreenShaders(RenderGameOverlayEvent.Pre event) {
+        if (shouldUseShaders() && !screenShaders.isEmpty() && event.getType() == RenderGameOverlayEvent.ElementType.ALL) {
+            resetScreenShaders();
+            GlStateManager.matrixMode(GL11.GL_TEXTURE);
+            GlStateManager.loadIdentity();
+            for (ShaderGroup shaderGroup : screenShaders.values()) {
+                GlStateManager.pushMatrix();
+                setScreenUniform(shaderGroup);
+                shaderGroup.render(event.getPartialTicks());
+                GlStateManager.popMatrix();
+            }
+            Minecraft.getMinecraft().getFramebuffer().bindFramebuffer(true);
+        }
+    }
+
+    public static void setScreenUniform(ShaderGroup shaderGroup) {
+        for (Shader shader : shaderGroup.listShaders) {
+            shader.getShaderManager().getShaderUniformOrDefault("SystemTime").set(System.currentTimeMillis());
+        }
+    }
+
+    private static void resetScreenShaders() {
+        Minecraft mc = Minecraft.getMinecraft();
+        if (resetScreenShaders || mc.displayWidth != oldDisplayWidth || oldDisplayHeight != mc.displayHeight) {
+            for (ShaderGroup sg : screenShaders.values()) {
+                sg.createBindFramebuffers(mc.displayWidth, mc.displayHeight);
+            }
+
+            oldDisplayWidth = mc.displayWidth;
+            oldDisplayHeight = mc.displayHeight;
+            resetScreenShaders = false;
+        }
+    }
+
+    /**
+     * Loads and links all registered shaders
+     *
+     * @param resourceManager Minecraft's resource manager
+     */
+    private static void loadShaders(IResourceManager resourceManager) {
+        if (!shouldUseShaders()) {
+            return;
+        }
+        Map<ResourceLocation, Pair<ResourceLocation, ResourceLocation>> registeredShaders = new HashMap<>();
+        MinecraftForge.EVENT_BUS.post(new ShaderRegistryEvent(registeredShaders));
+        registeredShaders.forEach((rl, sh) -> linkedShaders.put(rl, loadShader(resourceManager, sh.getLeft(), sh.getRight())));
+    }
+
+    /**
+     * Initializes a program with one or two shaders
+     *
+     * @param vertexLocation   the name or relative location of the vertex shader
+     * @param fragmentLocation the name or relative location of the fragment shader
+     * @return the reference to the initialized program
+     */
+    private static int loadShader(IResourceManager resourceManager, @Nullable ResourceLocation vertexLocation, @Nullable ResourceLocation fragmentLocation) {
+
+        // program creation
+        int programId = OpenGlHelper.glCreateProgram();
+
+        int vertexShaderId = 0;
+        int fragmentShaderId = 0;
+
+        // vertex shader creation
+        if (vertexLocation != null) {
+            vertexShaderId = OpenGlHelper.glCreateShader(OpenGlHelper.GL_VERTEX_SHADER);
+            ARBShaderObjects.glShaderSourceARB(vertexShaderId, fromFile(resourceManager, vertexLocation));
+            OpenGlHelper.glCompileShader(vertexShaderId);
+            OpenGlHelper.glAttachShader(programId, vertexShaderId);
+        }
+
+        // fragment shader creation
+        if (fragmentLocation != null) {
+            fragmentShaderId = OpenGlHelper.glCreateShader(OpenGlHelper.GL_FRAGMENT_SHADER);
+            ARBShaderObjects.glShaderSourceARB(fragmentShaderId, fromFile(resourceManager, fragmentLocation));
+            OpenGlHelper.glCompileShader(fragmentShaderId);
+            OpenGlHelper.glAttachShader(programId, fragmentShaderId);
+        }
+
+        OpenGlHelper.glLinkProgram(programId);
+        // check potential linkage errors
+        if (glGetProgrami(programId, GL_LINK_STATUS) == 0) {
+            throw new RuntimeException("Error linking Shader code: " + glGetProgramInfoLog(programId, 1024));
+        }
+
+        // free up the vertex and fragment shaders
+        if (vertexShaderId != 0) {
+            glDetachShader(programId, vertexShaderId);
+        }
+        if (fragmentShaderId != 0) {
+            glDetachShader(programId, fragmentShaderId);
+        }
+
+        // validate the program
+        // this may fail even when it works fine so only show the message in a dev environment
+        if (LadyLib.isDevEnv()) {
+            glValidateProgram(programId);
+            if (glGetProgrami(programId, GL_VALIDATE_STATUS) == 0) {
+                System.err.println("Warning validating Shader code:" + glGetProgramInfoLog(programId, 1024));
+            }
+        }
+
+
+        return programId;
     }
 
     /**
