@@ -7,10 +7,13 @@ import ladylib.LadyLib;
 import ladylib.registration.AutoRegister;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
+import net.minecraftforge.fml.common.asm.transformers.deobf.FMLDeobfuscatingRemapper;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.IForgeRegistryEntry;
+import org.objectweb.asm.Type;
 
+import javax.annotation.Nullable;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.AnnotatedElement;
@@ -19,30 +22,45 @@ import java.util.Optional;
 
 abstract class AutoRegistryRef<T extends AnnotatedElement> {
     static final LoadingCache<Class<?>, Optional<MethodHandle>> UNLOCALIZED_NAMES_CACHE = CacheBuilder.newBuilder()
-            .build(CacheLoader.from(type -> {
-                if (type == null) {
+            .build(new CacheLoader<Class<?>, Optional<MethodHandle>>() {
+                @Override
+                public Optional<MethodHandle> load(@Nullable Class<?> type) {
+                    if (type == null) {
+                        return Optional.empty();
+                    }
+                    try {
+                        Method m;
+                        // Items and blocks have different obfuscated names for their setTranslationKey method
+                        if (Item.class.isAssignableFrom(type)) {
+                            m = findSetTranslationKey(Item.class, "func_77655_b");
+                        } else if (Block.class.isAssignableFrom(type)) {
+                            m = findSetTranslationKey(Block.class, "func_149663_c");
+                        } else {
+                            // If it has a setTranslationKey method, it is not from vanilla so not obfuscated
+                            m = findSetTranslationKey(type, "setTranslationKey");
+                            if (m == null) {    // account for older naming schemes
+                                m = findSetTranslationKey(type, "setUnlocalizedName");
+                            }
+                        }
+                        if (m != null) {
+                            return Optional.of(MethodHandles.lookup().unreflect(m));
+                        }
+                    } catch (IllegalAccessException e) {
+                        LadyLib.LOGGER.error("Error while getting a setUnlocalizedName handle", e);
+                    }
                     return Optional.empty();
                 }
-                try {
-                    Method m;
-                    // Items and blocks have different obfuscated names for their setTranslationKey method
-                    if (Item.class.isAssignableFrom(type)) {
-                        m = ReflectionHelper.findMethod(Item.class, "setTranslationKey", "func_77655_b", String.class);
-                    } else if (Block.class.isAssignableFrom(type)) {
-                        m = ReflectionHelper.findMethod(Block.class, "setTranslationKey", "func_149663_c", String.class);
-                    } else    // If it has a setTranslationKey method, it is not from vanilla so not obfuscated
-                    {
-                        m = type.getMethod("setTranslationKey", String.class);
+
+                private Method findSetTranslationKey(Class<?> clazz, String obfName) {
+                    Method ret = null;
+                    try {
+                        String deobfName = FMLDeobfuscatingRemapper.INSTANCE.mapMethodName(clazz.getName().replace('.', '/'), obfName, "(Ljava/lang/String;)" + Type.getDescriptor(clazz));
+                        ret = ReflectionHelper.findMethod(clazz, deobfName, obfName, String.class);
+                    } catch (ReflectionHelper.UnableToFindMethodException ignored) {
                     }
-                    if (m != null) {
-                        return Optional.of(MethodHandles.lookup().unreflect(m));
-                    }
-                } catch (NoSuchMethodException ignored) {
-                } catch (IllegalAccessException e) {
-                    LadyLib.LOGGER.error("Error while getting a getUnlocalizedName handle", e);
+                    return ret;
                 }
-                return Optional.empty();
-            }));
+            });
 
     T referenced;
     String modId;
@@ -93,6 +111,6 @@ abstract class AutoRegistryRef<T extends AnnotatedElement> {
 
     abstract boolean isValidForRegistry(IForgeRegistry<?> registry);
 
-    abstract <V extends IForgeRegistryEntry> V nameAndGet();
+    abstract IForgeRegistryEntry nameAndGet();
 
 }

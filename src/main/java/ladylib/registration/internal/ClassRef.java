@@ -24,7 +24,7 @@ class ClassRef<T extends IForgeRegistryEntry<T>> extends AutoRegistryRef<Class<T
 
     @SuppressWarnings("unchecked")
     @Override
-    T nameAndGet() {
+    IForgeRegistryEntry nameAndGet() {
         String name = referenced.getName().toLowerCase(Locale.ENGLISH);
         value.setRegistryName(new ResourceLocation(modId, name));
         return value;

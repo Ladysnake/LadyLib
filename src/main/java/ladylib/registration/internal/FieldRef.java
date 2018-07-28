@@ -20,9 +20,8 @@ class FieldRef extends AutoRegistryRef<Field> {
         return registry.getRegistrySuperType().isAssignableFrom(referenced.getType());
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    <V extends IForgeRegistryEntry> V nameAndGet() {
+    IForgeRegistryEntry nameAndGet() {
         try {
             String name = referenced.getName().toLowerCase(Locale.ENGLISH);
             IForgeRegistryEntry value = ((IForgeRegistryEntry) referenced.get(null));
@@ -38,9 +37,9 @@ class FieldRef extends AutoRegistryRef<Field> {
                     throwable.printStackTrace();
                 }
             });
-            return (V) value;
+            return value;
         } catch (ExecutionException | IllegalAccessException e) {
-            LadyLib.LOGGER.error("Could not access an auto registered referenced", e);
+            LadyLib.LOGGER.error("Could not access an auto registered reference", e);
         }
         return null;
     }
