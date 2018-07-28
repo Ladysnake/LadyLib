@@ -4,14 +4,13 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import ladylib.LadyLib;
+import ladylib.misc.ReflectionUtil;
 import ladylib.registration.AutoRegister;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
-import net.minecraftforge.fml.common.asm.transformers.deobf.FMLDeobfuscatingRemapper;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.IForgeRegistryEntry;
-import org.objectweb.asm.Type;
 
 import javax.annotation.Nullable;
 import java.lang.invoke.MethodHandle;
@@ -52,13 +51,11 @@ abstract class AutoRegistryRef<T extends AnnotatedElement> {
                 }
 
                 private Method findSetTranslationKey(Class<?> clazz, String obfName) {
-                    Method ret = null;
                     try {
-                        String deobfName = FMLDeobfuscatingRemapper.INSTANCE.mapMethodName(clazz.getName().replace('.', '/'), obfName, "(Ljava/lang/String;)" + Type.getDescriptor(clazz));
-                        ret = ReflectionHelper.findMethod(clazz, deobfName, obfName, String.class);
-                    } catch (ReflectionHelper.UnableToFindMethodException ignored) {
+                        return ReflectionUtil.findMethodFromObfName(clazz, obfName, clazz, String.class);
+                    } catch (ReflectionHelper.UnableToFindMethodException e) {
+                        return null;
                     }
-                    return ret;
                 }
             });
 

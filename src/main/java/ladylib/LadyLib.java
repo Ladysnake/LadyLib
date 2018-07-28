@@ -14,7 +14,6 @@ import ladylib.registration.ItemRegistrar;
 import ladylib.registration.internal.AutoRegistrar;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraft.nbt.NBTBase;
-import net.minecraft.nbt.NBTTagString;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.*;
 import net.minecraftforge.fml.common.discovery.ASMDataTable;
@@ -208,9 +207,6 @@ public class LadyLib {
         registrar.autoRegisterTileEntities(dataTable);
         injectContainers(dataTable);
         DefaultValuesSearch.searchDefaultValues(dataTable);
-
-        NBTTagString nbtTagString = new NBTTagString();
-        LadyLib.fromNBT(nbtTagString, int.class);
     }
 
     /**
