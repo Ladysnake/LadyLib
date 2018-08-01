@@ -19,7 +19,7 @@ public class HTTPRequestHelper {
     private static final Gson GSON = new Gson();
     private static final Executor THREAD_POOL = new ThreadPoolExecutor(
             0,
-            3,
+            15,
             60, TimeUnit.SECONDS,
             new SynchronousQueue<>(),
             runnable -> new Thread(runnable, "LadyLib HTTP Helper")
@@ -81,7 +81,7 @@ public class HTTPRequestHelper {
             URLConnection page = openUrlConnection(url);
             if (page instanceof HttpURLConnection) {
                 int code = ((HttpURLConnection) page).getResponseCode();
-                if (code <= 200 || code > 299) {
+                if (code < 200 || code > 299) {
                     throw new RuntimeException("Got a bad response code from the server (code " + code + ")");
                 }
             }

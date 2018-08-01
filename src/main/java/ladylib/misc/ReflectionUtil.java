@@ -4,6 +4,7 @@ import net.minecraftforge.fml.common.asm.transformers.deobf.FMLDeobfuscatingRema
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToFindFieldException;
 import net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToFindMethodException;
+import org.jetbrains.annotations.Contract;
 import org.objectweb.asm.Type;
 
 import java.lang.invoke.*;
@@ -73,6 +74,7 @@ public class ReflectionUtil {
      * @return The method with the specified name and parameters in the given class.
      * @throws UnableToFindMethodException if an issue prevents the method from being reflected
      */
+    @Contract(pure = true)
     public static Method findMethodFromObfName(Class<?> clazz, String methodObfName, Class<?> returnType, Class<?>... parameterTypes) throws UnableToFindMethodException {
         String methodDesc = Type.getMethodDescriptor(Type.getType(returnType), Arrays.stream(parameterTypes).map(Type::getType).toArray(Type[]::new));
         String deobfName = FMLDeobfuscatingRemapper.INSTANCE.mapMethodName(clazz.getName().replace('.', '/'), methodObfName, methodDesc);
@@ -91,6 +93,7 @@ public class ReflectionUtil {
      * @return The field with the specified name and type in the given class.
      * @throws UnableToFindFieldException if an issue prevents the field from being reflected
      */
+    @Contract(pure = true)
     public static Field findFieldFromObfName(Class<?> clazz, String fieldObfName, Class<?> type) throws UnableToFindFieldException {
         String deobfName = FMLDeobfuscatingRemapper.INSTANCE.mapFieldName(clazz.getName().replace('.', '/'), fieldObfName, Type.getType(type).getDescriptor());
         return ReflectionHelper.findField(clazz, fieldObfName, deobfName);
@@ -110,6 +113,7 @@ public class ReflectionUtil {
      * @return A handle for the method with the specified name and parameters in the given class.
      * @throws UnableToFindMethodException if an issue prevents the method from being reflected
      */
+    @Contract(pure = true)
     public static MethodHandle findMethodHandleFromObfName(Class<?> clazz, String methodObfName, Class<?> returnType, Class<?>... parameterTypes) throws UnableToFindMethodException {
         try {
             return MethodHandles.lookup().unreflect(findMethodFromObfName(clazz, methodObfName, returnType, parameterTypes));
@@ -130,6 +134,7 @@ public class ReflectionUtil {
      * @return A handle for the getter of the field with the specified name and type in the given class.
      * @throws UnableToFindFieldException if an issue prevents the field from being reflected
      */
+    @Contract(pure = true)
     public static MethodHandle findGetterFromObfName(Class<?> clazz, String fieldObfName, Class<?> type) throws UnableToFindFieldException {
         try {
             return MethodHandles.lookup().unreflectGetter(findFieldFromObfName(clazz, fieldObfName, type));
@@ -150,6 +155,7 @@ public class ReflectionUtil {
      * @return A handle for the setter of the field with the specified name and type in the given class.
      * @throws UnableToFindFieldException if an issue prevents the field from being reflected
      */
+    @Contract(pure = true)
     public static MethodHandle findSetterFromObfName(Class<?> clazz, String fieldObfName, Class<?> type) throws UnableToFindFieldException {
         try {
             return MethodHandles.lookup().unreflectSetter(findFieldFromObfName(clazz, fieldObfName, type));
