@@ -3,7 +3,6 @@ package ladylib.client.shader;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.IContextSetter;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Map;
 
@@ -11,9 +10,9 @@ import java.util.Map;
  * Register your shaders when you receive this event
  */
 public class ShaderRegistryEvent extends Event implements IContextSetter {
-    private final Map<ResourceLocation, Pair<ResourceLocation, ResourceLocation>> registeredShaders;
+    private final Map<ResourceLocation, ShaderPair> registeredShaders;
 
-    public ShaderRegistryEvent(Map<ResourceLocation, Pair<ResourceLocation, ResourceLocation>> registeredShaders) {
+    public ShaderRegistryEvent(Map<ResourceLocation, ShaderPair> registeredShaders) {
         this.registeredShaders = registeredShaders;
     }
 
@@ -46,7 +45,7 @@ public class ShaderRegistryEvent extends Event implements IContextSetter {
      * @param fragment   the file name of the fragment shader, extension included
      */
     public void registerShader(ResourceLocation identifier, ResourceLocation vertex, ResourceLocation fragment) {
-        registeredShaders.put(identifier, Pair.of(vertex, fragment));
+        registeredShaders.put(identifier, new ShaderPair(fragment, vertex));
     }
 
 }

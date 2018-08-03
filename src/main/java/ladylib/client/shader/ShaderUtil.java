@@ -19,7 +19,6 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.message.FormattedMessage;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.ARBShaderObjects;
@@ -33,6 +32,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -319,9 +319,15 @@ public class ShaderUtil {
         if (!shouldUseShaders()) {
             return;
         }
-        Map<ResourceLocation, Pair<ResourceLocation, ResourceLocation>> registeredShaders = new HashMap<>();
+        Map<ResourceLocation, ShaderPair> registeredShaders = new HashMap<>();
         MinecraftForge.EVENT_BUS.post(new ShaderRegistryEvent(registeredShaders));
-        registeredShaders.forEach((rl, sh) -> linkedShaders.put(rl, loadShader(resourceManager, sh.getLeft(), sh.getRight())));
+        registeredShaders.forEach((rl, sh) -> {
+            try {
+                linkedShaders.put(rl, loadShader(resourceManager, sh.getVertex(), sh.getFragment()));
+            } catch (Exception e) {
+                LadyLib.LOGGER.error(new FormattedMessage("Could not create shader {} from vertex {} and fragment {}", rl, sh.getVertex(), sh.getFragment(), e));
+            }
+        });
     }
 
     /**
@@ -331,7 +337,7 @@ public class ShaderUtil {
      * @param fragmentLocation the name or relative location of the fragment shader
      * @return the reference to the initialized program
      */
-    private static int loadShader(IResourceManager resourceManager, @Nullable ResourceLocation vertexLocation, @Nullable ResourceLocation fragmentLocation) {
+    private static int loadShader(IResourceManager resourceManager, @Nullable ResourceLocation vertexLocation, @Nullable ResourceLocation fragmentLocation) throws IOException {
 
         // program creation
         int programId = OpenGlHelper.glCreateProgram();
@@ -343,16 +349,24 @@ public class ShaderUtil {
         if (vertexLocation != null) {
             vertexShaderId = OpenGlHelper.glCreateShader(OpenGlHelper.GL_VERTEX_SHADER);
             ARBShaderObjects.glShaderSourceARB(vertexShaderId, fromFile(resourceManager, vertexLocation));
-            OpenGlHelper.glCompileShader(vertexShaderId);
-            OpenGlHelper.glAttachShader(programId, vertexShaderId);
+            ARBShaderObjects.glCompileShaderARB(vertexShaderId);
+            ARBShaderObjects.glAttachObjectARB(programId, vertexShaderId);
+            String log = glGetShaderInfoLog(vertexShaderId, 1024);
+            if (!log.isEmpty()) {
+                LadyLib.LOGGER.error("Could not compile vertex shader " + vertexLocation + ": " + log);
+            }
         }
 
         // fragment shader creation
         if (fragmentLocation != null) {
             fragmentShaderId = OpenGlHelper.glCreateShader(OpenGlHelper.GL_FRAGMENT_SHADER);
             ARBShaderObjects.glShaderSourceARB(fragmentShaderId, fromFile(resourceManager, fragmentLocation));
-            OpenGlHelper.glCompileShader(fragmentShaderId);
-            OpenGlHelper.glAttachShader(programId, fragmentShaderId);
+            ARBShaderObjects.glCompileShaderARB(fragmentShaderId);
+            ARBShaderObjects.glAttachObjectARB(programId, fragmentShaderId);
+            String log = glGetShaderInfoLog(fragmentShaderId, 1024);
+            if (!log.isEmpty()) {
+                LadyLib.LOGGER.error("Could not compile fragment shader " + fragmentLocation + ": " + log);
+            }
         }
 
         OpenGlHelper.glLinkProgram(programId);
@@ -388,21 +402,16 @@ public class ShaderUtil {
      * @param fileLocation the path to the file to read
      * @return a string with the content of the file
      */
-    private static String fromFile(IResourceManager resourceManager, ResourceLocation fileLocation) {
+    private static String fromFile(IResourceManager resourceManager, ResourceLocation fileLocation) throws IOException {
         StringBuilder source = new StringBuilder();
 
         try (InputStream in = resourceManager.getResource(fileLocation).getInputStream();
-             BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"))) {
+             BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 source.append(line).append('\n');
             }
-        } catch (IOException exc) {
-            LadyLib.LOGGER.error(exc);
-        } catch (NullPointerException e) {
-            LadyLib.LOGGER.error(e + " : " + fileLocation + " does not exist");
         }
-
         return source.toString();
     }
 
