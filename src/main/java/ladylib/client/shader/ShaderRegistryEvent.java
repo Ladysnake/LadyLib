@@ -17,6 +17,46 @@ public class ShaderRegistryEvent extends Event implements IContextSetter {
     }
 
     /**
+     * Convenience method to register a fragment shader using the default <tt>vertex_base</tt>. <br>
+     * The corresponding program will be created and linked during the next ResourceManager reloading.
+     *
+     * <p>
+     *     <u>Example:</u> Using the identifier <tt>gaspunk:gas_overlay</tt> will register a shader using
+     *     the file <tt>assets/ladylib/shaders/vertex_base.vsh</tt> as its vertex shader and
+     *     <tt>assets/gaspunk/shaders/gas_overlay.fsh</tt> as its fragment shader.
+     * </p>
+     *
+     * @param identifier the name of the fragment shader, minus the file extension
+     */
+    public void registerFragmentShader(ResourceLocation identifier) {
+        registerShader(
+                identifier,
+                BaseShaders.BASE_VERTEX,
+                new ResourceLocation(identifier.getNamespace(), ShaderUtil.SHADER_LOCATION_PREFIX + identifier.getPath() + ".fsh")
+        );
+    }
+
+    /**
+     * Convenience method to register a vertex shader using the default <tt>fragment_base</tt>. <br>
+     * The corresponding program will be created and linked during the next ResourceManager reloading.
+     *
+     * <p>
+     *     <u>Example:</u> Using the identifier <tt>gaspunk:gas_overlay</tt> will register a shader using
+     *     the file <tt>assets/gaspunk/shaders/gas_overlay.vsh</tt> as its vertex shader and
+     *     <tt>assets/ladylib/shaders/fragment_base.fsh</tt> as its fragment shader.
+     * </p>
+     *
+     * @param identifier the name of the fragment shader, minus the file extension
+     */
+    public void registerVertexShader(ResourceLocation identifier) {
+        registerShader(
+                identifier,
+                new ResourceLocation(identifier.getNamespace(), ShaderUtil.SHADER_LOCATION_PREFIX + identifier.getPath() + ".vsh"),
+                BaseShaders.BASE_FRAGMENT
+        );
+    }
+
+    /**
      * Convenience method to register a shader with the fragment and vertex shaders having the same name <br>
      * The corresponding program will be created and linked during the next ResourceManager reloading.
      *
