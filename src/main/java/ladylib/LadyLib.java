@@ -5,6 +5,7 @@ import com.google.common.collect.SetMultimap;
 import com.google.gson.reflect.TypeToken;
 import ladylib.client.ClientHandler;
 import ladylib.client.particle.LLParticleManager;
+import ladylib.installer.ModEntry;
 import ladylib.nbt.NBTDeserializationException;
 import ladylib.nbt.NBTTypeAdapter;
 import ladylib.nbt.TagAdapters;
@@ -214,7 +215,9 @@ public class LadyLib {
      */
     @Mod.EventHandler
     public void init(@Nonnull FMLInitializationEvent event) {
-
+        if (event.getSide().isClient()) {
+            ModEntry.searchLadysnakeMods();
+        }
     }
 
     /**

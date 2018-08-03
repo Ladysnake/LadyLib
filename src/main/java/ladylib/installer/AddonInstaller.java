@@ -1,5 +1,6 @@
 package ladylib.installer;
 
+import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -14,7 +15,7 @@ import net.minecraftforge.fml.relauncher.libraries.ModList;
 import net.minecraftforge.fml.relauncher.libraries.Repository;
 import net.minecraftforge.fml.relauncher.libraries.SnapshotJson;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.message.FormattedMessage;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
@@ -48,52 +49,47 @@ public class AddonInstaller {
     private static final Gson GSON = new GsonBuilder().setLenient().setPrettyPrinting().create();
 
     /**
-     * Downloads the latest file uploaded on Curseforge for the current Minecraft Version <br>
-     * Exceptions will be automatically caught and logged.
+     * Downloads and installs the latest file uploaded on Curseforge for the project associated with the given mod.
+     * <p>
+     * This method uses <a href="https://github.com/NikkyAI/CurseProxy/blob/master/README.md">NikkyAI's Curse API</a>
+     * to obtain the latest file uploaded for the current Minecraft version. As such, <em>it is required that the passed in
+     * mod entry has a valid Curseforge project ID.</em> It will then download that file
+     * and install it using Forge's {@link ModList} system. Required project dependencies are installed recursively.
+     * <p>
+     * The returned {@link CompletableFuture} has as its result the list of every file that been successfully
+     * downloaded during the operation.
+     * Any exception thrown during the installation will be logged and update the mod entry's installation state,
+     * notifying the user of the {@link ladylib.installer.InstallationState.Status#FAILED failure}.
+     * <p>
+     * The passed in mod entry will see its {@link ModEntry#getInstallationState() installation state}
+     * updated adequately during the process.
      *
-     * @param projectId the numeric id of the CF project
+     * @param mod              a mod entry containing at least the numeric id of the CF project
      * @return a future that can be used to trigger other tasks once the installation has ended
-     * @see #downloadLatestFromCurseforge(String, boolean)
      */
-    public static CompletableFuture<List<File>> downloadLatestFromCurseforge(String projectId) {
-        return downloadLatestFromCurseforge(projectId, true);
-    }
-
-    /**
-     * Downloads the latest file uploaded on Curseforge for the current Minecraft Version
-     *
-     * @param projectId        the numeric id of the CF project
-     * @param handleExceptions if true, exceptional completions will be automatically caught and logged
-     * @return a future that can be used to trigger other tasks once the installation has ended
-     * @see #downloadLatestFromCurseforge(String)
-     */
-    public static CompletableFuture<List<File>> downloadLatestFromCurseforge(String projectId, boolean handleExceptions) {
-        if (!StringUtils.isNumeric(projectId)) {
-            throw new IllegalArgumentException(projectId + " is not a valid project id (should be a number)");
-        }
+    public static CompletableFuture<List<File>> installLatestFromCurseforge(ModEntry mod) {
         // holder class for required values
         class ParamHolder {
-            private String projectId, fileName, fileId;
+            private String fileName, fileId;
 
-            public ParamHolder(String projectId, String fileName, String fileId) {
-                this.projectId = projectId;
+            private ParamHolder(String fileName, String fileId) {
                 this.fileName = fileName;
                 this.fileId = fileId;
             }
         }
         URL apiUrl;
         try {
-            apiUrl = new URL("https://curse.nikky.moe/api/addon/" + projectId);
+            apiUrl = new URL("https://curse.nikky.moe/api/addon/" + mod.getCurseid());
         } catch (MalformedURLException e) {
             throw new IllegalStateException(e);
         }
-        CompletableFuture<List<File>> ret = HTTPRequestHelper.getJSON(apiUrl)
+        mod.setInstallationState(new InstallationState(InstallationState.Status.INSTALLING, "Downloading latest version"));
+        return HTTPRequestHelper.getJSON(apiUrl)
                 .thenApply(json -> {
                     // Identify the latest file for the current Minecraft Version
                     for (JsonElement el : json.getAsJsonObject().get("gameVersionLatestFiles").getAsJsonArray()) {
                         if (MinecraftForge.MC_VERSION.equals(el.getAsJsonObject().get("gameVersion").getAsString())) {
                             return new ParamHolder(
-                                    projectId,
                                     el.getAsJsonObject().get("projectFileName").getAsString(),
                                     el.getAsJsonObject().get("projectFileID").getAsString()
                             );
@@ -101,27 +97,32 @@ public class AddonInstaller {
                     }
                     throw new InstallationException("No file has been uploaded on project " + json.getAsJsonObject().get("webSiteURL") + " for version " + MinecraftForge.MC_VERSION);
                 })
-                .thenCompose(holder -> downloadFromCurseforge(holder.projectId, holder.fileName, holder.fileId))
+                .thenCompose(holder -> downloadFromCurseforge(mod, holder.fileName, holder.fileId))
                 .thenApplyAsync(
                         list -> list.stream()
                                 .map(CompletableFuture::join)
                                 .flatMap(List::stream)
                                 .collect(Collectors.toList()),
                         ForkJoinPool.commonPool()   // wait on another thread to avoid deadlock
-                );
-        if (handleExceptions) {
-            ret = ret.exceptionally(t -> {
-                LadyLib.LOGGER.error("Failed to install latest file from curse project " + projectId, t);
-                return new ArrayList<>();
-            });
-        }
-        return ret;
+                )
+                .handle((result, t) -> {
+                    if (t != null) {
+                        LadyLib.LOGGER.error(new FormattedMessage("Could not download latest file of {} (project {})", mod.getName(), mod.getCurseid()), t);
+                        mod.setInstallationState(new InstallationState(InstallationState.Status.FAILED, "Could not install, check logs for more information"));
+                        // rethrow the exception in case someone wants to do something else with it
+                        Throwables.throwIfUnchecked(t);
+                        throw new RuntimeException(t);
+                    } else {
+                        mod.setInstallationState(new InstallationState(InstallationState.Status.INSTALLED, "The latest version has been installed successfully\nPlease restart the game"));
+                        return result;
+                    }
+                });
     }
 
-    private static CompletableFuture<List<CompletableFuture<List<File>>>> downloadFromCurseforge(String projectId, String fileName, @Nullable String fileId) {
+    private static CompletableFuture<List<CompletableFuture<List<File>>>> downloadFromCurseforge(final ModEntry mod, String fileName, @Nullable String fileId) {
         // get the project information from the public API
         try {
-            return HTTPRequestHelper.getJSON(new URL("https://curse.nikky.moe/api/addon/" + projectId + "/files"))
+            return HTTPRequestHelper.getJSON(new URL("https://curse.nikky.moe/api/addon/" + mod.getCurseid() + "/files"))
                     .thenApplyAsync(json -> {
                         // filter the files based on the name
                         JsonObject fileToDownload = null;
@@ -133,28 +134,41 @@ public class AddonInstaller {
                             }
                         }
                         if (fileToDownload == null) {
-                            throw new InstallationException("Could not find file " + fileName + " in project " + projectId);
+                            throw new InstallationException("Could not find file " + fileName + " in project " + mod.getCurseid());
                         }
-                        List<CompletableFuture<List<File>>> downloadedDependencies = new ArrayList<>();
+                        List<CompletableFuture<List<File>>> downloadedFiles = new ArrayList<>();
                         for (JsonElement dependency : fileToDownload.get("dependencies").getAsJsonArray()) {
                             JsonObject dep = dependency.getAsJsonObject();
                             if (dep.get("type").getAsString().equals("REQUIRED")) {
-                                downloadedDependencies.add(downloadLatestFromCurseforge(dep.get("addOnId").getAsString(), false));
+                                int depCurseId = dep.get("addOnId").getAsInt();
+                                // If there is an existing entry for that dependency, update it, otherwise use a dummy
+                                ModEntry depEntry = ModEntry.getLadysnakeMods().stream()
+                                        .filter(me -> me.getCurseid() == depCurseId)
+                                        .findAny()
+                                        .orElse(new DummyModEntry(depCurseId));
+                                // We want the exceptions to be thrown when joining
+                                downloadedFiles.add(installLatestFromCurseforge(depEntry));
                             }
                         }
                         // download this file from the associated url
                         String downloadURL = fileToDownload.getAsJsonObject().get("downloadURL").getAsString();
+                        mod.getInstallationState().setMessage("Downloading file " + fileName);
                         Path temp = downloadFile(fileName, downloadURL);
+                        mod.getInstallationState().setMessage("Installing file " + fileName);
                         // read required information and move to mod repository
                         File archived = moveToModRepository(temp);
-                        downloadedDependencies.add(CompletableFuture.completedFuture(Collections.singletonList(archived)));
-                        return downloadedDependencies;
+                        if (archived != null) {
+                            downloadedFiles.add(CompletableFuture.completedFuture(Collections.singletonList(archived)));
+                        }
+                        mod.getInstallationState().setMessage("Finishing installation");
+                        return downloadedFiles;
                     }, DOWNLOAD_THREAD);  // operate on the download thread to avoid concurrency issues with files
         } catch (MalformedURLException e) {
-            throw new InstallationException("Invalid slug " + projectId, e);
+            throw new InstallationException("Invalid project id " + mod.getCurseid(), e);
         }
     }
 
+    @Nullable
     private static File moveToModRepository(Path artifactPath) {
         Attributes meta;
         byte[] data;
@@ -194,6 +208,14 @@ public class AddonInstaller {
         }
         ModList list = ModList.create(modList, Launch.minecraftHome);
         Artifact artifact = readArtifact(list.getRepository(), meta);
+        if (artifact.getFile().exists()) {  // nothing to do here
+            try {
+                Files.delete(artifactPath);
+            } catch (IOException e) {
+                LadyLib.LOGGER.error("Could not delete temporary file " + artifactPath, e);
+            }
+            return null;
+        }
         if (!artifact.getFile().getParentFile().exists() && !artifact.getFile().getParentFile().mkdirs()) {
             throw new InstallationException("Could not create parent directories for " + artifact.getFile());
         }
@@ -212,8 +234,9 @@ public class AddonInstaller {
 
     private static Artifact readArtifact(Repository repo, Attributes meta) {
         String timestamp = meta.getValue(new Attributes.Name("Timestamp"));
-        if (timestamp != null)
+        if (timestamp != null) {
             timestamp = SnapshotJson.TIMESTAMP.format(new Date(Long.parseLong(timestamp)));
+        }
 
         return new Artifact(repo, meta.getValue(new Attributes.Name("Maven-Artifact")), timestamp);
     }
@@ -233,13 +256,4 @@ public class AddonInstaller {
         }
     }
 
-    public static class InstallationException extends RuntimeException {
-        public InstallationException(String message, Throwable cause) {
-            super(message, cause);
-        }
-
-        public InstallationException(String message) {
-            super(message);
-        }
-    }
 }

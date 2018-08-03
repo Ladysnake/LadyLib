@@ -5,6 +5,7 @@
     "description": "A library for Ladysnake's minecraft mods",
     "version": "${version}",
     "mcversion": "${mcversion}",
+    "url": "https://github.com/Ladysnake/LadyLib",
     "authorList": [
       "Pyrofab"
     ],

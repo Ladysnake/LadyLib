@@ -36,6 +36,10 @@ public class HTTPRequestHelper {
      * Do note that the callback will be called on a different thread and can be called at any time after it
      * was passed to this method. There is also a chance that it may not be called at all, for a number of reasons,
      * such as 404s, I/O exceptions and unexpected input.
+     * <p>
+     * This helper method automatically swallows any exception thrown by the JSON retrieval or the callback.
+     * For proper handling of those exceptions, use {@link #getJSON(URL) the alternative overload}.
+     * </p>
      *
      * @param url     A string containing the URL to which the request is sent.
      * @param success A callback function that is executed if the request succeeds.
