@@ -12,7 +12,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.TextureUtil;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.common.ForgeVersion;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Loader;
@@ -27,9 +26,8 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ModEntry {
     private static final String LADYSNAKE_MODS = "https://gist.githubusercontent.com/Pyrofab/000073b92e7a9de9f68b4da685ff80c5/raw/6f49c492c0d8879749175455d191a012a7e4431c/ladysnake_mods_test.json";
@@ -59,6 +57,7 @@ public class ModEntry {
     private URL updateUrl;
     private List<ModEntry> dlcs;
 
+    // the following variables are calculated from the serialized ones
     private transient boolean isDlc;
     private transient boolean installed;
     private transient boolean outdated;
@@ -66,6 +65,7 @@ public class ModEntry {
     private transient String installedVersion = "";
     private transient String latestVersion = "";
     private transient ResourceLocation logo;
+    private Map<ComparableVersion, String> changelog;
 
     private ModEntry() {
         super();
@@ -90,18 +90,23 @@ public class ModEntry {
     protected void init(boolean isDlc) {
         this.isDlc = isDlc;
         ModContainer installedMod = Loader.instance().getIndexedModList().get(modid);
-        // reuse Forge update checker's result if possible
         if (installedMod != null) {
             this.installed = true;
             this.installedVersion = installedMod.getVersion();
-            ForgeVersion.CheckResult checkResult = ForgeVersion.getResult(installedMod);
+            // reuse Forge update checker's result if possible
+            /*ForgeVersion.CheckResult checkResult = ForgeVersion.getResult(installedMod);
+            boolean successful = checkResult.status != ForgeVersion.Status.PENDING && checkResult.status != ForgeVersion.Status.FAILED;
+            if (successful) {
+                this.changelog = checkResult.changes;
+            }
             if (checkResult.target != null) {
                 this.latestVersion = checkResult.target.toString();
                 this.outdated = true;
-            } else if (checkResult.status != ForgeVersion.Status.PENDING && checkResult.status != ForgeVersion.Status.FAILED) {
+            } else if (successful) {
                 // Forge's check has been completed successfully and no newer version has been found
                 this.latestVersion = this.installedVersion;
-            }
+            }*/
+
         }
         // get the logo
         getLogo:
@@ -144,10 +149,20 @@ public class ModEntry {
                                 .get(MinecraftForge.MC_VERSION + "-latest").getAsString();
                         this.setLatestVersion(latestVersion);
                         outdated = (new ComparableVersion(this.installedVersion).compareTo(new ComparableVersion(latestVersion)) < 0);
+                        Map<String, String> temp = GSON.fromJson(json.getAsJsonObject().get(MinecraftForge.MC_VERSION + ""), new TypeToken<Map<String, String>>() {}.getType());
+                        this.setChangelog(temp.keySet().stream().collect(Collectors.toMap(ComparableVersion::new, temp::get, (s1, s2) -> s1, LinkedHashMap::new)));
                     });
         }
         this.dlcs.forEach(modEntry -> modEntry.init(true));
 
+    }
+
+    public synchronized Map<ComparableVersion, String> getChangelog() {
+        return changelog;
+    }
+
+    public synchronized void setChangelog(Map<ComparableVersion, String> changelog) {
+        this.changelog = changelog;
     }
 
     public boolean isDlc() {

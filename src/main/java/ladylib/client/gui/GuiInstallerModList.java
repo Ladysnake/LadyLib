@@ -16,6 +16,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.ForgeVersion;
 import net.minecraftforge.fml.client.GuiScrollingList;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -24,15 +25,13 @@ import java.util.stream.Collectors;
 public class GuiInstallerModList extends GuiScrollingList {
     private static final ResourceLocation VERSION_CHECK_ICONS = new ResourceLocation(ForgeVersion.MOD_ID, "textures/gui/version_check_icons.png");
     private final GuiModInstaller parent;
-    private List<ModEntry> entries;
     private List<ModEntry> flattenedEntries;
     private int selected = -1;
 
     public GuiInstallerModList(GuiModInstaller parent, List<ModEntry> entries, int listWidth, int slotHeight) {
         super(Minecraft.getMinecraft(), listWidth, parent.height, 32, parent.height - 88 + 4, 10, slotHeight, parent.width, parent.height);
         this.parent = parent;
-        this.entries = entries;
-        flattenEntries();
+        flattenEntries(entries);
     }
 
     @Override
@@ -43,6 +42,7 @@ public class GuiInstallerModList extends GuiScrollingList {
     @Override
     protected void elementClicked(int index, boolean doubleClick) {
         this.selected = index;
+        this.parent.onModEntrySelected();
         if (doubleClick) {
             ModEntry selected = flattenedEntries.get(index);
             if (!selected.isInstalled() && selected.getInstallationState().getStatus() == InstallationState.Status.NONE) {
@@ -54,6 +54,11 @@ public class GuiInstallerModList extends GuiScrollingList {
     @Override
     protected boolean isSelected(int index) {
         return index == selected;
+    }
+
+    @Nullable
+    public ModEntry getSelected() {
+        return selected >= 0 ? flattenedEntries.get(selected) : null;
     }
 
     @Override
@@ -149,15 +154,17 @@ public class GuiInstallerModList extends GuiScrollingList {
     }
 
     public void reloadMods() {
-        entries = ModEntry.getLadysnakeMods().stream()
+        // regenerate the flattened list
+        flattenEntries(
+                ModEntry.getLadysnakeMods().stream()
                 .filter(me -> me.getName().toLowerCase(Locale.ENGLISH).contains(parent.getSearchText()))    // select entries matching the search
                 .sorted(this.parent.getSortType())                              // sort according to current selection
-                .collect(Collectors.toList());
-        flattenEntries();                       // regenerate the flattened list
+                .collect(Collectors.toList())
+        );
     }
 
-    private void flattenEntries() {
-        this.flattenedEntries = this.entries.stream().flatMap(me -> {
+    private void flattenEntries(List<ModEntry> entries) {
+        this.flattenedEntries = entries.stream().flatMap(me -> {
             List<ModEntry> ret = new ArrayList<>(me.getDlcs());
             ret.sort(this.parent.getSortType());
             ret.add(0, me);

@@ -3,13 +3,16 @@ package ladylib.client.gui;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import ladylib.LadyLib;
+import ladylib.installer.InstallationState;
 import ladylib.installer.ModEntry;
+import ladylib.installer.ModWinder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.util.StringUtils;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.fml.client.config.GuiUtils;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
@@ -17,14 +20,19 @@ import org.lwjgl.input.Mouse;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
-@Mod.EventBusSubscriber(modid = LadyLib.MOD_ID, value = Side.CLIENT)
+@Mod.EventBusSubscriber(modid = ModWinder.MOD_ID, value = Side.CLIENT)
 public class GuiModInstaller extends GuiScreen {
-    private static final int BUTTON_ID = 88037256;
+    private static final int MODWINDER_BUTTON_ID = 88037256;
+    private static final int DONE_BUTTON_ID = 6;
+    private static final int CHANGELOG_BUTTON_ID = 7;
+    private static final int DESCRIPTION_BUTTON_ID = 8;
 
     @SubscribeEvent
     public static void onGuiScreenInitGui(GuiScreenEvent.InitGuiEvent.Post event) {
@@ -39,7 +47,7 @@ public class GuiModInstaller extends GuiScreen {
             List<GuiButton> buttons = event.getButtonList();
             for (GuiButton b : buttons)
                 if (target.equals(b.displayString)) {
-                    GuiButton installer = new GuiButton(BUTTON_ID, b.x + (-24), b.y, 20, 20, "LS");
+                    GuiButton installer = new GuiButton(MODWINDER_BUTTON_ID, b.x + (-24), b.y, 20, 20, "LS");
                     // check for colliding buttons
                     boolean collision = false;
                     // we are only moving along the x axis, we shouldn't have to check buttons that are not on the same line
@@ -60,7 +68,7 @@ public class GuiModInstaller extends GuiScreen {
 
     @SubscribeEvent
     public static void onGuiScreenActionPerformed(GuiScreenEvent.ActionPerformedEvent.Pre event) {
-        if (event.getGui() instanceof GuiMainMenu && event.getButton().id == BUTTON_ID) {
+        if (event.getGui() instanceof GuiMainMenu && event.getButton().id == MODWINDER_BUTTON_ID) {
             Minecraft.getMinecraft().displayGuiScreen(new GuiModInstaller(event.getGui()));
         }
     }
@@ -102,7 +110,8 @@ public class GuiModInstaller extends GuiScreen {
     private GuiScreen mainMenu;
     private GuiInstallerModList modList;
 
-    private int buttonMargin = 1;
+    private GuiButton changelogButton, descriptionButton;
+
     private int numButtons = SortType.values().length;
 
     private String lastFilterText = "";
@@ -122,7 +131,15 @@ public class GuiModInstaller extends GuiScreen {
         this.modList = new GuiInstallerModList(this, ModEntry.getLadysnakeMods(), this.width - 30, 35);
 
         // "Done" button
-        this.buttonList.add(new GuiButton(6, ((this.width) / 2) - 100, this.height - 38, I18n.format("gui.done")));
+        this.buttonList.add(new GuiButton(DONE_BUTTON_ID, ((this.width) / 2) - 100, this.height - 38, I18n.format("gui.done")));
+        // Changelog button
+        this.changelogButton = new GuiButton(CHANGELOG_BUTTON_ID, (3 * (this.width) / 4), this.height - 38, this.width / 5, 20, "Changelog");
+        this.changelogButton.enabled = false;
+        this.buttonList.add(changelogButton);
+        // CF description link
+        this.descriptionButton = new GuiButton(DESCRIPTION_BUTTON_ID, (3 * (this.width) / 4), this.height - 57, this.width / 5, 20, "Description");
+        this.descriptionButton.enabled = false;
+        this.buttonList.add(descriptionButton);
 
         // Search bar
         search = new GuiTextField(0, fontRenderer, 12 + 3 * this.modList.getListWidth() / 4, this.modList.getTop() - 17, this.modList.getListWidth() / 4 - 4, 14);
@@ -132,6 +149,7 @@ public class GuiModInstaller extends GuiScreen {
         // Sorting buttons
         int width = (this.modList.getListWidth() / 3 / numButtons);
         int x = 10, y = 10;
+        int buttonMargin = 1;
         GuiButton normalSort = new GuiButton(SortType.NORMAL.buttonID, x, y, width - buttonMargin, 20, I18n.format("fml.menu.mods.normal"));
         normalSort.enabled = false;
         buttonList.add(normalSort);
@@ -206,6 +224,8 @@ public class GuiModInstaller extends GuiScreen {
             GuiUtils.drawHoveringText(Lists.newArrayList(Splitter.on("\n").split(this.hoveringText)), mouseX, mouseY, width, height, -1, fontRenderer);
             hoveringText = null;
         }
+        String tip = "Double click on a mod to install the latest version";
+        this.drawString(this.fontRenderer, tip, this.width - 10 - fontRenderer.getStringWidth(tip), this.height - 10, 0xFFFF99);
     }
 
     /**
@@ -227,8 +247,40 @@ public class GuiModInstaller extends GuiScreen {
                 sortType = type;
             } else {
                 switch (button.id) {
-                    case 6: {
-                        this.mc.displayGuiScreen(this.mainMenu);
+                    case DONE_BUTTON_ID: {
+                        if (ModEntry.getLadysnakeMods().stream().map(ModEntry::getInstallationState).map(InstallationState::getStatus).anyMatch(InstallationState.Status.INSTALLED::equals)) {
+                            this.mc.displayGuiScreen(new GuiYesNo((confirm, i) -> {
+                                if (confirm) {
+                                    FMLCommonHandler.instance().exitJava(0, false);
+                                } else {
+                                    this.mc.displayGuiScreen(this.mainMenu);
+                                }
+                            }, "One or more mods have been installed", "Do you want to restart the game now ?", DONE_BUTTON_ID));
+                        } else {
+                            this.mc.displayGuiScreen(this.mainMenu);
+                        }
+                        return;
+                    }
+                    case CHANGELOG_BUTTON_ID: {
+                        ModEntry selected = this.modList.getSelected();
+                        if (selected != null && selected.getChangelog() != null) {
+                            this.mc.displayGuiScreen(new GuiModChangelog(this, selected.getChangelog()));
+                        }
+                        return;
+                    }
+                    case DESCRIPTION_BUTTON_ID: {
+                        ModEntry selected = this.modList.getSelected();
+                        if (selected != null) {
+                            String cfLink = "https://minecraft.curseforge.com/projects/" + selected.getCurseid();
+                            try {
+                                this.clickedLinkURI = new URI(cfLink);
+                                GuiConfirmOpenLink link = new GuiConfirmOpenLink(this, cfLink, 31102009, false);
+                                link.disableSecurityWarning();
+                                this.mc.displayGuiScreen(link);
+                            } catch (URISyntaxException e) {
+                                LadyLib.LOGGER.error("Can't open url for {}", cfLink, e);
+                            }
+                        }
                         return;
                     }
                 }
@@ -256,5 +308,10 @@ public class GuiModInstaller extends GuiScreen {
 
     public void setHoveringText(String hoveringText) {
         this.hoveringText = hoveringText;
+    }
+
+    public void onModEntrySelected() {
+        this.changelogButton.enabled = true;
+        this.descriptionButton.enabled = true;
     }
 }
