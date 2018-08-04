@@ -12,6 +12,7 @@ import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.fml.client.config.GuiUtils;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.relauncher.Side;
 import org.lwjgl.input.Mouse;
 
 import javax.annotation.Nullable;
@@ -21,7 +22,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
-@Mod.EventBusSubscriber(modid = LadyLib.MOD_ID)
+@Mod.EventBusSubscriber(modid = LadyLib.MOD_ID, value = Side.CLIENT)
 public class GuiModInstaller extends GuiScreen {
     private static final int BUTTON_ID = 88037256;
 
