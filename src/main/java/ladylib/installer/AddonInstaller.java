@@ -64,7 +64,7 @@ public class AddonInstaller {
      * The passed in mod entry will see its {@link ModEntry#getInstallationState() installation state}
      * updated adequately during the process.
      *
-     * @param mod              a mod entry containing at least the numeric id of the CF project
+     * @param mod a mod entry containing at least the numeric id of the CF project
      * @return a future that can be used to trigger other tasks once the installation has ended
      */
     public static CompletableFuture<List<File>> installLatestFromCurseforge(ModEntry mod) {
@@ -208,14 +208,7 @@ public class AddonInstaller {
         }
         ModList list = ModList.create(modList, Launch.minecraftHome);
         Artifact artifact = readArtifact(list.getRepository(), meta);
-        if (artifact.getFile().exists()) {  // nothing to do here
-            try {
-                Files.delete(artifactPath);
-            } catch (IOException e) {
-                LadyLib.LOGGER.error("Could not delete temporary file " + artifactPath, e);
-            }
-            return null;
-        }
+
         if (!artifact.getFile().getParentFile().exists() && !artifact.getFile().getParentFile().mkdirs()) {
             throw new InstallationException("Could not create parent directories for " + artifact.getFile());
         }
@@ -223,7 +216,9 @@ public class AddonInstaller {
         try {
             // remove the current version of the mod
             List<Artifact> artifacts = ReflectionHelper.getPrivateValue(ModList.class, list, "artifacts");
-            artifacts.removeIf(artifact::matchesID);
+            Map<String, Artifact> art_map = ReflectionHelper.getPrivateValue(ModList.class, list, "art_map");
+            // if the map contains that exact artifact, it will get replaced during list.add()
+            artifacts.removeIf(o -> !art_map.containsKey(o.toString()) && artifact.matchesID(o));
             list.add(artifact);
             list.save();
         } catch (IOException e) {
@@ -250,6 +245,8 @@ public class AddonInstaller {
             try (FileOutputStream fos = new FileOutputStream(temp.toFile())) {
                 fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
             }
+            // Make sure temporary files don't linger
+            temp.toFile().deleteOnExit();
             return temp;
         } catch (IOException e) {
             throw new InstallationException("Could not download file " + dest, e);
