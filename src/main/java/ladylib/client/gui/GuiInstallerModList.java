@@ -92,17 +92,19 @@ public class GuiInstallerModList extends GuiScrollingList {
 
         int color = 0x0000FF;
 
+        final int iconX = right - (height / 2 + 4);
+        final int iconY = slotTop + (height / 2 - 4);
+        final int iconWidth = 8;
+        final int iconHeight = 8;
 
         if ((!entry.isInstalled() || entry.isOutdated()) && entry.getInstallationState().getStatus().shouldDisplay()) {
             InstallationState state = entry.getInstallationState();
-            int x = right - (height / 2 + 4);
-            int y = slotTop + (height / 2 - 4);
             Minecraft.getMinecraft().getTextureManager().bindTexture(VERSION_CHECK_ICONS);
             GlStateManager.color(state.getStatus().getRed(), state.getStatus().getGreen(), state.getStatus().getBlue(), 1);
             GlStateManager.pushMatrix();
-            Gui.drawModalRectWithCustomSizedTexture(x, y, 3 * 8, 0, 8, 8, 64, 16);
+            Gui.drawModalRectWithCustomSizedTexture(iconX, iconY, 3 * iconWidth, 0, iconWidth, iconHeight, 64, 16);
             GlStateManager.popMatrix();
-            if (mouseX > x && mouseX < x + 8 && mouseY > y && mouseY < y + 8) {
+            if (mouseX > iconX && mouseX < iconX + iconWidth && mouseY > iconY && mouseY < iconY + iconHeight) {
                 parent.setHoveringText(state.getMessage());
             }
         } else if (!entry.isInstalled()) {
@@ -113,8 +115,11 @@ public class GuiInstallerModList extends GuiScrollingList {
             GlStateManager.color(1, 1, 1, 1);
             GlStateManager.pushMatrix();
             int v = (((System.currentTimeMillis() / 800 & 1)) == 1) ? 8 : 0;
-            Gui.drawModalRectWithCustomSizedTexture(right - (height / 2 + 4), slotTop + (height / 2 - 4), 3 * 8, v, 8, 8, 64, 16);
+            Gui.drawModalRectWithCustomSizedTexture(right - (height / 2 + 4), slotTop + (height / 2 - 4), 3 * iconWidth, v, iconWidth, iconHeight, 64, 16);
             GlStateManager.popMatrix();
+            if (mouseX > iconX && mouseX < iconX + iconWidth && mouseY > iconY && mouseY < iconY + iconHeight) {
+                parent.setHoveringText("This mod is outdated\nCurrently installed version: " + entry.getInstalledVersion());
+            }
         }
 
         font.drawString(font.trimStringToWidth(name,    listWidth - 10), left, slotTop +  2, 0xFFFFFF);
