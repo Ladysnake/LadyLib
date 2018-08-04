@@ -10,5 +10,16 @@
       "Pyrofab"
     ],
     "credits": "The modding community from which I have taken code and advice for this project."
+  },
+  {
+    "modid": "modwinder",
+    "name": "ModWinder",
+    "description": "Integrated installer for Ladysnake's minecraft mods",
+    "version": "1.0",
+    "mcversion": "${mcversion}",
+    "authorList": [
+      "Pyrofab"
+    ],
+    "parent": "ladylib"
   }
 ]
