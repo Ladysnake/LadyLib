@@ -6,12 +6,14 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import ladylib.LadyLib;
+import ladylib.misc.ReflectionUtil;
 import ladylib.networking.http.HTTPRequestHelper;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import net.minecraftforge.fml.relauncher.libraries.*;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.message.FormattedMessage;
 
 import javax.annotation.Nullable;
@@ -19,6 +21,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.invoke.MethodHandle;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.channels.Channels;
@@ -43,6 +46,7 @@ public class AddonInstaller {
      * A single thread used to download and manage files.
      */
     private static final Executor DOWNLOAD_THREAD = Executors.newSingleThreadExecutor(r -> new Thread(r, "Ladylib Installer"));
+    private static final MethodHandle libraryManager$extractPacked = ReflectionUtil.findMethodHandleFromObfName(LibraryManager.class, "extractPacked", Pair.class, File.class, ModList.class, File[].class);
     private static final Gson GSON = new GsonBuilder().setLenient().setPrettyPrinting().create();
 
     /**
@@ -217,8 +221,10 @@ public class AddonInstaller {
             // if the map contains that exact artifact, it will get replaced during list.add()
             artifacts.removeIf(o -> !art_map.containsKey(o.toString()) && artifact.matchesID(o));
             list.add(artifact);
+            // Extract contained files from the jar
+            libraryManager$extractPacked.invoke(artifact.getFile(), list, new File[] {modsDir});
             list.save();
-        } catch (IOException e) {
+        } catch (Throwable e) {
             throw new InstallationException("Could not archive downloaded mod " + artifact.getFilename(), e);
         }
         return artifact.getFile();
