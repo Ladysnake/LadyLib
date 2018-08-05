@@ -10,12 +10,14 @@ import java.util.function.Function;
 
 /**
  * AutoRegister can be used to automatically populate appropriate registries from the class' public static final fields.
- * It is effectively the counterpart to {@link net.minecraftforge.fml.common.registry.GameRegistry.ObjectHolder}
+ * It is effectively the counterpart to {@link net.minecraftforge.fml.common.registry.GameRegistry.ObjectHolder}.
  *
  * <p>
  * Blocks will be automatically associated with a corresponding ItemBlock. Use {@link NoItem} to prevent this behaviour.
  * Items will be automatically added to the mod's creative tab. Use {@link Unlisted} to hide an item.
- * </p>
+ * <p>
+ * Items will get a default model assigned based on their registry name.
+ * To control the render registration, use a custom {@link ladylib.client.ItemRenderRegistrationHandler}.
  *
  * @see Ignore
  */

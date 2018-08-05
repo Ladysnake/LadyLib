@@ -1,7 +1,7 @@
 package ladylib.misc;
 
 import ladylib.LadyLib;
-import ladylib.client.ICustomLocation;
+import ladylib.client.ItemRenderRegistrationHandler;
 import ladylib.registration.BlockRegistrar;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
@@ -50,7 +50,7 @@ public class TemplateUtil {
         TemplateUtil.srcRoot = srcRoot;
         List<String> createdModelFiles = LadyLib.instance.getItemRegistrar().getAllItems().stream()
                 .filter(item -> modid.equals(item.getRegistryName().getNamespace()))
-                .filter(itemIn -> !(itemIn instanceof ItemBlock) && !(itemIn instanceof ICustomLocation))
+                .filter(itemIn -> !(itemIn instanceof ItemBlock) && !(itemIn instanceof ItemRenderRegistrationHandler))
                 .map(Item::getRegistryName)
                 .map(TemplateUtil::generateItemModel)
                 .filter(Objects::nonNull)

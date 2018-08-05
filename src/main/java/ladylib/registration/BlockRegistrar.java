@@ -29,11 +29,9 @@ import java.util.function.Function;
  */
 public class BlockRegistrar {
 
-    private ItemRegistrar itemRegistrar;
-    /**
-     * A map tracking all registered blocks and their associated info
-     */
-    private Map<Block, BlockInfo> allBlocks = new HashMap<>();
+    /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+                        Utility methods
+     * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
     /**
      * Utility method to set at the same time an item's unlocalized and registry name. <br/>
@@ -49,9 +47,28 @@ public class BlockRegistrar {
         return block;
     }
 
-    public BlockRegistrar(ItemRegistrar itemRegistrar) {
-        this.itemRegistrar = itemRegistrar;
+    /**
+     * Maps all states of a block to a custom {@link net.minecraft.client.renderer.block.model.IBakedModel}
+     *
+     * @param block the block to be mapped
+     * @param rl    The model resource location for your custom baked model
+     */
+    @SideOnly(Side.CLIENT)
+    @SuppressWarnings("unused")
+    public static void registerSmartRender(@Nonnull Block block, @Nonnull ModelResourceLocation rl) {
+        StateMapperBase ignoreState = new StateMapperBase() {
+            @Nonnull
+            @Override
+            protected ModelResourceLocation getModelResourceLocation(@Nonnull IBlockState iBlockState) {
+                return rl;
+            }
+        };
+        ModelLoader.setCustomStateMapper(block, ignoreState);
     }
+
+     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+                        Registrar API methods
+     * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
     /**
      * Adds a block to be registered during {@link RegistryEvent.Register<Block>}
@@ -99,6 +116,25 @@ public class BlockRegistrar {
         return item;
     }
 
+    public Set<Block> getAllBlocks() {
+        return allBlocks.keySet();
+    }
+
+
+    /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+                            Internal
+     * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+    private ItemRegistrar itemRegistrar;
+    /**
+     * A map tracking all registered blocks and their associated info
+     */
+    private Map<Block, BlockInfo> allBlocks = new HashMap<>();
+
+    public BlockRegistrar(ItemRegistrar itemRegistrar) {
+        this.itemRegistrar = itemRegistrar;
+    }
+
     /**
      * Needs to be called after the main registrar has discovered all blocks
      */
@@ -112,34 +148,11 @@ public class BlockRegistrar {
         });
     }
 
-    /**
-     * Maps all states of a block to a custom {@link net.minecraft.client.renderer.block.model.IBakedModel}
-     *
-     * @param block the block to be mapped
-     * @param rl    The model resource location for your custom baked model
-     */
-    @SideOnly(Side.CLIENT)
-    @SuppressWarnings("unused")
-    public void registerSmartRender(@Nonnull Block block, @Nonnull ModelResourceLocation rl) {
-        StateMapperBase ignoreState = new StateMapperBase() {
-            @Nonnull
-            @Override
-            protected ModelResourceLocation getModelResourceLocation(@Nonnull IBlockState iBlockState) {
-                return rl;
-            }
-        };
-        ModelLoader.setCustomStateMapper(block, ignoreState);
-    }
-
-    public Set<Block> getAllBlocks() {
-        return allBlocks.keySet();
-    }
-
     class BlockInfo {
         @Nonnull
         String[] oreNames;
 
-        public BlockInfo(@Nonnull String[] oreNames) {
+        BlockInfo(@Nonnull String[] oreNames) {
             this.oreNames = oreNames;
         }
     }
