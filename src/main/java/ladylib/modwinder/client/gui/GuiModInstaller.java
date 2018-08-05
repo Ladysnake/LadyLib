@@ -1,11 +1,11 @@
-package ladylib.client.gui;
+package ladylib.modwinder.client.gui;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import ladylib.LadyLib;
-import ladylib.installer.InstallationState;
-import ladylib.installer.ModEntry;
-import ladylib.installer.ModWinder;
+import ladylib.modwinder.ModWinder;
+import ladylib.modwinder.installer.InstallationState;
+import ladylib.modwinder.installer.ModEntry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
 import net.minecraft.client.resources.I18n;

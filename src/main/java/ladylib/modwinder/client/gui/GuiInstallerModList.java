@@ -1,10 +1,9 @@
-package ladylib.client.gui;
+package ladylib.modwinder.client.gui;
 
-import ladylib.client.shader.BaseShaders;
 import ladylib.client.shader.ShaderUtil;
-import ladylib.installer.AddonInstaller;
-import ladylib.installer.InstallationState;
-import ladylib.installer.ModEntry;
+import ladylib.modwinder.installer.AddonInstaller;
+import ladylib.modwinder.installer.InstallationState;
+import ladylib.modwinder.installer.ModEntry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
@@ -81,7 +80,7 @@ public class GuiInstallerModList extends GuiScrollingList {
 
         Minecraft.getMinecraft().getTextureManager().bindTexture(entry.getLogo());
         GlStateManager.enableAlpha();
-        ShaderUtil.useShader(BaseShaders.ROUNDISH);
+        ShaderUtil.useShader(MWShaders.ROUNDISH);
         ShaderUtil.setUniform("saturation", entry.isInstalled() ? 1f : 0f);
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         BufferBuilder bufferbuilder = tess.getBuffer();

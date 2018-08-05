@@ -1,4 +1,4 @@
-package ladylib.installer;
+package ladylib.modwinder.installer;
 
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
@@ -10,10 +10,7 @@ import ladylib.networking.http.HTTPRequestHelper;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
-import net.minecraftforge.fml.relauncher.libraries.Artifact;
-import net.minecraftforge.fml.relauncher.libraries.ModList;
-import net.minecraftforge.fml.relauncher.libraries.Repository;
-import net.minecraftforge.fml.relauncher.libraries.SnapshotJson;
+import net.minecraftforge.fml.relauncher.libraries.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.message.FormattedMessage;
 
@@ -59,7 +56,7 @@ public class AddonInstaller {
      * The returned {@link CompletableFuture} has as its result the list of every file that been successfully
      * downloaded during the operation.
      * Any exception thrown during the installation will be logged and update the mod entry's installation state,
-     * notifying the user of the {@link ladylib.installer.InstallationState.Status#FAILED failure}.
+     * notifying the user of the {@link InstallationState.Status#FAILED failure}.
      * <p>
      * The passed in mod entry will see its {@link ModEntry#getInstallationState() installation state}
      * updated adequately during the process.
@@ -146,7 +143,7 @@ public class AddonInstaller {
                                         .filter(me -> me.getCurseid() == depCurseId)
                                         .findAny()
                                         .orElse(new DummyModEntry(depCurseId));
-                                // We want the exceptions to be thrown when joining
+                                // We want the exceptions to be thrown when joining, so no handling right now
                                 downloadedFiles.add(installLatestFromCurseforge(depEntry));
                             }
                         }

@@ -1,4 +1,4 @@
-package ladylib.client.gui;
+package ladylib.modwinder.client.gui;
 
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;

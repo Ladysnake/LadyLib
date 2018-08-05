@@ -1,4 +1,4 @@
-package ladylib.installer;
+package ladylib.modwinder.installer;
 
 public class InstallationException extends RuntimeException {
     public InstallationException(String message, Throwable cause) {

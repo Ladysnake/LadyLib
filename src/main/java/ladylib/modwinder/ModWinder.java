@@ -1,5 +1,6 @@
-package ladylib.installer;
+package ladylib.modwinder;
 
+import ladylib.modwinder.installer.ModEntry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 
@@ -10,7 +11,7 @@ public class ModWinder {
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
-        ModEntry.searchLadysnakeMods();
+        ModEntry.gatherLadysnakeMods();
     }
 
 }

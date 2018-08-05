@@ -1,4 +1,4 @@
-package ladylib.installer;
+package ladylib.modwinder.installer;
 
 public class InstallationState {
     public static final InstallationState NAUGHT = new InstallationState(Status.NONE, "");

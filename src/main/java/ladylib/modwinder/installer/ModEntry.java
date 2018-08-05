@@ -1,4 +1,4 @@
-package ladylib.installer;
+package ladylib.modwinder.installer;
 
 import com.google.common.collect.ImmutableList;
 import com.google.gson.FieldNamingPolicy;
@@ -26,15 +26,18 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class ModEntry {
     private static final String LADYSNAKE_MODS = "https://gist.githubusercontent.com/Pyrofab/000073b92e7a9de9f68b4da685ff80c5/raw/6f49c492c0d8879749175455d191a012a7e4431c/ladysnake_mods_test.json";
-    private static final Gson GSON = new GsonBuilder().setFieldNamingStrategy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+    public static final Gson GSON = new GsonBuilder().setFieldNamingStrategy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
     private static List<ModEntry> ladysnakeMods;
 
-    public static void searchLadysnakeMods() {
+    public static void gatherLadysnakeMods() {
         HTTPRequestHelper.getJSON(LADYSNAKE_MODS, json -> {
             try {
                 Type type = new TypeToken<List<ModEntry>>() {
@@ -47,6 +50,9 @@ public class ModEntry {
         });
     }
 
+    /**
+     * @return a list of mod entries gathered during {@link #gatherLadysnakeMods()}
+     */
     public static List<ModEntry> getLadysnakeMods() {
         return ladysnakeMods == null ? ImmutableList.of() : ImmutableList.copyOf(ladysnakeMods);
     }
@@ -70,9 +76,12 @@ public class ModEntry {
     private ModEntry() {
         super();
         this.dlcs = Collections.emptyList();
+        // gets a default logo while the right one is loaded
+        setLogo(null);
     }
 
     public ModEntry(String modid, int curseid, String name, URL updateUrl, List<ModEntry> dlcs) {
+        this();
         this.modid = modid;
         this.curseid = curseid;
         this.name = name;
@@ -81,32 +90,12 @@ public class ModEntry {
         init(false);
     }
 
-    {
-        // initializer, run in every constructor
-        // gets a default logo while the right one is loaded
-        setLogo(null);
-    }
-
     protected void init(boolean isDlc) {
         this.isDlc = isDlc;
         ModContainer installedMod = Loader.instance().getIndexedModList().get(modid);
         if (installedMod != null) {
             this.installed = true;
             this.installedVersion = installedMod.getVersion();
-            // reuse Forge update checker's result if possible
-            /*ForgeVersion.CheckResult checkResult = ForgeVersion.getResult(installedMod);
-            boolean successful = checkResult.status != ForgeVersion.Status.PENDING && checkResult.status != ForgeVersion.Status.FAILED;
-            if (successful) {
-                this.changelog = checkResult.changes;
-            }
-            if (checkResult.target != null) {
-                this.latestVersion = checkResult.target.toString();
-                this.outdated = true;
-            } else if (successful) {
-                // Forge's check has been completed successfully and no newer version has been found
-                this.latestVersion = this.installedVersion;
-            }*/
-
         }
         // get the logo
         getLogo:
@@ -140,8 +129,7 @@ public class ModEntry {
             LadyLib.LOGGER.error("Invalid curse project id " + curseid, e);
         }
         if (this.latestVersion.isEmpty()) {
-            // Either the mod is not installed or Forge's version check is too slow
-            // Forge's version check does not have a callback so it is easier to just check ourselves
+            // Forge's version check does not have a callback so it is easier to just check ourselves even if the mod is installed
             HTTPRequestHelper.getJSON(this.getUpdateUrl())
                     .thenAccept(json -> {
                         String latestVersion = json.getAsJsonObject()
@@ -150,7 +138,7 @@ public class ModEntry {
                         this.setLatestVersion(latestVersion);
                         outdated = (new ComparableVersion(this.installedVersion).compareTo(new ComparableVersion(latestVersion)) < 0);
                         Map<String, String> temp = GSON.fromJson(json.getAsJsonObject().get(MinecraftForge.MC_VERSION + ""), new TypeToken<Map<String, String>>() {}.getType());
-                        this.setChangelog(temp.keySet().stream().collect(Collectors.toMap(ComparableVersion::new, temp::get, (s1, s2) -> s1, LinkedHashMap::new)));
+                        this.setChangelog(temp.keySet().stream().collect(Collectors.toMap(ComparableVersion::new, temp::get)));
                     });
         }
         this.dlcs.forEach(modEntry -> modEntry.init(true));

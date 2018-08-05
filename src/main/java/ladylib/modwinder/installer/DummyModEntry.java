@@ -1,4 +1,4 @@
-package ladylib.installer;
+package ladylib.modwinder.installer;
 
 import java.net.URL;
 import java.util.Collections;
