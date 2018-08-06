@@ -1,5 +1,6 @@
-package ladylib.nbt;
+package ladylib.nbt.serialization;
 
+import com.google.common.annotations.Beta;
 import net.minecraft.nbt.NBTBase;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
@@ -9,9 +10,14 @@ import java.util.Optional;
 /**
  * A type adapter that can serialize and deserialize objects from an appropriate NBT data structure.
  *
+ * <p>
+ * Base implementations of this interface can be found in {@link ladylib.nbt.serialization.adapter}
+ * </p>
+ *
  * @param <T>   the type of object handled by this adapter
  * @param <NBT> the nbt type used to serialize objects
  */
+@Beta
 public interface NBTTypeAdapter<T, NBT extends NBTBase> {
 
     @Nullable

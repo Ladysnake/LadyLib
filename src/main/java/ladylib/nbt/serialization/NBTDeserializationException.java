@@ -1,5 +1,8 @@
-package ladylib.nbt;
+package ladylib.nbt.serialization;
 
+/**
+ * Thrown when a NBT serialization operation fails
+ */
 public class NBTDeserializationException extends RuntimeException {
 
     public NBTDeserializationException() {

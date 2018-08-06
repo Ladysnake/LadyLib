@@ -1,9 +1,9 @@
 package ladylib.capability;
 
 import ladylib.LadyLib;
-import ladylib.nbt.NBTDeserializationException;
-import ladylib.nbt.NBTTypeAdapter;
-import ladylib.nbt.ReflectiveNBTAdapterFactory;
+import ladylib.nbt.serialization.NBTDeserializationException;
+import ladylib.nbt.serialization.NBTTypeAdapter;
+import ladylib.nbt.serialization.adapter.ReflectiveNBTAdapterFactory;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;

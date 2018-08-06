@@ -1,9 +1,9 @@
 /**
- * Classes used to provide specific compatibility with other mods
+ * TODO: EVERYTHING
  */
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
-package ladylib.compat;
+package ladylib.networking.minecraft;
 
 import mcp.MethodsReturnNonnullByDefault;
 

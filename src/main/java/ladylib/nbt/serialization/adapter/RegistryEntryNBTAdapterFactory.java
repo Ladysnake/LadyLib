@@ -1,6 +1,8 @@
-package ladylib.nbt;
+package ladylib.nbt.serialization.adapter;
 
 import com.google.gson.reflect.TypeToken;
+import ladylib.nbt.serialization.NBTTypeAdapter;
+import ladylib.nbt.serialization.NBTTypeAdapterFactory;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagString;
 import net.minecraft.util.ResourceLocation;

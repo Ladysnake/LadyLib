@@ -1,7 +1,10 @@
-package ladylib.nbt;
+package ladylib.nbt.serialization.adapter;
 
 import com.google.gson.reflect.TypeToken;
 import ladylib.misc.ReflectionUtil;
+import ladylib.nbt.serialization.NBTMutatingTypeAdapter;
+import ladylib.nbt.serialization.NBTTypeAdapter;
+import ladylib.nbt.serialization.NBTTypeAdapterFactory;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -13,7 +16,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.Supplier;
 
-import static ladylib.nbt.CollectionNBTTypeAdapterFactory.getElementTypeAdapter;
+import static ladylib.nbt.serialization.adapter.CollectionNBTTypeAdapterFactory.getElementTypeAdapter;
 
 public class MapNBTTypeAdapterFactory implements NBTTypeAdapterFactory<Map, NBTTagList> {
     @Override

@@ -1,9 +1,9 @@
 /**
- * Classes used to provide specific compatibility with other mods
+ * Default adapters registered in {@link ladylib.nbt.serialization.TagAdapters}
  */
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
-package ladylib.compat;
+package ladylib.nbt.serialization.adapter;
 
 import mcp.MethodsReturnNonnullByDefault;
 

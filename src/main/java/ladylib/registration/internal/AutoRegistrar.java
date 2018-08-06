@@ -1,6 +1,7 @@
 package ladylib.registration.internal;
 
 import com.google.common.collect.ImmutableList;
+import joptsimple.internal.Strings;
 import ladylib.capability.internal.CapabilityRegistrar;
 import ladylib.registration.AutoRegister;
 import ladylib.registration.AutoRegisterTile;
@@ -76,10 +77,10 @@ public class AutoRegistrar {
                 @SuppressWarnings("unchecked") Class<? extends TileEntity> teClass =
                         (Class<? extends TileEntity>) Class.forName(className, true, getClass().getClassLoader());
                 String name = (String) data.getAnnotationInfo().get("name");
-                if (name == null || name.isEmpty()) {
+                if (Strings.isNullOrEmpty(name)) {
                     name = teClass.getSimpleName().toLowerCase(Locale.ENGLISH);
                 }
-                GameRegistry.registerTileEntity(teClass, modId + ":" + name);
+                GameRegistry.registerTileEntity(teClass, new ResourceLocation(modId, name));
                 if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
                     ClientRegistrar.registerTESR(teClass, (Type) data.getAnnotationInfo().get("renderer"));
                 }

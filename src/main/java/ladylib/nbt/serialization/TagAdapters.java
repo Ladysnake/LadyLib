@@ -1,7 +1,9 @@
-package ladylib.nbt;
+package ladylib.nbt.serialization;
 
+import com.google.common.annotations.Beta;
 import com.google.gson.reflect.TypeToken;
 import ladylib.LadyLib;
+import ladylib.nbt.serialization.adapter.*;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.util.math.BlockPos;
@@ -12,6 +14,7 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.function.Supplier;
 
+@Beta
 public class TagAdapters {
     private static final List<NBTTypeAdapterFactory> factories = new ArrayList<>();
     private static final Map<TypeToken<?>, NBTAdapterEntry> cache = new HashMap<>();

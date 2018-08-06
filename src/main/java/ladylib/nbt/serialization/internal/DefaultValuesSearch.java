@@ -1,10 +1,10 @@
-package ladylib.nbt.internal;
+package ladylib.nbt.serialization.internal;
 
 import com.google.gson.reflect.TypeToken;
 import ladylib.LadyLib;
 import ladylib.misc.ReflectionUtil;
-import ladylib.nbt.DefaultValue;
-import ladylib.nbt.TagAdapters;
+import ladylib.nbt.serialization.DefaultValue;
+import ladylib.nbt.serialization.TagAdapters;
 import net.minecraftforge.fml.common.discovery.ASMDataTable;
 import org.apache.logging.log4j.message.FormattedMessage;
 import org.objectweb.asm.Type;

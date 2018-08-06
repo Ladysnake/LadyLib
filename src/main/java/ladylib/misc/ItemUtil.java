@@ -31,7 +31,7 @@ public class ItemUtil {
      * Turns an {@link ItemStack} into another inside of an entity's inventory.
      * <p>
      * If the entity is a player, the result will be inserted. If the entity is not a player or
-     * its inventory is full, the result will be dropped at its feet. <br/>
+     * its inventory is full, the result will be dropped at its feet. <br>
      * The old stack will be shrank by the size of the result stack.
      * </p>
      * Note: this method makes no check that the resulting stack is of an appropriate size
