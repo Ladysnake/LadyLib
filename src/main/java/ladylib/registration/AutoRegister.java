@@ -1,6 +1,7 @@
 package ladylib.registration;
 
 import net.minecraft.block.Block;
+import net.minecraftforge.fml.common.registry.GameRegistry.ObjectHolder;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -10,7 +11,7 @@ import java.util.function.Function;
 
 /**
  * AutoRegister can be used to automatically populate appropriate registries from the class' public static final fields.
- * It is effectively the counterpart to {@link net.minecraftforge.fml.common.registry.GameRegistry.ObjectHolder}.
+ * It is effectively the counterpart to {@link ObjectHolder}.
  *
  * <p>
  * Blocks will be automatically associated with a corresponding ItemBlock. Use {@link NoItem} to prevent this behaviour.

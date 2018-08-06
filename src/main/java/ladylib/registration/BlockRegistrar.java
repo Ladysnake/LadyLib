@@ -104,7 +104,7 @@ public class BlockRegistrar {
         // adds the block to the list to be registered later
         allBlocks.put(block, new BlockInfo(oreNames));
         if (listed) {
-            block.setCreativeTab(LadyLib.instance.getContainer(block.getRegistryName().getNamespace()).getCreativeTab());
+            block.setCreativeTab(LadyLib.INSTANCE.getContainer(block.getRegistryName().getNamespace()).getCreativeTab());
         }
         // adds the corresponding item to the list of items to be registered as well
         T item = blockItemFunction.apply(block);

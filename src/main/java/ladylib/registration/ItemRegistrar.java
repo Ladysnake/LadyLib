@@ -92,9 +92,6 @@ public class ItemRegistrar {
     public void addItem(@Nonnull Item item, boolean listed, String... oreNames) {
         Preconditions.checkNotNull(item.getRegistryName(), "Can't use a null-name for the registry, object %s.", item);
         allItems.put(item, new ItemInfo(listed, oreNames));
-        if (item instanceof ItemRenderRegistrationHandler) {
-            setModelRegistrationHandler(item.getRegistryName(), ItemRegistrar::registerRender);
-        }
     }
 
     /**
@@ -105,7 +102,7 @@ public class ItemRegistrar {
      * @param registryName the registry name of an item
      * @param handler a render registration handler
      */
-    public void setModelRegistrationHandler(ResourceLocation registryName, ItemRenderRegistrationHandler handler) {
+    public void setCustomRenderRegistrationHandler(ResourceLocation registryName, ItemRenderRegistrationHandler handler) {
         this.modelRegistrationHandlers.put(registryName, handler);
     }
 
@@ -144,7 +141,7 @@ public class ItemRegistrar {
         allItems.forEach((item, info) -> {
             event.getRegistry().register(item);
             if (info.listed) {
-                item.setCreativeTab(LadyLib.instance.getContainer(item.getRegistryName().getNamespace()).getCreativeTab());
+                item.setCreativeTab(LadyLib.INSTANCE.getContainer(item.getRegistryName().getNamespace()).getCreativeTab());
             }
             for (String oreName : info.oreNames) {
                 OreDictionary.registerOre(oreName, item);
@@ -155,7 +152,7 @@ public class ItemRegistrar {
     @SideOnly(Side.CLIENT)
     @SubscribeEvent
     void registerRenders(ModelRegistryEvent event) {
-        allItems.keySet().forEach(item -> modelRegistrationHandlers.get(item.getRegistryName()).registerRender(item));
+        allItems.keySet().forEach(item -> modelRegistrationHandlers.getOrDefault(item.getRegistryName(), ItemRegistrar::registerRender).registerRender(item));
     }
 
     static class ItemInfo {

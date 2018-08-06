@@ -1,5 +1,6 @@
-package ladylib.nbt;
+package ladylib.nbt.serialization;
 
+import com.google.common.annotations.Beta;
 import com.google.gson.reflect.TypeToken;
 import net.minecraft.nbt.NBTBase;
 
@@ -15,6 +16,7 @@ import javax.annotation.Nullable;
  * @param <T> the common superclass of types this factory can create adapters for
  * @param <NBT> the type of NBT object used to serialize objects of those types
  */
+@Beta
 @FunctionalInterface
 public interface NBTTypeAdapterFactory<T, NBT extends NBTBase> {
 

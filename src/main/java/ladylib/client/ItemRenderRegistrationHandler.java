@@ -13,7 +13,7 @@ import javax.annotation.Nonnull;
  * A registration function that handles the registration of an item's render.
  * <p>
  * Custom render registration handlers can be set using
- * {@link ItemRegistrar#setModelRegistrationHandler(ResourceLocation, ItemRenderRegistrationHandler)}
+ * {@link ItemRegistrar#setCustomRenderRegistrationHandler(ResourceLocation, ItemRenderRegistrationHandler)}
  * <p>
  * If an item implements this interface, it will automatically handle its own render registration, unless
  * another {@link ItemRenderRegistrationHandler} is registered for that item.

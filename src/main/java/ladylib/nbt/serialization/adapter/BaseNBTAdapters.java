@@ -1,5 +1,6 @@
-package ladylib.nbt;
+package ladylib.nbt.serialization.adapter;
 
+import ladylib.nbt.serialization.DefaultValue;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.*;
 import net.minecraft.util.math.BlockPos;

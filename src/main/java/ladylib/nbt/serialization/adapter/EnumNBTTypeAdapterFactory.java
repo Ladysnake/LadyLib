@@ -1,6 +1,10 @@
-package ladylib.nbt;
+package ladylib.nbt.serialization.adapter;
 
 import com.google.gson.reflect.TypeToken;
+import ladylib.nbt.serialization.NBTDeserializationException;
+import ladylib.nbt.serialization.NBTTypeAdapter;
+import ladylib.nbt.serialization.NBTTypeAdapterFactory;
+import ladylib.nbt.serialization.TagAdapters;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagString;
 

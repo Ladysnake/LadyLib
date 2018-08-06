@@ -1,16 +1,19 @@
-package ladylib.nbt;
+package ladylib.nbt.serialization.adapter;
 
 import com.google.common.collect.ImmutableCollection;
 import com.google.gson.reflect.TypeToken;
 import ladylib.LadyLib;
 import ladylib.misc.ReflectionUtil;
+import ladylib.nbt.serialization.NBTDeserializationException;
+import ladylib.nbt.serialization.NBTTypeAdapter;
+import ladylib.nbt.serialization.NBTTypeAdapterFactory;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagList;
 
 import java.util.Collection;
 import java.util.function.Supplier;
 
-import static ladylib.nbt.CollectionNBTTypeAdapterFactory.getElementTypeAdapter;
+import static ladylib.nbt.serialization.adapter.CollectionNBTTypeAdapterFactory.getElementTypeAdapter;
 
 public class ImmutableCollectionNBTAdapterFactory implements NBTTypeAdapterFactory<ImmutableCollection, NBTTagList> {
     @Override
@@ -51,7 +54,10 @@ public class ImmutableCollectionNBTAdapterFactory implements NBTTypeAdapterFacto
             ImmutableCollection.Builder<E> ret = builderSupplier.get();
             cast(nbt, NBTTagList.class).ifPresent(list -> {
                 for (NBTBase nbtBase : list) {
-                    ret.add(elementAdapter.fromNBT(nbtBase));
+                    E element = elementAdapter.fromNBT(nbtBase);
+                    if (element != null) {
+                        ret.add(element);
+                    } else throw new NBTDeserializationException("An element of an immutable list was null");
                 }
             });
             return ret.build();
