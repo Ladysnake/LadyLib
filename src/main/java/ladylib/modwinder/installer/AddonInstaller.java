@@ -8,6 +8,7 @@ import com.google.gson.JsonObject;
 import ladylib.LadyLib;
 import ladylib.misc.ReflectionUtil;
 import ladylib.networking.http.HTTPRequestHelper;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
@@ -80,11 +81,11 @@ public class AddonInstaller {
         }
         URL apiUrl;
         try {
-            apiUrl = new URL("https://curse.nikky.moe/api/addon/" + mod.getCurseid());
+            apiUrl = new URL("https://curse.nikky.moe/api/addon/" + mod.getCurseId());
         } catch (MalformedURLException e) {
             throw new IllegalStateException(e);
         }
-        mod.setInstallationState(new InstallationState(InstallationState.Status.INSTALLING, "Downloading latest version"));
+        mod.setInstallationState(new InstallationState(InstallationState.Status.INSTALLING, I18n.format("modwinder.status.downloading.start")));
         return HTTPRequestHelper.getJSON(apiUrl)
                 .thenApply(json -> {
                     // Identify the latest file for the current Minecraft Version
@@ -108,13 +109,13 @@ public class AddonInstaller {
                 )
                 .handle((result, t) -> {
                     if (t != null) {
-                        LadyLib.LOGGER.error(new FormattedMessage("Could not download latest file of {} (project {})", mod.getName(), mod.getCurseid()), t);
-                        mod.setInstallationState(new InstallationState(InstallationState.Status.FAILED, "Could not install, check logs for more information"));
+                        LadyLib.LOGGER.error(new FormattedMessage("Could not download latest file of {} (project {})", mod.getName(), mod.getCurseId()), t);
+                        mod.setInstallationState(new InstallationState(InstallationState.Status.FAILED, I18n.format("modwinder.status.failed")));
                         // rethrow the exception in case someone wants to do something else with it
                         Throwables.throwIfUnchecked(t);
                         throw new RuntimeException(t);
                     } else {
-                        mod.setInstallationState(new InstallationState(InstallationState.Status.INSTALLED, "The latest version has been installed successfully\nPlease restart the game"));
+                        mod.setInstallationState(new InstallationState(InstallationState.Status.INSTALLED, I18n.format("modwinder.status.installed"), I18n.format("modwinder.status.installed.restart")));
                         return result;
                     }
                 });
@@ -123,7 +124,7 @@ public class AddonInstaller {
     private static CompletableFuture<List<CompletableFuture<List<File>>>> downloadFromCurseforge(final ModEntry mod, String fileName, @Nullable String fileId) {
         // get the project information from the public API
         try {
-            return HTTPRequestHelper.getJSON(new URL("https://curse.nikky.moe/api/addon/" + mod.getCurseid() + "/files"))
+            return HTTPRequestHelper.getJSON(new URL("https://curse.nikky.moe/api/addon/" + mod.getCurseId() + "/files"))
                     .thenApplyAsync(json -> {
                         // filter the files based on the name
                         JsonObject fileToDownload = null;
@@ -135,7 +136,7 @@ public class AddonInstaller {
                             }
                         }
                         if (fileToDownload == null) {
-                            throw new InstallationException("Could not find file " + fileName + " in project " + mod.getCurseid());
+                            throw new InstallationException("Could not find file " + fileName + " in project " + mod.getCurseId());
                         }
                         List<CompletableFuture<List<File>>> downloadedFiles = new ArrayList<>();
                         for (JsonElement dependency : fileToDownload.get("dependencies").getAsJsonArray()) {
@@ -144,7 +145,7 @@ public class AddonInstaller {
                                 int depCurseId = dep.get("addOnId").getAsInt();
                                 // If there is an existing entry for that dependency, update it, otherwise use a dummy
                                 ModEntry depEntry = ModEntry.getLadysnakeMods().stream()
-                                        .filter(me -> me.getCurseid() == depCurseId)
+                                        .filter(me -> me.getCurseId() == depCurseId)
                                         .findAny()
                                         .orElse(new DummyModEntry(depCurseId));
                                 // We want the exceptions to be thrown when joining, so no handling right now
@@ -153,19 +154,19 @@ public class AddonInstaller {
                         }
                         // download this file from the associated url
                         String downloadURL = fileToDownload.getAsJsonObject().get("downloadURL").getAsString();
-                        mod.getInstallationState().setMessage("Downloading file " + fileName);
+                        mod.getInstallationState().setMessage(I18n.format("modwinder.status.downloading.file", fileName));
                         Path temp = downloadFile(fileName, downloadURL);
-                        mod.getInstallationState().setMessage("Installing file " + fileName);
+                        mod.getInstallationState().setMessage(I18n.format("modwinder.status.installing", fileName));
                         // read required information and move to mod repository
                         File archived = moveToModRepository(temp);
                         if (archived != null) {
                             downloadedFiles.add(CompletableFuture.completedFuture(Collections.singletonList(archived)));
                         }
-                        mod.getInstallationState().setMessage("Finishing installation");
+                        mod.getInstallationState().setMessage(I18n.format("modwinder.status.installing.end"));
                         return downloadedFiles;
                     }, DOWNLOAD_THREAD);  // operate on the download thread to avoid concurrency issues with files
         } catch (MalformedURLException e) {
-            throw new InstallationException("Invalid project id " + mod.getCurseid(), e);
+            throw new InstallationException("Invalid project id " + mod.getCurseId(), e);
         }
     }
 

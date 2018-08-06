@@ -5,6 +5,7 @@ import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
+import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import ladylib.LadyLib;
 import ladylib.networking.http.HTTPRequestHelper;
@@ -33,7 +34,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class ModEntry {
-    private static final String LADYSNAKE_MODS = "https://gist.githubusercontent.com/Pyrofab/000073b92e7a9de9f68b4da685ff80c5/raw/6f49c492c0d8879749175455d191a012a7e4431c/ladysnake_mods_test.json";
+    public static final String LADYSNAKE_MODS = "https://gist.githubusercontent.com/Pyrofab/000073b92e7a9de9f68b4da685ff80c5/raw/89674640b591774a26e84d643a5fdac82c3166bd/ladysnake_mods_test.json";
     public static final Gson GSON = new GsonBuilder().setFieldNamingStrategy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
     private static List<ModEntry> ladysnakeMods;
 
@@ -57,9 +58,12 @@ public class ModEntry {
         return ladysnakeMods == null ? ImmutableList.of() : ImmutableList.copyOf(ladysnakeMods);
     }
 
-    private String modid;
-    private int curseid;
+    @SerializedName("modid")
+    private String modId;
+    @SerializedName("curseid")
+    private int curseId;
     private String name;
+    private String author;
     private URL updateUrl;
     private List<ModEntry> dlcs;
 
@@ -80,10 +84,10 @@ public class ModEntry {
         setLogo(null);
     }
 
-    public ModEntry(String modid, int curseid, String name, URL updateUrl, List<ModEntry> dlcs) {
+    public ModEntry(String modId, int curseId, String name, String author, URL updateUrl, List<ModEntry> dlcs) {
         this();
-        this.modid = modid;
-        this.curseid = curseid;
+        this.modId = modId;
+        this.curseId = curseId;
         this.name = name;
         this.updateUrl = updateUrl;
         this.dlcs = dlcs;
@@ -92,7 +96,7 @@ public class ModEntry {
 
     protected void init(boolean isDlc) {
         this.isDlc = isDlc;
-        ModContainer installedMod = Loader.instance().getIndexedModList().get(modid);
+        ModContainer installedMod = Loader.instance().getIndexedModList().get(modId);
         if (installedMod != null) {
             this.installed = true;
             this.installedVersion = installedMod.getVersion();
@@ -103,7 +107,7 @@ public class ModEntry {
             if (FMLCommonHandler.instance().getSide() == Side.SERVER) {
                 break getLogo;
             }
-            URL curseApi = new URL("https://curse.nikky.moe/api/addon/" + curseid);
+            URL curseApi = new URL("https://curse.nikky.moe/api/addon/" + curseId);
             HTTPRequestHelper.getJSON(curseApi)
                     .thenApply(json -> {
                         // get the logo's url
@@ -126,7 +130,7 @@ public class ModEntry {
                 return null;
             });
         } catch (MalformedURLException e) {
-            LadyLib.LOGGER.error("Invalid curse project id " + curseid, e);
+            LadyLib.LOGGER.error("Invalid curse project id " + curseId, e);
         }
         if (this.latestVersion.isEmpty()) {
             // Forge's version check does not have a callback so it is easier to just check ourselves even if the mod is installed
@@ -161,16 +165,20 @@ public class ModEntry {
         return outdated;
     }
 
-    public String getModid() {
-        return modid;
+    public String getModId() {
+        return modId;
     }
 
-    public int getCurseid() {
-        return curseid;
+    public int getCurseId() {
+        return curseId;
     }
 
     public String getName() {
         return name;
+    }
+
+    public String getAuthor() {
+        return author;
     }
 
     public URL getUpdateUrl() {
@@ -215,7 +223,7 @@ public class ModEntry {
             // run in the client thread for the OpenGL context
             Minecraft.getMinecraft().addScheduledTask(() -> {
                 DynamicTexture texture = logo == null ? TextureUtil.MISSING_TEXTURE : new DynamicTexture(logo);
-                this.logo = Minecraft.getMinecraft().getTextureManager().getDynamicTextureLocation("curse-logo-" + getModid(), texture);
+                this.logo = Minecraft.getMinecraft().getTextureManager().getDynamicTextureLocation("curse-logo-" + getModId(), texture);
             });
         }
     }
@@ -225,8 +233,8 @@ public class ModEntry {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ModEntry modEntry = (ModEntry) o;
-        return Objects.equals(modid, modEntry.modid) &&
-                Objects.equals(curseid, modEntry.curseid) &&
+        return Objects.equals(modId, modEntry.modId) &&
+                Objects.equals(curseId, modEntry.curseId) &&
                 Objects.equals(name, modEntry.name) &&
                 Objects.equals(updateUrl, modEntry.updateUrl) &&
                 Objects.equals(dlcs, modEntry.dlcs);
@@ -234,14 +242,14 @@ public class ModEntry {
 
     @Override
     public int hashCode() {
-        return Objects.hash(modid, curseid, name, updateUrl, dlcs);
+        return Objects.hash(modId, curseId, name, updateUrl, dlcs);
     }
 
     @Override
     public String toString() {
         return "ModEntry{" +
-                "modid='" + modid + '\'' +
-                ", curseid='" + curseid + '\'' +
+                "modId='" + modId + '\'' +
+                ", curseId='" + curseId + '\'' +
                 ", name='" + name + '\'' +
                 ", updateUrl='" + updateUrl + '\'' +
                 ", dlcs=" + dlcs +

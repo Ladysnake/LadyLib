@@ -1,0 +1,21 @@
+modwinder.status.outdated=This mod is outdated
+modwinder.status.outdated.current_version=Currently installed version: %s
+
+modwinder.status.downloading.start=Downloading latest version
+modwinder.status.downloading.file=Downloading file %s
+modwinder.status.installing=Installing file %s
+
+modwinder.status.failed=Could not install, check logs for more information
+
+modwinder.status.installed=The latest version has been installed successfully
+modwinder.status.installed.restart=Please restart the game
+
+modwinder.status.installing.end=Finishing installation
+modwinder.dlc=%d DLC(s)
+modwinder.changelog=Changelog
+modwinder.cf_description=Description
+modwinder.menu.title=Mod List
+modwinder.restart.1=One or more mods have been installed
+modwinder.restart.2=Do you want to restart the game now ?
+
+modwinder.hint=Double click on a mod to install the latest version

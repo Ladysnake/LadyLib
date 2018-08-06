@@ -7,11 +7,11 @@ import java.util.List;
 public class DummyModEntry extends ModEntry {
 
     public DummyModEntry(int curseid) {
-        this("", curseid, "", null, Collections.emptyList());
+        this("", curseid, "", "", null, Collections.emptyList());
     }
 
-    public DummyModEntry(String modid, int curseid, String name, URL updateUrl, List<ModEntry> dlcs) {
-        super(modid, curseid, name, updateUrl, dlcs);
+    public DummyModEntry(String modid, int curseid, String name, String author, URL updateUrl, List<ModEntry> dlcs) {
+        super(modid, curseid, name, author, updateUrl, dlcs);
     }
 
     @Override

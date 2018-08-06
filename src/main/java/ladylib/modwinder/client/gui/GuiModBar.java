@@ -1,7 +1,5 @@
 package ladylib.modwinder.client.gui;
 
-import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
 import ladylib.LadyLib;
 import ladylib.modwinder.ModWinder;
 import ladylib.modwinder.installer.InstallationState;
@@ -14,6 +12,7 @@ import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.fml.client.config.GuiUtils;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import org.lwjgl.input.Mouse;
@@ -22,19 +21,24 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
+/**
+ * This is a mod bar, as in the place you get milksnakes
+ */
 @Mod.EventBusSubscriber(modid = ModWinder.MOD_ID, value = Side.CLIENT)
-public class GuiModInstaller extends GuiScreen {
+public class GuiModBar extends GuiScreen {
     private static final int MODWINDER_BUTTON_ID = 88037256;
     private static final int DONE_BUTTON_ID = 6;
     private static final int CHANGELOG_BUTTON_ID = 7;
     private static final int DESCRIPTION_BUTTON_ID = 8;
 
-    @SubscribeEvent
+    // let the other mods add their buttons first
+    @SubscribeEvent(priority = EventPriority.LOW)
     public static void onGuiScreenInitGui(GuiScreenEvent.InitGuiEvent.Post event) {
         GuiScreen gui = event.getGui();
 
@@ -47,15 +51,16 @@ public class GuiModInstaller extends GuiScreen {
             List<GuiButton> buttons = event.getButtonList();
             for (GuiButton b : buttons)
                 if (target.equals(b.displayString)) {
-                    GuiButton installer = new GuiButton(MODWINDER_BUTTON_ID, b.x + (-24), b.y, 20, 20, "LS");
+                    GuiButton installer = new GuiButtonModBar(MODWINDER_BUTTON_ID, b.x -24, b.y);
                     // check for colliding buttons
-                    boolean collision = false;
+                    boolean collision;
                     // we are only moving along the x axis, we shouldn't have to check buttons that are not on the same line
                     List<GuiButton> possibleCollisions = buttons.stream().filter(other -> other.y < installer.y + installer.height && other.y + other.height > installer.y).collect(Collectors.toList());
                     do {
+                        collision = false;
                         for (GuiButton other : possibleCollisions) {
                             if (other.x < installer.x + installer.width && other.x + other.width > installer.x) {
-                                installer.x = other.x - installer.width;
+                                installer.x = other.x - installer.width - 4;
                                 collision = true;
                             }
                         }
@@ -69,7 +74,7 @@ public class GuiModInstaller extends GuiScreen {
     @SubscribeEvent
     public static void onGuiScreenActionPerformed(GuiScreenEvent.ActionPerformedEvent.Pre event) {
         if (event.getGui() instanceof GuiMainMenu && event.getButton().id == MODWINDER_BUTTON_ID) {
-            Minecraft.getMinecraft().displayGuiScreen(new GuiModInstaller(event.getGui()));
+            Minecraft.getMinecraft().displayGuiScreen(new GuiModBar(event.getGui()));
         }
     }
 
@@ -115,13 +120,13 @@ public class GuiModInstaller extends GuiScreen {
     private int numButtons = SortType.values().length;
 
     private String lastFilterText = "";
-    private String hoveringText;
+    private List<String> hoveringText;
 
     private GuiTextField search;
     private boolean sorted = false;
     private SortType sortType = SortType.NORMAL;
 
-    public GuiModInstaller(GuiScreen mainMenu) {
+    public GuiModBar(GuiScreen mainMenu) {
         this.mainMenu = mainMenu;
     }
 
@@ -133,11 +138,11 @@ public class GuiModInstaller extends GuiScreen {
         // "Done" button
         this.buttonList.add(new GuiButton(DONE_BUTTON_ID, ((this.width) / 2) - 100, this.height - 38, I18n.format("gui.done")));
         // Changelog button
-        this.changelogButton = new GuiButton(CHANGELOG_BUTTON_ID, (3 * (this.width) / 4), this.height - 38, this.width / 5, 20, "Changelog");
+        this.changelogButton = new GuiButton(CHANGELOG_BUTTON_ID, (3 * (this.width) / 4), this.height - 38, this.width / 5, 20, I18n.format("modwinder.changelog"));
         this.changelogButton.enabled = false;
         this.buttonList.add(changelogButton);
         // CF description link
-        this.descriptionButton = new GuiButton(DESCRIPTION_BUTTON_ID, (3 * (this.width) / 4), this.height - 57, this.width / 5, 20, "Description");
+        this.descriptionButton = new GuiButton(DESCRIPTION_BUTTON_ID, (3 * (this.width) / 4), this.height - 57, this.width / 5, 20, I18n.format("modwinder.cf_description"));
         this.descriptionButton.enabled = false;
         this.buttonList.add(descriptionButton);
 
@@ -213,7 +218,7 @@ public class GuiModInstaller extends GuiScreen {
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         this.modList.drawScreen(mouseX, mouseY, partialTicks);
         int left = ((this.width - 38) / 2) + 30;
-        this.drawCenteredString(this.fontRenderer, "Mod List", left, 16, 0xFFFFFF);
+        this.drawCenteredString(this.fontRenderer, I18n.format("modwinder.menu.title"), left, 16, 0xFFFFFF);
         super.drawScreen(mouseX, mouseY, partialTicks);
 
         String text = I18n.format("fml.menu.mods.search");
@@ -221,10 +226,10 @@ public class GuiModInstaller extends GuiScreen {
         getFontRenderer().drawString(text, x, search.y + 5, 0xFFFFFF);
         search.drawTextBox();
         if (hoveringText != null) {
-            GuiUtils.drawHoveringText(Lists.newArrayList(Splitter.on("\n").split(this.hoveringText)), mouseX, mouseY, width, height, -1, fontRenderer);
+            GuiUtils.drawHoveringText(this.hoveringText, mouseX, mouseY, width, height, -1, fontRenderer);
             hoveringText = null;
         }
-        String tip = "Double click on a mod to install the latest version";
+        String tip = I18n.format("modwinder.hint");
         this.drawString(this.fontRenderer, tip, this.width - 10 - fontRenderer.getStringWidth(tip), this.height - 10, 0xFFFF99);
     }
 
@@ -255,7 +260,7 @@ public class GuiModInstaller extends GuiScreen {
                                 } else {
                                     this.mc.displayGuiScreen(this.mainMenu);
                                 }
-                            }, "One or more mods have been installed", "Do you want to restart the game now ?", DONE_BUTTON_ID));
+                            }, I18n.format("modwinder.restart.1"), I18n.format("modwinder.restart.2"), DONE_BUTTON_ID));
                         } else {
                             this.mc.displayGuiScreen(this.mainMenu);
                         }
@@ -271,7 +276,7 @@ public class GuiModInstaller extends GuiScreen {
                     case DESCRIPTION_BUTTON_ID: {
                         ModEntry selected = this.modList.getSelected();
                         if (selected != null) {
-                            String cfLink = "https://minecraft.curseforge.com/projects/" + selected.getCurseid();
+                            String cfLink = "https://minecraft.curseforge.com/projects/" + selected.getCurseId();
                             try {
                                 this.clickedLinkURI = new URI(cfLink);
                                 GuiConfirmOpenLink link = new GuiConfirmOpenLink(this, cfLink, 31102009, false);
@@ -306,8 +311,8 @@ public class GuiModInstaller extends GuiScreen {
         return fontRenderer;
     }
 
-    public void setHoveringText(String hoveringText) {
-        this.hoveringText = hoveringText;
+    public void setHoveringText(String... hoveringText) {
+        this.hoveringText = Arrays.asList(hoveringText);
     }
 
     public void onModEntrySelected() {

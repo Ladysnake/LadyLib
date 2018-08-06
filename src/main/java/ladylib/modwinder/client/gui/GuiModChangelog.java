@@ -44,7 +44,7 @@ public class GuiModChangelog extends GuiScreen {
         drawDefaultBackground();
         this.changelogScreen.drawScreen(mouseX, mouseY, partialTicks);
         int left = ((this.width - 38) / 2) + 30;
-        this.drawCenteredString(this.fontRenderer, "Changelog", left, 16, 0xFFFFFF);
+        this.drawCenteredString(this.fontRenderer, I18n.format("modwinder.changelog"), left, 16, 0xFFFFFF);
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 

@@ -1,6 +1,8 @@
 package ladylib.modwinder.client.gui;
 
+import joptsimple.internal.Strings;
 import ladylib.client.shader.ShaderUtil;
+import ladylib.modwinder.ModWinder;
 import ladylib.modwinder.installer.AddonInstaller;
 import ladylib.modwinder.installer.InstallationState;
 import ladylib.modwinder.installer.ModEntry;
@@ -11,6 +13,7 @@ import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.ForgeVersion;
 import net.minecraftforge.fml.client.GuiScrollingList;
@@ -22,12 +25,15 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 public class GuiInstallerModList extends GuiScrollingList {
-    private static final ResourceLocation VERSION_CHECK_ICONS = new ResourceLocation(ForgeVersion.MOD_ID, "textures/gui/version_check_icons.png");
-    private final GuiModInstaller parent;
+
+    public static final ResourceLocation INSTALLATION_STATUS_ICON = new ResourceLocation(ModWinder.MOD_ID, "textures/gui/installation_status_icons.png");
+    public static final ResourceLocation VERSION_CHECK_ICONS = new ResourceLocation(ForgeVersion.MOD_ID, "textures/gui/version_check_icons.png");
+
+    private final GuiModBar parent;
     private List<ModEntry> flattenedEntries;
     private int selected = -1;
 
-    public GuiInstallerModList(GuiModInstaller parent, List<ModEntry> entries, int listWidth, int slotHeight) {
+    public GuiInstallerModList(GuiModBar parent, List<ModEntry> entries, int listWidth, int slotHeight) {
         super(Minecraft.getMinecraft(), listWidth, parent.height, 32, parent.height - 88 + 4, 10, slotHeight, parent.width, parent.height);
         this.parent = parent;
         flattenEntries(entries);
@@ -70,6 +76,7 @@ public class GuiInstallerModList extends GuiScrollingList {
         ModEntry entry = flattenedEntries.get(slotIdx);
         String name = entry.getName();
         String version = entry.getLatestVersion();
+        String author = entry.getAuthor();
         FontRenderer font = parent.getFontRenderer();
 
         int left = this.left + 3;
@@ -94,7 +101,7 @@ public class GuiInstallerModList extends GuiScrollingList {
 
         left += height + 5;
 
-        int color = 0x0000FF;
+        int color = 0x00E6D2;
 
         final int iconX = right - (height / 2 + 4);
         final int iconY = slotTop + (height / 2 - 4);
@@ -103,18 +110,19 @@ public class GuiInstallerModList extends GuiScrollingList {
 
         if ((!entry.isInstalled() || entry.isOutdated()) && entry.getInstallationState().getStatus().shouldDisplay()) {
             InstallationState state = entry.getInstallationState();
-            Minecraft.getMinecraft().getTextureManager().bindTexture(VERSION_CHECK_ICONS);
-            GlStateManager.color(state.getStatus().getRed(), state.getStatus().getGreen(), state.getStatus().getBlue(), 1);
+            Minecraft.getMinecraft().getTextureManager().bindTexture(INSTALLATION_STATUS_ICON);
+            GlStateManager.color(1, 1, 1, 1);
             GlStateManager.pushMatrix();
-            Gui.drawModalRectWithCustomSizedTexture(iconX, iconY, 3 * iconWidth, 0, iconWidth, iconHeight, 64, 16);
+            int v = (((System.currentTimeMillis() / 800 & 1)) == 1) ? 8 : 0;
+            Gui.drawModalRectWithCustomSizedTexture(iconX, iconY, state.getStatus().getSheetOffset() * iconWidth, v, iconWidth, iconHeight, 88, 16);
             GlStateManager.popMatrix();
             if (mouseX > iconX && mouseX < iconX + iconWidth && mouseY > iconY && mouseY < iconY + iconHeight) {
                 parent.setHoveringText(state.getMessage());
             }
         } else if (!entry.isInstalled()) {
-            color = 0x555555;
+            color = 0x9E9E9E;
         } else if (entry.isOutdated()) {
-            color = 0xFF4400;
+            color = 0xFF6E00;
             Minecraft.getMinecraft().getTextureManager().bindTexture(VERSION_CHECK_ICONS);
             GlStateManager.color(1, 1, 1, 1);
             GlStateManager.pushMatrix();
@@ -122,14 +130,24 @@ public class GuiInstallerModList extends GuiScrollingList {
             Gui.drawModalRectWithCustomSizedTexture(right - (height / 2 + 4), slotTop + (height / 2 - 4), 3 * iconWidth, v, iconWidth, iconHeight, 64, 16);
             GlStateManager.popMatrix();
             if (mouseX > iconX && mouseX < iconX + iconWidth && mouseY > iconY && mouseY < iconY + iconHeight) {
-                parent.setHoveringText("This mod is outdated\nCurrently installed version: " + entry.getInstalledVersion());
+                parent.setHoveringText(
+                        I18n.format("modwinder.status.outdated"),
+                        I18n.format("modwinder.status.outdated.current_version", version)
+                );
             }
         }
 
+        // write the mod's name
         font.drawString(font.trimStringToWidth(name,    listWidth - 10), left, slotTop +  2, 0xFFFFFF);
+        // write the author's name
+        if (!Strings.isNullOrEmpty(author)) {
+            font.drawString(font.trimStringToWidth("by " + author, listWidth - 10), left + font.getStringWidth(name) + 5, slotTop + 2, 0x808080);
+        }
+        // write the mod's latest version
         font.drawString(font.trimStringToWidth(version, listWidth - (5 + height)), left, slotTop + 12, color);
+        // write the mod's number of DLCs
         if (entry.getDlcs().size() > 0) {
-            font.drawString(font.trimStringToWidth(entry.getDlcs().size() + " DLC(s)", listWidth - (5 + height)), left, slotTop + 22, 0xCCCCCC);
+            font.drawString(font.trimStringToWidth(I18n.format("modwinder.dlc", entry.getDlcs().size()), listWidth - (5 + height)), left, slotTop + 22, 0xCCCCCC);
         }
 
         GlStateManager.disableAlpha();
@@ -140,16 +158,8 @@ public class GuiInstallerModList extends GuiScrollingList {
         return Math.max(this.bottom - this.top, super.getContentHeight());
     }
 
-    public int getBottom() {
-        return bottom;
-    }
-
     public int getListWidth() {
         return listWidth;
-    }
-
-    public int getRight() {
-        return right;
     }
 
     public void reloadMods() {
