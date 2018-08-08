@@ -258,7 +258,7 @@ public class GuiModBar extends GuiScreen {
                                 .anyMatch(status -> status == InstallationState.Status.INSTALLING || status == InstallationState.Status.INSTALLED)) {
                             this.mc.displayGuiScreen(new GuiYesNo((confirm, i) -> {
                                 if (confirm) {
-                                    FMLCommonHandler.instance().exitJava(0, false);
+                                    this.mc.displayGuiScreen(new GuiWaitingModInstall(this));
                                 } else {
                                     this.mc.displayGuiScreen(this.mainMenu);
                                 }
