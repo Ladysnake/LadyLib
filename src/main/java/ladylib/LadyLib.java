@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 // note: mod information is contained in mcmod.info
-@Mod(modid = LadyLib.MOD_ID)
+@Mod(modid = LadyLib.MOD_ID, version = "${version}")
 public class LadyLib {
     public static final String MOD_ID = "ladylib";
     public static final String MOD_NAME = "LadyLib";

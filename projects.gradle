@@ -1,0 +1,43 @@
+subprojects {
+    //Don't set up dev env for subprojects
+    tasks.remove(tasks.setupCiWorkspace)
+    tasks.remove(tasks.setupDevWorkspace)
+    tasks.remove(tasks.setupDecompWorkspace)
+    tasks.remove(tasks.eclipse)
+    tasks.remove(tasks.idea)
+
+    //Move build dir into root's build folder
+    buildDir = new File(rootProject.projectDir, 'build/' + project.name + '/build/')
+
+    //Processes the resources of sourceSets.main
+    processResources {
+        inputs.property 'version', project.version
+        inputs.property 'mcversion', project.minecraft.version
+
+        from (sourceSets.main.resources.srcDirs) {
+            include 'mcmod.info'
+            expand 'version':project.version, 'mcversion':project.minecraft.version
+        }
+
+        rename '(.+_at.cfg)', 'META-INF/$1'
+    }
+
+    //Set destination dir of all subprojects to build/libs/
+    jar {
+        destinationDir = new File(rootProject.projectDir, 'build/libs/')
+    }
+}
+
+project(':Milksnake') {
+
+    dependencies {
+        compile rootProject
+    }
+
+    //Builds the milksnake jar
+    jar {
+        dependsOn rootProject.build
+
+        from(rootProject.jar.archivePath.absolutePath) { include '*' into 'META-INF/libraries' }
+    }
+}

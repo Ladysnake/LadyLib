@@ -11,57 +11,72 @@ buildscript {
     }
 }
 
+allprojects {
+
+    group = modGroup
+    version = project.findProperty("${project.name}Version")
+
+    apply plugin: "net.minecraftforge.gradle.forge"
+
+    sourceCompatibility = targetCompatibility = '1.8'
+
+
+    minecraft {
+        version = project.forgeVersion
+        runDir = "run"
+        replace '${version}', project.version
+
+        mappings = project.mcpVersion
+        makeObfSourceJar = false // Disable Srg named sources jar
+    }
+
+    apply from: new File(rootProject.projectDir, 'dependencies.gradle')
+
+    jar {
+        archiveName = "${archivesBaseName}-${mcVersion}-${project.version}.jar"
+        manifest {
+            attributes ([
+                    'Maven-Artifact': "${project.group}:${archivesBaseName}:${project.version}",
+                    'Timestamp': System.currentTimeMillis()
+            ])
+        }
+    }
+
+    processResources {
+        // this will ensure that this task is redone when the versions change.
+        inputs.property "version", project.version
+        inputs.property "mcversion", project.minecraft.version
+
+        // replace stuff in mcmod.info, nothing else
+        from(sourceSets.main.resources.srcDirs) {
+            include "mcmod.info"
+
+            // replace version and mcversion
+            expand "version": project.version, "mcversion": project.minecraft.version
+        }
+
+        // copy everything else, that's not the mcmod.info
+        from(sourceSets.main.resources.srcDirs) {
+            exclude "mcmod.info"
+        }
+
+        rename '(.+_at.cfg)', 'META-INF/$1'
+    }
+}
+
 apply plugin: 'maven'
 apply plugin: 'signing'
-apply plugin: "net.minecraftforge.gradle.forge"
-
-version = "${mcVersion}-${modVersion}"
-group = modGroup
-archivesBaseName = modBaseName
-
-sourceCompatibility = 1.8
-
-
-minecraft {
-    version = project.forgeVersion
-    runDir = "run"
-
-//    if (canJarBeSigned()) {
-//        replace '@FINGERPRINT@', signSHA1
-//    }
-
-    mappings = project.mcpVersion
-}
-
-repositories {
-    mavenCentral()
-    maven {
-        // location of the maven that hosts JEI files
-        name = "Progwml6 maven"
-        url = "http://dvs1.progwml6.com/files/maven"
-    }
-    maven {
-        // location of a maven mirror for JEI files, as a fallback
-        name = "ModMaven"
-        url = "modmaven.k-4u.nl"
-    }
-}
-
-dependencies {
-    compile "org.jetbrains:annotations:16.0.2"
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    deobfProvided "mezz.jei:jei_${mcVersion}:${jeiVersion}:api"
-    runtimeOnly "mezz.jei:jei_${mcVersion}:${jeiVersion}"
-}
 
 jar {
     manifest {
         attributes([
-                'Maven-Artifact': "${project.group}:${project.archivesBaseName}:${project.version}",
-                'Timestamp'     : System.currentTimeMillis(),
                 'FMLAT'         : 'ladylib_at.cfg'
         ])
     }
+}
+
+sourceJar {
+    archiveName = "${archivesBaseName}-${mcVersion}-${project.version}-${classifier}.jar"
 }
 
 task signJar(type: SignJar, dependsOn: reobfJar) {
@@ -87,23 +102,5 @@ artifacts {
     archives sourceJar
 }
 
-processResources {
-    // this will ensure that this task is redone when the versions change.
-    inputs.property "version", project.version
-    inputs.property "mcversion", project.minecraft.version
-
-    // replace stuff in mcmod.info, nothing else
-    from(sourceSets.main.resources.srcDirs) {
-        include "mcmod.info"
-
-        // replace version and mcversion
-        expand "version": project.version, "mcversion": project.minecraft.version
-    }
-
-    // copy everything else, that's not the mcmod.info
-    from(sourceSets.main.resources.srcDirs) {
-        exclude "mcmod.info"
-    }
-
-    rename '(.+_at.cfg)', 'META-INF/$1'
-}
+// configure subprojects
+apply from: 'projects.gradle'

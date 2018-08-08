@@ -4,7 +4,7 @@ import ladylib.modwinder.installer.ModEntry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
-@Mod(modid = ModWinder.MOD_ID)
+@Mod(modid = ModWinder.MOD_ID, version = "1.0")
 public class ModWinder {
 
     public static final String MOD_ID = "modwinder";

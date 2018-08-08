@@ -1,0 +1,14 @@
+[
+  {
+    "modid": "milksnake",
+    "name": "MilkSnake",
+    "description": "A wrapper for LadyLib and ModWinder, featuring a fancy menu retexture.",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "url": "https://minecraft.curseforge.com/projects/milksnake",
+    "authorList": [
+      "Pyrofab",
+      "RiverLeviathan"
+    ]
+  }
+]
