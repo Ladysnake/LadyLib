@@ -17,6 +17,7 @@ import net.minecraft.client.resources.I18n;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.ForgeVersion;
 import net.minecraftforge.fml.client.GuiScrollingList;
+import org.lwjgl.input.Mouse;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 public class GuiInstallerModList extends GuiScrollingList {
 
     public static final ResourceLocation INSTALLATION_STATUS_ICON = new ResourceLocation(ModWinder.MOD_ID, "textures/gui/installation_status_icons.png");
+    public static final ResourceLocation TRASH_ICONS = new ResourceLocation(ModWinder.MOD_ID, "textures/gui/uninstall_icons.png");  // your waifu
     public static final ResourceLocation VERSION_CHECK_ICONS = new ResourceLocation(ForgeVersion.MOD_ID, "textures/gui/version_check_icons.png");
 
     private final GuiModBar parent;
@@ -50,8 +52,13 @@ public class GuiInstallerModList extends GuiScrollingList {
         this.parent.onModEntrySelected();
         if (doubleClick) {
             ModEntry selected = flattenedEntries.get(index);
-            if (!selected.isInstalled() && selected.getInstallationState().getStatus() == InstallationState.Status.NONE) {
-                AddonInstaller.installLatestFromCurseforge(selected);
+            if (selected.getInstallationState().getStatus().canInstall(selected)) {
+                if (!AddonInstaller.attemptReEnabling(selected)) {
+                    AddonInstaller.installLatestFromCurseforge(selected);
+                    // update DLCs while we are at it
+                    // note: if the mod just got installed or re-enabled, no DLC is active, we only need to update them when the parent mod is updated
+                    selected.getDlcs().stream().filter(ModEntry::isOutdated).forEach(AddonInstaller::installLatestFromCurseforge);
+                }
             }
         }
     }
@@ -103,18 +110,45 @@ public class GuiInstallerModList extends GuiScrollingList {
 
         int color = 0x00E6D2;
 
-        final int iconX = right - (height / 2 + 4);
+        int iconX = right - (height / 2 + 4 + 12);
         final int iconY = slotTop + (height / 2 - 4);
         final int iconWidth = 8;
         final int iconHeight = 8;
+        final boolean flashing = (System.currentTimeMillis() / 800 & 1) == 1;
 
-        if ((!entry.isInstalled() || entry.isOutdated()) && entry.getInstallationState().getStatus().shouldDisplay()) {
+        GlStateManager.color(1, 1, 1, 1);
+
+        // draw trash can
+        if (entry.isInstalled() && entry.getInstallationState() == InstallationState.NAUGHT) {
+            int u = 3;
+            int v = 0;
+
+            // if the mouse is hovering the trash can
+            if (mouseX >= iconX && mouseX < iconX + iconWidth && mouseY > iconY && mouseY < iconY + iconHeight) {
+                // the mouse is hovering the bin icon
+                v = 8;
+                if (Mouse.isButtonDown(0)) {
+                    AddonInstaller.uninstall(entry);
+                    this.parent.setTip(I18n.format("modwinder.hint.uninstall"));
+                }
+            }
+
+            if (isSelected(slotIdx)) {
+                Minecraft.getMinecraft().getTextureManager().bindTexture(TRASH_ICONS);
+                GlStateManager.pushMatrix();
+                Gui.drawModalRectWithCustomSizedTexture(iconX, iconY, u * iconWidth, v, iconWidth, iconHeight, 64, 16);
+                GlStateManager.popMatrix();
+            }
+        }
+
+        iconX += 12;
+
+        // draw status icons
+        if (entry.getInstallationState().getStatus().shouldDisplay()) {
             InstallationState state = entry.getInstallationState();
             Minecraft.getMinecraft().getTextureManager().bindTexture(INSTALLATION_STATUS_ICON);
-            GlStateManager.color(1, 1, 1, 1);
             GlStateManager.pushMatrix();
-            int v = (((System.currentTimeMillis() / 800 & 1)) == 1) ? 8 : 0;
-            Gui.drawModalRectWithCustomSizedTexture(iconX, iconY, state.getStatus().getSheetOffset() * iconWidth, v, iconWidth, iconHeight, 88, 16);
+            Gui.drawModalRectWithCustomSizedTexture(iconX, iconY, state.getStatus().getSheetOffset() * iconWidth, flashing ? 8 : 0, iconWidth, iconHeight, 112, 16);
             GlStateManager.popMatrix();
             if (mouseX > iconX && mouseX < iconX + iconWidth && mouseY > iconY && mouseY < iconY + iconHeight) {
                 parent.setHoveringText(state.getMessage());
@@ -124,12 +158,10 @@ public class GuiInstallerModList extends GuiScrollingList {
         } else if (entry.isOutdated()) {
             color = 0xFF6E00;
             Minecraft.getMinecraft().getTextureManager().bindTexture(VERSION_CHECK_ICONS);
-            GlStateManager.color(1, 1, 1, 1);
             GlStateManager.pushMatrix();
-            int v = (((System.currentTimeMillis() / 800 & 1)) == 1) ? 8 : 0;
-            Gui.drawModalRectWithCustomSizedTexture(right - (height / 2 + 4), slotTop + (height / 2 - 4), 3 * iconWidth, v, iconWidth, iconHeight, 64, 16);
+            Gui.drawModalRectWithCustomSizedTexture(right - (height / 2 + 4), slotTop + (height / 2 - 4), 3 * iconWidth, flashing ? 8 : 0, iconWidth, iconHeight, 64, 16);
             GlStateManager.popMatrix();
-            if (mouseX > iconX && mouseX < iconX + iconWidth && mouseY > iconY && mouseY < iconY + iconHeight) {
+            if (mouseX >= iconX && mouseX < iconX + iconWidth && mouseY > iconY && mouseY < iconY + iconHeight) {
                 parent.setHoveringText(
                         I18n.format("modwinder.status.outdated"),
                         I18n.format("modwinder.status.outdated.current_version", version)

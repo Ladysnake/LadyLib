@@ -15,7 +15,7 @@ public class DummyModEntry extends ModEntry {
     }
 
     @Override
-    protected void init(boolean isDlc) {
+    protected void init() {
         // NO-OP
     }
 }

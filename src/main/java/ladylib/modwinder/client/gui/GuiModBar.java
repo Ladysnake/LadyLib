@@ -10,7 +10,6 @@ import net.minecraft.client.resources.I18n;
 import net.minecraft.util.StringUtils;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.fml.client.config.GuiUtils;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -120,6 +119,7 @@ public class GuiModBar extends GuiScreen {
     private int numButtons = SortType.values().length;
 
     private String lastFilterText = "";
+    private String tip = I18n.format("modwinder.hint");
     private List<String> hoveringText;
 
     private GuiTextField search;
@@ -225,12 +225,11 @@ public class GuiModBar extends GuiScreen {
         int x = (/*(10 +*/ search.x - 5/* + width) / 2*/) - (getFontRenderer().getStringWidth(text)/* / 2*/);
         getFontRenderer().drawString(text, x, search.y + 5, 0xFFFFFF);
         search.drawTextBox();
+        this.drawString(this.fontRenderer, tip, this.width - 10 - fontRenderer.getStringWidth(tip), this.height - 10, 0xFFFF99);
         if (hoveringText != null) {
             GuiUtils.drawHoveringText(this.hoveringText, mouseX, mouseY, width, height, -1, fontRenderer);
             hoveringText = null;
         }
-        String tip = I18n.format("modwinder.hint");
-        this.drawString(this.fontRenderer, tip, this.width - 10 - fontRenderer.getStringWidth(tip), this.height - 10, 0xFFFF99);
     }
 
     /**
@@ -253,7 +252,10 @@ public class GuiModBar extends GuiScreen {
             } else {
                 switch (button.id) {
                     case DONE_BUTTON_ID: {
-                        if (ModEntry.getLadysnakeMods().stream().map(ModEntry::getInstallationState).map(InstallationState::getStatus).anyMatch(InstallationState.Status.INSTALLED::equals)) {
+                        if (ModEntry.getLadysnakeMods().stream()
+                                .map(ModEntry::getInstallationState)
+                                .map(InstallationState::getStatus)
+                                .anyMatch(status -> status == InstallationState.Status.INSTALLING || status == InstallationState.Status.INSTALLED)) {
                             this.mc.displayGuiScreen(new GuiYesNo((confirm, i) -> {
                                 if (confirm) {
                                     FMLCommonHandler.instance().exitJava(0, false);
@@ -309,6 +311,10 @@ public class GuiModBar extends GuiScreen {
 
     public FontRenderer getFontRenderer() {
         return fontRenderer;
+    }
+
+    public void setTip(String tip) {
+        this.tip = tip;
     }
 
     public void setHoveringText(String... hoveringText) {

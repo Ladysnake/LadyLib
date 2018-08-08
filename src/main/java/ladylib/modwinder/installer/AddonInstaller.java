@@ -11,6 +11,7 @@ import ladylib.networking.http.HTTPRequestHelper;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import net.minecraftforge.fml.relauncher.libraries.*;
 import org.apache.commons.io.IOUtils;
@@ -30,6 +31,7 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -43,12 +45,42 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class AddonInstaller {
+
+    public static final InstallationState DOWNLOAD_START = new InstallationState(InstallationState.Status.INSTALLING, I18n.format("modwinder.status.downloading.start"));
+    public static final InstallationState DOWNLOAD_FAILED = new InstallationState(InstallationState.Status.FAILED, I18n.format("modwinder.status.failed"));
+    public static final InstallationState INSTALLATION_COMPLETE = new InstallationState(InstallationState.Status.INSTALLED, I18n.format("modwinder.status.installed"), I18n.format("modwinder.status.restart"));
+    public static final InstallationState INSTALLATION_END = new InstallationState(InstallationState.Status.INSTALLING, I18n.format("modwinder.status.installing.end"));
+    public static final InstallationState UNINSTALLED = new InstallationState(InstallationState.Status.UNINSTALLED, I18n.format("modwinder.status.uninstalled"), I18n.format("modwinder.status.restart"));
+    public static final InstallationState UNINSTALL_FAILED = new InstallationState(InstallationState.Status.FAILED, I18n.format("modwinder.status.uninstalled.failed"));
+
     /**
      * A single thread used to download and manage files.
      */
     private static final Executor DOWNLOAD_THREAD = Executors.newSingleThreadExecutor(r -> new Thread(r, "Ladylib Installer"));
-    private static final MethodHandle libraryManager$extractPacked = ReflectionUtil.findMethodHandleFromObfName(LibraryManager.class, "extractPacked", Pair.class, File.class, ModList.class, File[].class);
     private static final Gson GSON = new GsonBuilder().setLenient().setPrettyPrinting().create();
+    private static final ModWinderModList LOCAL_MODS;
+    private static final ModList MOD_LIST;
+    private static final MethodHandle libraryManager$extractPacked = ReflectionUtil.findMethodHandleFromObfName(LibraryManager.class, "extractPacked", Pair.class, File.class, ModList.class, File[].class);
+
+    static {
+        Path modsPath = Paths.get( "mods", MinecraftForge.MC_VERSION);
+        LOCAL_MODS = ModWinderModList.create(modsPath.resolve("modwinder_local_mods.json"));
+        File modsDir = modsPath.toFile();
+        File modList = new File(modsDir, "mod_list.json");
+        if (!modList.exists()) {
+            if (!modsDir.exists() && !modsDir.mkdir()) {
+                throw new IllegalStateException("No mods directory ?!");
+            }
+            Map<String, Object> baseList = new HashMap<>();
+            baseList.put("repositoryRoot", "mods/1.12.2");
+            try {
+                Files.write(modList.toPath(), GSON.toJson(baseList).getBytes(StandardCharsets.UTF_8));
+            } catch (IOException e) {
+                throw new InstallationException("Could not write base mod list", e);
+            }
+        }
+        MOD_LIST = ModList.create(modList, Launch.minecraftHome);
+    }
 
     /**
      * Downloads and installs the latest file uploaded on Curseforge for the project associated with the given mod.
@@ -85,7 +117,7 @@ public class AddonInstaller {
         } catch (MalformedURLException e) {
             throw new IllegalStateException(e);
         }
-        mod.setInstallationState(new InstallationState(InstallationState.Status.INSTALLING, I18n.format("modwinder.status.downloading.start")));
+        mod.setInstallationState(DOWNLOAD_START);
         return HTTPRequestHelper.getJSON(apiUrl)
                 .thenApply(json -> {
                     // Identify the latest file for the current Minecraft Version
@@ -110,15 +142,74 @@ public class AddonInstaller {
                 .handle((result, t) -> {
                     if (t != null) {
                         LadyLib.LOGGER.error(new FormattedMessage("Could not download latest file of {} (project {})", mod.getName(), mod.getCurseId()), t);
-                        mod.setInstallationState(new InstallationState(InstallationState.Status.FAILED, I18n.format("modwinder.status.failed")));
+                        mod.setInstallationState(DOWNLOAD_FAILED);
                         // rethrow the exception in case someone wants to do something else with it
                         Throwables.throwIfUnchecked(t);
                         throw new RuntimeException(t);
                     } else {
-                        mod.setInstallationState(new InstallationState(InstallationState.Status.INSTALLED, I18n.format("modwinder.status.installed"), I18n.format("modwinder.status.installed.restart")));
+                        mod.setInstallationState(INSTALLATION_COMPLETE);
                         return result;
                     }
                 });
+    }
+
+    public static void uninstall(ModEntry modEntry) {
+        try {
+            for (ModEntry dlc : modEntry.getDlcs()) {
+                uninstall(dlc);
+            }
+            List<Artifact> artifacts = ReflectionHelper.getPrivateValue(ModList.class, MOD_LIST, "artifacts");
+            Map<String, Artifact> art_map = ReflectionHelper.getPrivateValue(ModList.class, MOD_LIST, "art_map");
+            File modSource = Loader.instance().getIndexedModList().get(modEntry.getModId()).getSource();
+            artifacts.removeIf(artifact -> {
+                if (Objects.equals(artifact.getFile(), modSource)) {
+                    art_map.remove(artifact.toString());
+                    // just in case someone added the entry in the mod list manually, it doesn't hurt to add it here
+                    LOCAL_MODS.add(modEntry, artifact);
+                    return true;
+                }
+                return false;
+            });
+            MOD_LIST.save();
+            LOCAL_MODS.save();
+            modEntry.setInstallationState(UNINSTALLED);
+        } catch (Exception e) {
+            LadyLib.LOGGER.error("Could not uninstall mod {} ({})", modEntry.getName(), modEntry.getModId(), e);
+            modEntry.setInstallationState(UNINSTALL_FAILED);
+        }
+    }
+
+    /**
+     * Re-enables a mod that has been uninstalled but is still loaded in the minecraft instance
+     * @param modEntry the information regarding the mod to re-enable
+     * @return true if the mod has been re-enabled, false if it needs to be installed from scratch
+     */
+    public static boolean attemptReEnabling(ModEntry modEntry) {
+        try {
+            if (modEntry.isDlc()) {
+                // if any of the parent mods is not up to date, just update everything
+                if (!modEntry.getParentMods().allMatch(AddonInstaller::attemptReEnabling)) {
+                    return false;
+                }
+            }
+            Artifact disabled = LOCAL_MODS.getArtifact(modEntry, MOD_LIST.getRepository());
+            if (disabled == null) {
+                return false;
+            }
+            MOD_LIST.add(disabled);
+            MOD_LIST.save();
+            if (Loader.isModLoaded(modEntry.getModId())) {
+                // mod is already loaded, just remove the current indication
+                modEntry.setInstallationState(InstallationState.NAUGHT);
+            } else {
+                // instantly complete the installation
+                modEntry.setInstallationState(INSTALLATION_COMPLETE);
+            }
+            return true;
+        } catch (Exception e) {
+            LadyLib.LOGGER.error("Could not re-enable mod {}", modEntry.getModId(), e);
+        }
+        return false;
     }
 
     private static CompletableFuture<List<CompletableFuture<List<File>>>> downloadFromCurseforge(final ModEntry mod, String fileName, @Nullable String fileId) {
@@ -148,21 +239,24 @@ public class AddonInstaller {
                                         .filter(me -> me.getCurseId() == depCurseId)
                                         .findAny()
                                         .orElse(new DummyModEntry(depCurseId));
-                                // We want the exceptions to be thrown when joining, so no handling right now
-                                downloadedFiles.add(installLatestFromCurseforge(depEntry));
+                                // check that we actually need to download it first
+                                if (depEntry.getInstallationState().getStatus().canInstall(depEntry)) {
+                                    // We want the exceptions to be thrown when joining, so no handling right now
+                                    downloadedFiles.add(installLatestFromCurseforge(depEntry));
+                                }
                             }
                         }
                         // download this file from the associated url
                         String downloadURL = fileToDownload.getAsJsonObject().get("downloadURL").getAsString();
-                        mod.getInstallationState().setMessage(I18n.format("modwinder.status.downloading.file", fileName));
+                        mod.setInstallationState(new InstallationState(InstallationState.Status.INSTALLING, I18n.format("modwinder.status.downloading.file", fileName)));
                         Path temp = downloadFile(fileName, downloadURL);
-                        mod.getInstallationState().setMessage(I18n.format("modwinder.status.installing", fileName));
+                        mod.setInstallationState(new InstallationState(InstallationState.Status.INSTALLING, I18n.format("modwinder.status.installing", fileName)));
                         // read required information and move to mod repository
-                        File archived = moveToModRepository(temp);
+                        File archived = moveToModRepository(temp, mod);
                         if (archived != null) {
                             downloadedFiles.add(CompletableFuture.completedFuture(Collections.singletonList(archived)));
                         }
-                        mod.getInstallationState().setMessage(I18n.format("modwinder.status.installing.end"));
+                        mod.setInstallationState(INSTALLATION_END);
                         return downloadedFiles;
                     }, DOWNLOAD_THREAD);  // operate on the download thread to avoid concurrency issues with files
         } catch (MalformedURLException e) {
@@ -171,7 +265,7 @@ public class AddonInstaller {
     }
 
     @Nullable
-    private static File moveToModRepository(Path artifactPath) {
+    private static File moveToModRepository(Path artifactPath, ModEntry mod) {
         Attributes meta;
         byte[] data;
         byte[] manifestData;
@@ -195,36 +289,27 @@ public class AddonInstaller {
             throw new InstallationException("Could not read manifest data from downloaded file " + artifactPath.toFile().getName(), e);
         }
         File modsDir = new File(Launch.minecraftHome, "mods/" + MinecraftForge.MC_VERSION);
-        File modList = new File(modsDir, "mod_list.json");
-        if (!modList.exists()) {
-            if (!modsDir.exists() && !modsDir.mkdir()) {
-                throw new IllegalStateException("No mods directory ?!");
-            }
-            Map<String, Object> baseList = new HashMap<>();
-            baseList.put("repositoryRoot", "mods/1.12.2");
-            try {
-                Files.write(modList.toPath(), GSON.toJson(baseList).getBytes(StandardCharsets.UTF_8));
-            } catch (IOException e) {
-                throw new InstallationException("Could not write base mod list", e);
-            }
-        }
-        ModList list = ModList.create(modList, Launch.minecraftHome);
-        Artifact artifact = readArtifact(list.getRepository(), meta);
+        Artifact artifact = readArtifact(MOD_LIST.getRepository(), meta);
 
         if (!artifact.getFile().getParentFile().exists() && !artifact.getFile().getParentFile().mkdirs()) {
             throw new InstallationException("Could not create parent directories for " + artifact.getFile());
         }
-        list.getRepository().archive(artifact, artifactPath.toFile(), manifestData);
+        MOD_LIST.getRepository().archive(artifact, artifactPath.toFile(), manifestData);
         try {
             // remove the current version of the mod
-            List<Artifact> artifacts = ReflectionHelper.getPrivateValue(ModList.class, list, "artifacts");
-            Map<String, Artifact> art_map = ReflectionHelper.getPrivateValue(ModList.class, list, "art_map");
+            List<Artifact> artifacts = ReflectionHelper.getPrivateValue(ModList.class, MOD_LIST, "artifacts");
+            Map<String, Artifact> art_map = ReflectionHelper.getPrivateValue(ModList.class, MOD_LIST, "art_map");
             // if the map contains that exact artifact, it will get replaced during list.add()
             artifacts.removeIf(o -> !art_map.containsKey(o.toString()) && artifact.matchesID(o));
-            list.add(artifact);
+
+            LOCAL_MODS.add(mod, artifact);
+            MOD_LIST.add(artifact);
+
             // Extract contained files from the jar
-            libraryManager$extractPacked.invoke(artifact.getFile(), list, new File[] {modsDir});
-            list.save();
+            libraryManager$extractPacked.invoke(artifact.getFile(), MOD_LIST, new File[] {modsDir});
+
+            LOCAL_MODS.save();
+            MOD_LIST.save();
         } catch (Throwable e) {
             throw new InstallationException("Could not archive downloaded mod " + artifact.getFilename(), e);
         }
@@ -237,7 +322,11 @@ public class AddonInstaller {
             timestamp = SnapshotJson.TIMESTAMP.format(new Date(Long.parseLong(timestamp)));
         }
 
-        return new Artifact(repo, meta.getValue(new Attributes.Name("Maven-Artifact")), timestamp);
+        String mavenArtifact = meta.getValue(new Attributes.Name("Maven-Artifact"));
+        if (mavenArtifact == null) {
+            throw new InstallationException("The Maven-Artifact attribute is absent");
+        }
+        return new Artifact(repo, mavenArtifact, timestamp);
     }
 
     private static Path downloadFile(String dest, String urlString) {

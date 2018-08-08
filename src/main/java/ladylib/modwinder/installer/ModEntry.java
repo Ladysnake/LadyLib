@@ -27,24 +27,29 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ModEntry {
-    public static final String LADYSNAKE_MODS = "https://gist.githubusercontent.com/Pyrofab/000073b92e7a9de9f68b4da685ff80c5/raw/89674640b591774a26e84d643a5fdac82c3166bd/ladysnake_mods_test.json";
-    public static final Gson GSON = new GsonBuilder().setFieldNamingStrategy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+    public static final String MOD_BAR_URL = "https://ladysnake.glitch.me/milksnake-bar";
+
+    static final Gson GSON = new GsonBuilder().setFieldNamingStrategy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
     private static List<ModEntry> ladysnakeMods;
 
-    public static void gatherLadysnakeMods() {
-        HTTPRequestHelper.getJSON(LADYSNAKE_MODS, json -> {
+    /**
+     * Retrieves the list of mods featured on <a href=http://ladysnake.glitch.me/data/milksnake-bar.json>Ladysnake's website</a>
+     * and processes it.
+     * <p>
+     * This process is asynchronous, as such the method should return instantly even though the whole process is likely to
+     * take several seconds.
+     */
+    public static void refillModBar() {
+        HTTPRequestHelper.getJSON(MOD_BAR_URL, json -> {
             try {
-                Type type = new TypeToken<List<ModEntry>>() {
-                }.getType();
+                Type type = new TypeToken<List<ModEntry>>() {}.getType();
                 ladysnakeMods = GSON.fromJson(json, type);
-                ladysnakeMods.forEach(modEntry -> modEntry.init(false));
+                ladysnakeMods.forEach(ModEntry::init);
             } catch (Exception e) {
                 LadyLib.LOGGER.warn("Could not create the list of Ladysnake mods", e);
             }
@@ -52,7 +57,7 @@ public class ModEntry {
     }
 
     /**
-     * @return a list of mod entries gathered during {@link #gatherLadysnakeMods()}
+     * @return a list of mod entries gathered during {@link #refillModBar()}
      */
     public static List<ModEntry> getLadysnakeMods() {
         return ladysnakeMods == null ? ImmutableList.of() : ImmutableList.copyOf(ladysnakeMods);
@@ -68,13 +73,21 @@ public class ModEntry {
     private List<ModEntry> dlcs;
 
     // the following variables are calculated from the serialized ones
-    private transient boolean isDlc;
+
+    /**
+     * Set to true after {@link #init(ModEntry)} has been called once
+     */
+    private transient boolean initialized;
     private transient boolean installed;
     private transient boolean outdated;
     private transient InstallationState installationState = InstallationState.NAUGHT;
     private transient String installedVersion = "";
     private transient String latestVersion = "";
     private transient ResourceLocation logo;
+    /**
+     * The list of mods this entry is a DLC of <br>
+     */
+    private transient Set<ModEntry> parents = new HashSet<>();
     private Map<ComparableVersion, String> changelog;
 
     private ModEntry() {
@@ -89,13 +102,21 @@ public class ModEntry {
         this.modId = modId;
         this.curseId = curseId;
         this.name = name;
+        this.author = author;
         this.updateUrl = updateUrl;
         this.dlcs = dlcs;
-        init(false);
+        init();
     }
 
-    protected void init(boolean isDlc) {
-        this.isDlc = isDlc;
+    protected synchronized void init(ModEntry parent) {
+        this.parents.add(parent);
+        init();
+    }
+
+    protected synchronized void init() {
+        if (initialized) {
+            return;
+        }
         ModContainer installedMod = Loader.instance().getIndexedModList().get(modId);
         if (installedMod != null) {
             this.installed = true;
@@ -141,12 +162,13 @@ public class ModEntry {
                                 .get(MinecraftForge.MC_VERSION + "-latest").getAsString();
                         this.setLatestVersion(latestVersion);
                         outdated = (new ComparableVersion(this.installedVersion).compareTo(new ComparableVersion(latestVersion)) < 0);
-                        Map<String, String> temp = GSON.fromJson(json.getAsJsonObject().get(MinecraftForge.MC_VERSION + ""), new TypeToken<Map<String, String>>() {}.getType());
+                        Map<String, String> temp = GSON.fromJson(json.getAsJsonObject().get(MinecraftForge.MC_VERSION + ""), new TypeToken<Map<String, String>>() {
+                        }.getType());
                         this.setChangelog(temp.keySet().stream().collect(Collectors.toMap(ComparableVersion::new, temp::get)));
                     });
         }
-        this.dlcs.forEach(modEntry -> modEntry.init(true));
-
+        this.initialized = true;
+        this.dlcs.forEach(modEntry -> modEntry.init(this));
     }
 
     public synchronized Map<ComparableVersion, String> getChangelog() {
@@ -158,7 +180,11 @@ public class ModEntry {
     }
 
     public boolean isDlc() {
-        return isDlc;
+        return !parents.isEmpty();
+    }
+
+    public Stream<ModEntry> getParentMods() {
+        return this.parents.stream();
     }
 
     public boolean isOutdated() {
