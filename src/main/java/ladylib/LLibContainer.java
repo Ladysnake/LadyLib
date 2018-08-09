@@ -29,6 +29,7 @@ public class LLibContainer {
     /**
      * This method creates a creative tab for the enclosing mod, sets its icon item
      * to the provided one, and makes it the default.
+     *
      * @param icon a supplier for the tab's icon itemstack
      * @return the generated creative tab
      */
@@ -89,5 +90,21 @@ public class LLibContainer {
     @Nonnull
     public String getModId() {
         return owner.getModId();
+    }
+
+    /**
+     * Adds a resource to be loaded as an override for an existing minecraft resource
+     * <p>
+     * The path to the resource will be constructed as <code>assets/[modid]/[path]/overrides/[file]</code>,
+     * where <code>modid</code> is the mod id of this container's owner.
+     * <p>
+     * Note: Overrides have minimal priority, only higher than vanilla.
+     * Any resourcepack selected by users will function as usual.
+     *
+     * @param path  the path to the parent directory of the resource
+     * @param files the name of one or more files, extension included
+     */
+    public void addVanillaResourceOverride(String path, String... files) {
+        LadyLib.INSTANCE.clientHandler.addResourceOverride(getModId(), path, files);
     }
 }

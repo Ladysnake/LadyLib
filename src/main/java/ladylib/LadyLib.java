@@ -11,6 +11,7 @@ import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.*;
 import net.minecraftforge.fml.common.discovery.ASMDataTable;
+import net.minecraftforge.fml.common.event.FMLConstructionEvent;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.relauncher.Side;
@@ -76,9 +77,14 @@ public class LadyLib {
 
 
     private AutoRegistrar registrar;
+    ClientHandler clientHandler;
 
-    @SideOnly(Side.CLIENT)
-    private ClientHandler clientHandler;
+    @Mod.EventHandler
+    public void construction(FMLConstructionEvent event) {
+        if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
+            ClientHandler.hookResourceProxy();
+        }
+    }
 
     /**
      * LadyLib pre-initialization
