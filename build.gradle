@@ -17,6 +17,7 @@ allprojects {
     version = project.findProperty("${project.name}Version")
 
     apply plugin: "net.minecraftforge.gradle.forge"
+    apply plugin: 'signing'
 
     sourceCompatibility = targetCompatibility = '1.8'
 
@@ -35,11 +36,15 @@ allprojects {
     jar {
         archiveName = "${archivesBaseName}-${mcVersion}-${project.version}.jar"
         manifest {
-            attributes ([
+            attributes([
                     'Maven-Artifact': "${project.group}:${archivesBaseName}:${project.version}",
-                    'Timestamp': System.currentTimeMillis()
+                    'Timestamp'     : System.currentTimeMillis()
             ])
         }
+    }
+
+    sourceJar {
+        archiveName = "${archivesBaseName}-${mcVersion}-${project.version}-${classifier}.jar"
     }
 
     processResources {
@@ -62,35 +67,34 @@ allprojects {
 
         rename '(.+_at.cfg)', 'META-INF/$1'
     }
+
+    task signJar(type: SignJar, dependsOn: reobfJar) {
+        onlyIf {
+            project.hasProperty('keyStore')
+        }
+
+        keyStore = project.properties.keyStore
+        alias = project.properties.keyStoreAlias
+        storePass = project.properties.keyStorePass
+        keyPass = project.properties.keyStoreKeyPass
+    }
+
+    build.dependsOn signJar
 }
 
 apply plugin: 'maven'
-apply plugin: 'signing'
 
 jar {
     manifest {
         attributes([
-                'FMLAT'         : 'ladylib_at.cfg'
+                'FMLAT': 'ladylib_at.cfg'
         ])
     }
 }
 
-sourceJar {
-    archiveName = "${archivesBaseName}-${mcVersion}-${project.version}-${classifier}.jar"
-}
-
-task signJar(type: SignJar, dependsOn: reobfJar) {
-    onlyIf {
-        project.hasProperty('keyStore')
-    }
-
+signJar {
     inputFile = jar.archivePath
     outputFile = jar.archivePath
-
-    keyStore = project.properties.keyStore
-    alias = project.properties.keyStoreAlias
-    storePass = project.properties.keyStorePass
-    keyPass = project.properties.keyStoreKeyPass
 }
 
 artifacts {

@@ -39,5 +39,14 @@ project(':Milksnake') {
         dependsOn rootProject.build
 
         from(rootProject.jar.archivePath.absolutePath) { include '*' into 'META-INF/libraries' }
+
+        manifest.attributes([
+            'ContainedDeps': rootProject.jar.archivePath.name,
+        ])
+    }
+
+    signJar {
+        inputFile = jar.archivePath
+        outputFile = jar.archivePath
     }
 }
