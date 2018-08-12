@@ -73,7 +73,13 @@ public class GuiModBar extends GuiScreen {
     @SubscribeEvent
     public static void onGuiScreenActionPerformed(GuiScreenEvent.ActionPerformedEvent.Pre event) {
         if (event.getGui() instanceof GuiMainMenu && event.getButton().id == MODWINDER_BUTTON_ID) {
-            Minecraft.getMinecraft().displayGuiScreen(new GuiModBar(event.getGui()));
+            // Java versions before 8u101 miss some certificates required to use the Curse API
+            // An update number with only 2 digits (less than 100) is too old
+            if (System.getProperty("java.version").matches("1\\.8\\.0_\\d{2}")) {
+                Minecraft.getMinecraft().displayGuiScreen(new GuiOutdatedJava(event.getGui()));
+            } else {
+                Minecraft.getMinecraft().displayGuiScreen(new GuiModBar(event.getGui()));
+            }
         }
     }
 

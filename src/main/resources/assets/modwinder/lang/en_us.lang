@@ -24,3 +24,6 @@ modwinder.status.uninstalled=This mod has been uninstalled
 modwinder.status.uninstalled.failed=Could not uninstall, check logs for more information
 
 modwinder.waiting=Waiting for mods to finish installing
+modwinder.java_warning_1=Your Minecraft is using an outdated java version
+modwinder.java_warning.info=More Information
+modwinder.java_warning_2=Please configure your launcher to use a recent version of Java
