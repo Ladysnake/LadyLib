@@ -1,7 +1,8 @@
 package ladylib.misc;
 
+import com.google.common.annotations.Beta;
 import ladylib.LadyLib;
-import ladylib.client.ICustomLocation;
+import ladylib.client.ItemRenderRegistrationHandler;
 import ladylib.registration.BlockRegistrar;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
  * A class to help generating base json files for registered blocks and items. <br/>
  * Methods in this class will do nothing outside of a development environment.
  */
+@Beta
 public class TemplateUtil {
 
     private static final ResourceLocation STUB_ITEM_MODEL = new ResourceLocation("ladylib", "models/item/sample_item.json");
@@ -48,9 +50,9 @@ public class TemplateUtil {
         }
 
         TemplateUtil.srcRoot = srcRoot;
-        List<String> createdModelFiles = LadyLib.instance.getItemRegistrar().getAllItems().stream()
+        List<String> createdModelFiles = LadyLib.INSTANCE.getItemRegistrar().getAllItems().stream()
                 .filter(item -> modid.equals(item.getRegistryName().getNamespace()))
-                .filter(itemIn -> !(itemIn instanceof ItemBlock) && !(itemIn instanceof ICustomLocation))
+                .filter(itemIn -> !(itemIn instanceof ItemBlock) && !(itemIn instanceof ItemRenderRegistrationHandler))
                 .map(Item::getRegistryName)
                 .map(TemplateUtil::generateItemModel)
                 .filter(Objects::nonNull)

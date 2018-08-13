@@ -11,72 +11,103 @@ buildscript {
     }
 }
 
+allprojects {
+
+    group = modGroup
+    version = project.findProperty("${project.name}Version")
+
+    apply plugin: "net.minecraftforge.gradle.forge"
+    apply plugin: 'signing'
+
+    sourceCompatibility = targetCompatibility = '1.8'
+
+
+    minecraft {
+        version = project.forgeVersion
+        runDir = "run"
+        replace '@VERSION@', project.version
+        if (project.hasProperty('keyStore')) {
+            replace '@FINGERPRINT@', project.findProperty('signSHA1')
+        }
+
+        mappings = project.mcpVersion
+        makeObfSourceJar = false // Disable Srg named sources jar
+    }
+
+    apply from: new File(rootProject.projectDir, 'dependencies.gradle')
+    apply from: new File(rootProject.projectDir, 'update_json.gradle')
+
+    build.finalizedBy updateJson
+
+    jar {
+        from sourceSets.api.output
+        from sourceSets.main.output
+        manifest {
+            attributes([
+                    'Maven-Artifact': "${project.group}:${archivesBaseName}:${project.version}",
+                    'Timestamp'     : System.currentTimeMillis()
+            ])
+        }
+    }
+
+    processResources {
+        // this will ensure that this task is redone when the versions change.
+        inputs.property "version", project.version
+        inputs.property "mcversion", project.minecraft.version
+
+        // replace stuff in mcmod.info, nothing else
+        from(sourceSets.main.resources.srcDirs) {
+            include "mcmod.info"
+
+            // replace version and mcversion
+            expand "version": project.version, "mcversion": project.minecraft.version
+        }
+
+        // copy everything else, that's not the mcmod.info
+        from(sourceSets.main.resources.srcDirs) {
+            exclude "mcmod.info"
+        }
+
+        rename '(.+_at.cfg)', 'META-INF/$1'
+    }
+
+    task signJar(type: SignJar, dependsOn: reobfJar) {
+        onlyIf {
+            project.hasProperty('keyStore')
+        }
+
+        keyStore = project.properties.keyStore
+        alias = project.properties.keyStoreAlias
+        storePass = project.properties.keyStorePass
+        keyPass = project.properties.keyStoreKeyPass
+    }
+
+    build.dependsOn signJar
+}
+
 apply plugin: 'maven'
-apply plugin: 'signing'
-apply plugin: "net.minecraftforge.gradle.forge"
 
-version = "${mcVersion}-${modVersion}"
-group = modGroup
-archivesBaseName = modBaseName
-
-sourceCompatibility = 1.8
-
-
-minecraft {
-    version = project.forgeVersion
-    runDir = "run"
-
-//    if (canJarBeSigned()) {
-//        replace '@FINGERPRINT@', signSHA1
-//    }
-    replace '@VERSION@', project.version
-
-    mappings = project.mcpVersion
-}
-
-repositories {
-    mavenCentral()
-    maven {
-        // location of the maven that hosts JEI files
-        name = "Progwml6 maven"
-        url = "http://dvs1.progwml6.com/files/maven"
-    }
-    maven {
-        // location of a maven mirror for JEI files, as a fallback
-        name = "ModMaven"
-        url = "modmaven.k-4u.nl"
-    }
-}
-
-dependencies {
-    compile 'org.jetbrains:annotations:15.0'
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    deobfProvided "mezz.jei:jei_${mcVersion}:${jeiVersion}:api"
-    runtimeOnly "mezz.jei:jei_${mcVersion}:${jeiVersion}"
+configurations {
+    contained
+    contained.transitive = false
 }
 
 jar {
+    archiveName = "${archivesBaseName}-${mcVersion}-${project.version}.jar"
     manifest {
         attributes([
-                'Maven-Artifact': "${project.group}:${project.archivesBaseName}:${project.version}",
-                'Timestamp'     : System.currentTimeMillis(),
                 'FMLAT': 'ladylib_at.cfg'
         ])
     }
 }
 
-task signJar(type: SignJar, dependsOn: reobfJar) {
-    onlyIf {
-        project.hasProperty('keyStore')
-    }
+sourceJar {
+    archiveName = "${archivesBaseName}-${mcVersion}-${project.version}-${classifier}.jar"
+}
 
+signJar {
     inputFile = jar.archivePath
     outputFile = jar.archivePath
-
-    keyStore = project.properties.keyStore
-    alias = project.properties.keyStoreAlias
-    storePass = project.properties.keyStorePass
-    keyPass = project.properties.keyStoreKeyPass
 }
 
 artifacts {
@@ -88,23 +119,5 @@ artifacts {
     archives sourceJar
 }
 
-processResources {
-    // this will ensure that this task is redone when the versions change.
-    inputs.property "version", project.version
-    inputs.property "mcversion", project.minecraft.version
-
-    // replace stuff in mcmod.info, nothing else
-    from(sourceSets.main.resources.srcDirs) {
-        include "mcmod.info"
-
-        // replace version and mcversion
-        expand "version": project.version, "mcversion": project.minecraft.version
-    }
-
-    // copy everything else, that's not the mcmod.info
-    from(sourceSets.main.resources.srcDirs) {
-        exclude "mcmod.info"
-    }
-
-    rename '(.+_at.cfg)', 'META-INF/$1'
-}
+// configure subprojects
+apply from: 'projects.gradle'

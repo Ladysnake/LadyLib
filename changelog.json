@@ -1,0 +1,10 @@
+{
+    "homepage": "https://github.com/Ladysnake/LadyLib/releases",
+    "promos": {
+        "1.12.2-latest": "2.1.0",
+        "1.12.2-recommended": "2.1.0"
+    },
+    "1.12.2": {
+        "2.1.0": "Add screen shaders\nFix automatic registration for older mappings\nAdd reflection helper methods for obfuscation and method handles"
+    }
+}

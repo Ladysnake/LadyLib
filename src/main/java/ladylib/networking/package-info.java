@@ -1,6 +1,5 @@
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
-
 package ladylib.networking;
 
 import mcp.MethodsReturnNonnullByDefault;

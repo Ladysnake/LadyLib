@@ -35,15 +35,14 @@ public @interface AutoCapability {
      * The returned predicate should match for targets on which the capability should be attached.
      *
      * <p>
-     * Example:
-     * <pre>
-     *    &nbsp;@AutoCapability.AttachCapabilityCheckHandler("magicmod:mana")
+     * Example:<pre>
+     *    &#64AutoCapability.AttachCapabilityCheckHandler("magicmod:mana")
      *     public static Predicate<Entity> isRelevantFor() {
      *         return o -> o instanceof EntityPlayer;
      *     }
      * </pre>
-     * </p>
      *
+     * <p>
      * If no check handler exists, the capability will not be attached automatically.
      *
      * @see #value()

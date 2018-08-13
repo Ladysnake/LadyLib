@@ -11,7 +11,7 @@ public enum DrawingStages implements IParticleDrawingStage {
      */
     NORMAL(GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, false),
     /**
-     * Additive particles are rendered additively to their background, making them flashier
+     * Additive particles are rendered on their background using additive blending, making them flashier
      */
     ADDITIVE(GlStateManager.DestFactor.ONE, false),
     /**

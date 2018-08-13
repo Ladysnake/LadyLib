@@ -15,7 +15,17 @@ The other is as a proper gradle dependency through [jitpack](https://jitpack.io/
 * Helper methods for registration (because the two aren't mutually exclusive)
 * Generation of stub model files
 * NBT Serialization based on [Gson](https://github.com/google/gson)
+* Built-in methods to interact with online JSON APIs
 * Simplified capabilities
 * Extremely customizable particles
 * A framework for shaders usage
+* Programmatic overriding of vanilla resources
 * Actual documentation (yes, I count that as a feature)
+
+## ModWinder
+ModWinder is an integrated installer for [Ladysnake approved mods](https://ladysnake.glitch.me/milksnake-bar). 
+It works as a child mod of LadyLib, and allows players to easily install and update mods from inside the game.
+
+## [Milksnake](Milksnake/README.md)
+Milksnake is a sub-project [distributed on curseforge](https://minecraft.curseforge.com/projects/milksnake) containing
+LadyLib and adding a few cosmetic features.
