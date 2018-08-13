@@ -4,6 +4,7 @@ import ladylib.registration.ItemRegistrar;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.item.Item;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -22,8 +23,11 @@ import javax.annotation.Nonnull;
 public interface ItemRenderRegistrationHandler {
 
     /**
-     * Called by {@link ladylib.registration.ItemRegistrar#registerRender(Item)}.
+     * Called by {@link ladylib.registration.ItemRegistrar#registerRender(Item)} during {@link ModelRegistryEvent}.
      * Use this to register the item's render.
+     * <p>
+     * If an Item is handling its own registration, the value of <code>item</code> is <code>this</code>. (<code>item == this</code>)
+     *
      * @param item the item for which to register the render
      */
     @SideOnly(Side.CLIENT)
@@ -33,6 +37,7 @@ public interface ItemRenderRegistrationHandler {
      * Accepts a string representing a valid model location and returns a
      * {@link ItemRenderRegistrationHandler} that registers item renders
      * with a {@link ModelResourceLocation} constructed from that string.
+     *
      * @param modelLocation a path to the model json file for this item
      */
     static ItemRenderRegistrationHandler forCustomLocation(@Nonnull String modelLocation) {

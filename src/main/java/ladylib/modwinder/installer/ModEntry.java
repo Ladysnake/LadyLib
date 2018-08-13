@@ -8,6 +8,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import ladylib.LadyLib;
+import ladylib.modwinder.ModsFetchedEvent;
 import ladylib.networking.http.HTTPRequestHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -35,7 +36,7 @@ public class ModEntry {
     public static final String MOD_BAR_URL = "https://ladysnake.glitch.me/milksnake-bar";
 
     static final Gson GSON = new GsonBuilder().setFieldNamingStrategy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
-    private static List<ModEntry> ladysnakeMods;
+    private static ImmutableList<ModEntry> ladysnakeMods = ImmutableList.of();
 
     /**
      * Retrieves the list of mods featured on <a href=http://ladysnake.glitch.me/data/milksnake-bar.json>Ladysnake's website</a>
@@ -47,9 +48,11 @@ public class ModEntry {
     public static void refillModBar() {
         HTTPRequestHelper.getJSON(MOD_BAR_URL, json -> {
             try {
-                Type type = new TypeToken<List<ModEntry>>() {}.getType();
-                ladysnakeMods = GSON.fromJson(json, type);
-                ladysnakeMods.forEach(ModEntry::init);
+                final Type type = new TypeToken<List<ModEntry>>() {}.getType();
+                final List<ModEntry> retrieved = GSON.fromJson(json, type);
+                retrieved.forEach(ModEntry::init);
+                MinecraftForge.EVENT_BUS.post(new ModsFetchedEvent(retrieved));
+                ladysnakeMods = ImmutableList.copyOf(retrieved);
             } catch (Exception e) {
                 LadyLib.LOGGER.warn("Could not create the list of Ladysnake mods", e);
             }
@@ -59,8 +62,8 @@ public class ModEntry {
     /**
      * @return a list of mod entries gathered during {@link #refillModBar()}
      */
-    public static List<ModEntry> getLadysnakeMods() {
-        return ladysnakeMods == null ? ImmutableList.of() : ImmutableList.copyOf(ladysnakeMods);
+    public static ImmutableList<ModEntry> getLadysnakeMods() {
+        return ladysnakeMods;
     }
 
     @SerializedName("modid")

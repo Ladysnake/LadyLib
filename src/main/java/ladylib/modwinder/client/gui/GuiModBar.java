@@ -1,7 +1,9 @@
 package ladylib.modwinder.client.gui;
 
 import ladylib.LadyLib;
+import ladylib.misc.ReflectionUtil;
 import ladylib.modwinder.ModWinder;
+import ladylib.modwinder.ModsFetchedEvent;
 import ladylib.modwinder.installer.InstallationState;
 import ladylib.modwinder.installer.ModEntry;
 import net.minecraft.client.Minecraft;
@@ -39,35 +41,48 @@ public class GuiModBar extends GuiScreen {
     // let the other mods add their buttons first
     @SubscribeEvent(priority = EventPriority.LOW)
     public static void onGuiScreenInitGui(GuiScreenEvent.InitGuiEvent.Post event) {
-        GuiScreen gui = event.getGui();
+        if (event.getGui() instanceof GuiMainMenu) {
+            List<GuiButton> buttons = event.getButtonList();
+            addModBarButton(buttons);
+        }
+    }
 
-        if (gui instanceof GuiMainMenu) {
-            if (ModEntry.getLadysnakeMods().isEmpty()) {
+    @SubscribeEvent
+    public static void onModsFetched(ModsFetchedEvent event) {
+        final Minecraft mc = Minecraft.getMinecraft();
+        mc.addScheduledTask(() -> {
+            if (mc.currentScreen instanceof GuiMainMenu) {
+                List<GuiButton> buttonList = ReflectionUtil.getPrivateValue(Minecraft.class, mc, "field_146292_n", List.class);
+                addModBarButton(buttonList);
+            }
+        });
+    }
+
+    private static void addModBarButton(List<GuiButton> buttons) {
+        if (ModEntry.getLadysnakeMods().isEmpty()) {
+            return;
+        }
+        String target = I18n.format("fml.menu.mods");
+
+        for (GuiButton b : buttons)
+            if (target.equals(b.displayString)) {
+                GuiButton installer = new GuiButtonModBar(MODWINDER_BUTTON_ID, b.x -24, b.y);
+                // check for colliding buttons
+                boolean collision;
+                // we are only moving along the x axis, we shouldn't have to check buttons that are not on the same line
+                List<GuiButton> possibleCollisions = buttons.stream().filter(other -> other.y < installer.y + installer.height && other.y + other.height > installer.y).collect(Collectors.toList());
+                do {
+                    collision = false;
+                    for (GuiButton other : possibleCollisions) {
+                        if (other.x < installer.x + installer.width && other.x + other.width > installer.x) {
+                            installer.x = other.x - installer.width - 4;
+                            collision = true;
+                        }
+                    }
+                } while (collision);
+                buttons.add(installer);
                 return;
             }
-            String target = I18n.format("fml.menu.mods");
-
-            List<GuiButton> buttons = event.getButtonList();
-            for (GuiButton b : buttons)
-                if (target.equals(b.displayString)) {
-                    GuiButton installer = new GuiButtonModBar(MODWINDER_BUTTON_ID, b.x -24, b.y);
-                    // check for colliding buttons
-                    boolean collision;
-                    // we are only moving along the x axis, we shouldn't have to check buttons that are not on the same line
-                    List<GuiButton> possibleCollisions = buttons.stream().filter(other -> other.y < installer.y + installer.height && other.y + other.height > installer.y).collect(Collectors.toList());
-                    do {
-                        collision = false;
-                        for (GuiButton other : possibleCollisions) {
-                            if (other.x < installer.x + installer.width && other.x + other.width > installer.x) {
-                                installer.x = other.x - installer.width - 4;
-                                collision = true;
-                            }
-                        }
-                    } while (collision);
-                    buttons.add(installer);
-                    return;
-                }
-        }
     }
 
     @SubscribeEvent
