@@ -7,7 +7,7 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@Mod(modid = MilkSnake.MOD_ID, version = "${version}", dependencies = "required-after:ladylib;")
+@Mod(modid = MilkSnake.MOD_ID, version = "@VERSION@", dependencies = "required-after:ladylib;", clientSideOnly = true, certificateFingerprint = "@FINGERPRINT@")
 public class MilkSnake {
     public static final String MOD_ID = "milksnake";
     public static final Logger LOGGER = LogManager.getLogger(MOD_ID);

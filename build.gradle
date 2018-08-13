@@ -25,26 +25,29 @@ allprojects {
     minecraft {
         version = project.forgeVersion
         runDir = "run"
-        replace '${version}', project.version
+        replace '@VERSION@', project.version
+        if (project.hasProperty('keyStore')) {
+            replace '@FINGERPRINT@', project.findProperty('signSHA1')
+        }
 
         mappings = project.mcpVersion
         makeObfSourceJar = false // Disable Srg named sources jar
     }
 
     apply from: new File(rootProject.projectDir, 'dependencies.gradle')
+    apply from: new File(rootProject.projectDir, 'update_json.gradle')
+
+    build.finalizedBy updateJson
 
     jar {
-        archiveName = "${archivesBaseName}-${mcVersion}-${project.version}.jar"
+        from sourceSets.api.output
+        from sourceSets.main.output
         manifest {
             attributes([
                     'Maven-Artifact': "${project.group}:${archivesBaseName}:${project.version}",
                     'Timestamp'     : System.currentTimeMillis()
             ])
         }
-    }
-
-    sourceJar {
-        archiveName = "${archivesBaseName}-${mcVersion}-${project.version}-${classifier}.jar"
     }
 
     processResources {
@@ -84,12 +87,22 @@ allprojects {
 
 apply plugin: 'maven'
 
+configurations {
+    contained
+    contained.transitive = false
+}
+
 jar {
+    archiveName = "${archivesBaseName}-${mcVersion}-${project.version}.jar"
     manifest {
         attributes([
                 'FMLAT': 'ladylib_at.cfg'
         ])
     }
+}
+
+sourceJar {
+    archiveName = "${archivesBaseName}-${mcVersion}-${project.version}-${classifier}.jar"
 }
 
 signJar {

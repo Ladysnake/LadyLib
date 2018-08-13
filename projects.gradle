@@ -41,7 +41,7 @@ project(':Milksnake') {
         from(rootProject.jar.archivePath.absolutePath) { include '*' into 'META-INF/libraries' }
 
         manifest.attributes([
-            'ContainedDeps': rootProject.jar.archivePath.name,
+            'ContainedDeps': rootProject.jar.archivePath.name
         ])
     }
 
@@ -49,4 +49,6 @@ project(':Milksnake') {
         inputFile = jar.archivePath
         outputFile = jar.archivePath
     }
+
+    updateJson.versionScheme = '%1$s-%2$s'
 }

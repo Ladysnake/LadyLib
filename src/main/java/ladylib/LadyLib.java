@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 // note: mod information is contained in mcmod.info
-@Mod(modid = LadyLib.MOD_ID, version = "${version}")
+@Mod(modid = LadyLib.MOD_ID, version = "@VERSION@")
 public class LadyLib {
     public static final String MOD_ID = "ladylib";
     public static final String MOD_NAME = "LadyLib";
@@ -79,7 +79,7 @@ public class LadyLib {
 
 
     private AutoRegistrar registrar;
-    ClientHandlerImpl clientHandler;
+    private ClientHandlerImpl clientHandler;
 
     @Mod.EventHandler
     public void construction(FMLConstructionEvent event) {

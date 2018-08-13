@@ -1,3 +1,5 @@
+// Common dependencies for all projects defined by this buildscript
+
 repositories {
     mavenCentral()
     maven {

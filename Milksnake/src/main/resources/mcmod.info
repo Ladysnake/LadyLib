@@ -6,6 +6,7 @@
     "version": "${version}",
     "mcversion": "${mcversion}",
     "url": "https://minecraft.curseforge.com/projects/milksnake",
+    "updateJSON": "https://github.com/Ladysnake/LadyLib/blob/master/Milksnake/changelog.json",
     "authorList": [
       "Pyrofab",
       "RiverLeviathan"
