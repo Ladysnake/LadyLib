@@ -1,1 +1,0 @@
-_Milksnake's assets are All Right Reserved_
