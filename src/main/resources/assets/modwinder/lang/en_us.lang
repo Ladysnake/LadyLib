@@ -14,7 +14,7 @@ modwinder.status.installing.end=Finishing installation
 modwinder.dlc=%d DLC(s)
 modwinder.changelog=Changelog
 modwinder.cf_description=Description
-modwinder.menu.title=Mod List
+modwinder.menu.title=Mod Bar
 modwinder.restart.1=One or more mods have been installed
 modwinder.restart.2=Do you want to restart the game now ?
 
