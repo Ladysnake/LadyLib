@@ -105,6 +105,6 @@ public class LLibContainer {
      * @param files the name of one or more files, extension included
      */
     public void addVanillaResourceOverride(String path, String... files) {
-        LadyLib.INSTANCE.clientHandler.addResourceOverride(getModId(), path, files);
+        // client override
     }
 }

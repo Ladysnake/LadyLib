@@ -2,6 +2,8 @@ package ladylib;
 
 import com.google.common.collect.SetMultimap;
 import ladylib.client.ClientHandler;
+import ladylib.client.LLibClientContainer;
+import ladylib.client.internal.ClientHandlerImpl;
 import ladylib.client.particle.LLParticleManager;
 import ladylib.nbt.serialization.internal.DefaultValuesSearch;
 import ladylib.registration.BlockRegistrar;
@@ -77,12 +79,12 @@ public class LadyLib {
 
 
     private AutoRegistrar registrar;
-    ClientHandler clientHandler;
+    ClientHandlerImpl clientHandler;
 
     @Mod.EventHandler
     public void construction(FMLConstructionEvent event) {
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
-            ClientHandler.hookResourceProxy();
+            ClientHandlerImpl.hookResourceProxy();
         }
     }
 
@@ -97,7 +99,7 @@ public class LadyLib {
         MinecraftForge.EVENT_BUS.register(registrar.getItemRegistrar());
         MinecraftForge.EVENT_BUS.register(registrar.getBlockRegistrar());
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
-            clientHandler = new ClientHandler();
+            clientHandler = new ClientHandlerImpl();
             clientHandler.clientInit();
         }
         registrar.autoRegisterTileEntities(dataTable);
@@ -139,13 +141,25 @@ public class LadyLib {
         return allInstances.values();
     }
 
+    public ClientHandler getClientHandler() {
+        return clientHandler;
+    }
+
     /**
      * Gets LadyLib's wrapper container used to provide mod-specific behaviour.
-     * @param modid the mod id owning the container
+     * @param modId the mod id owning the container
      * @return the mod's container
      */
-    public LLibContainer getContainer(String modid) {
-        return allInstances.computeIfAbsent(modid, id -> new LLibContainer(Loader.instance().getIndexedModList().get(id)));
+    public LLibContainer getContainer(String modId) {
+        return allInstances.computeIfAbsent(modId, this::createContainer);
+    }
+
+    private LLibContainer createContainer(String modId) {
+        ModContainer owner = Loader.instance().getIndexedModList().get(modId);
+        if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
+            return new LLibClientContainer(owner);
+        }
+        return new LLibContainer(owner);
     }
 
     /**
