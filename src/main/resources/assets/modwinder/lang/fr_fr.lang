@@ -1,0 +1,29 @@
+modwinder.status.outdated=Ce mod n'est pas à jour
+modwinder.status.outdated.current_version=Version actuellement installée: %s
+
+modwinder.status.downloading.start=Téléchargement de la dernière version
+modwinder.status.downloading.file=Téléchargement du fichier %s
+modwinder.status.installing=Installation du fichier %s
+
+modwinder.status.failed=L'installation a échoué, lisez les logs pour plus d'information
+
+modwinder.status.installed=La dernière version a été installée avec succès
+modwinder.status.restart=Merci de redémarrer le jeu
+
+modwinder.status.installing.end=Finition de l'installation
+modwinder.dlc=%d DLC(s)
+modwinder.changelog=Changelog
+modwinder.cf_description=Description
+modwinder.menu.title=Bar à Mods
+modwinder.restart.1=Un ou plusieurs mods ont été installés
+modwinder.restart.2=Souhaitez-vous redémarrer le jeu maintenant ?
+
+modwinder.hint=Double-cliquez sur un mod pour installer la dernière version
+modwinder.hint.uninstall=Les mods désinstallés peuvent être réinstallés instantanément
+modwinder.status.uninstalled=Ce mod a été désinstallé
+modwinder.status.uninstalled.failed=La désinstallation a échoué, lisez les logs pour plus d'information
+
+modwinder.waiting=En attente de l'installation de certains mods
+modwinder.java_warning_1=Votre Minecraft utilise une version de Java dépassée
+modwinder.java_warning.info=Plus d'information
+modwinder.java_warning_2=Merci de configurer votre launcher pour utiliser une version récente de Java
