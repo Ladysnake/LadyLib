@@ -1,6 +1,6 @@
 package ladylib.modwinder.client.gui;
 
-import ladylib.LadyLib;
+import ladylib.modwinder.ModWinder;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiConfirmOpenLink;
 import net.minecraft.client.gui.GuiScreen;
@@ -48,7 +48,7 @@ public class GuiOutdatedJava extends GuiScreen {
                     link.disableSecurityWarning();
                     this.mc.displayGuiScreen(link);
                 } catch (URISyntaxException e) {
-                    LadyLib.LOGGER.error("Can't open url for {}", url, e);
+                    ModWinder.LOGGER.error("Can't open url for {}", url, e);
                 }
                 break;
             }

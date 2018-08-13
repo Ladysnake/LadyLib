@@ -1,6 +1,5 @@
 package ladylib.modwinder.client.gui;
 
-import ladylib.LadyLib;
 import ladylib.misc.ReflectionUtil;
 import ladylib.modwinder.ModWinder;
 import ladylib.modwinder.ModsFetchedEvent;
@@ -306,7 +305,7 @@ public class GuiModBar extends GuiScreen {
                                 link.disableSecurityWarning();
                                 this.mc.displayGuiScreen(link);
                             } catch (URISyntaxException e) {
-                                LadyLib.LOGGER.error("Can't open url for {}", cfLink, e);
+                                ModWinder.LOGGER.error("Can't open url for {}", cfLink, e);
                             }
                         }
                         return;

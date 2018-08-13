@@ -5,8 +5,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import ladylib.LadyLib;
 import ladylib.misc.ReflectionUtil;
+import ladylib.modwinder.ModWinder;
 import ladylib.networking.http.HTTPRequestHelper;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.launchwrapper.Launch;
@@ -141,7 +141,7 @@ public class AddonInstaller {
                 )
                 .handle((result, t) -> {
                     if (t != null) {
-                        LadyLib.LOGGER.error(new FormattedMessage("Could not download latest file of {} (project {})", mod.getName(), mod.getCurseId()), t);
+                        ModWinder.LOGGER.error(new FormattedMessage("Could not download latest file of {} (project {})", mod.getName(), mod.getCurseId()), t);
                         mod.setInstallationState(DOWNLOAD_FAILED);
                         // rethrow the exception in case someone wants to do something else with it
                         Throwables.throwIfUnchecked(t);
@@ -174,7 +174,7 @@ public class AddonInstaller {
             LOCAL_MODS.save();
             modEntry.setInstallationState(UNINSTALLED);
         } catch (Exception e) {
-            LadyLib.LOGGER.error("Could not uninstall mod {} ({})", modEntry.getName(), modEntry.getModId(), e);
+            ModWinder.LOGGER.error("Could not uninstall mod {} ({})", modEntry.getName(), modEntry.getModId(), e);
             modEntry.setInstallationState(UNINSTALL_FAILED);
         }
     }
@@ -207,7 +207,7 @@ public class AddonInstaller {
             }
             return true;
         } catch (Exception e) {
-            LadyLib.LOGGER.error("Could not re-enable mod {}", modEntry.getModId(), e);
+            ModWinder.LOGGER.error("Could not re-enable mod {}", modEntry.getModId(), e);
         }
         return false;
     }

@@ -7,7 +7,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
-import ladylib.LadyLib;
+import ladylib.modwinder.ModWinder;
 import ladylib.modwinder.ModsFetchedEvent;
 import ladylib.networking.http.HTTPRequestHelper;
 import net.minecraft.client.Minecraft;
@@ -54,7 +54,7 @@ public class ModEntry {
                 MinecraftForge.EVENT_BUS.post(new ModsFetchedEvent(retrieved));
                 ladysnakeMods = ImmutableList.copyOf(retrieved);
             } catch (Exception e) {
-                LadyLib.LOGGER.warn("Could not create the list of Ladysnake mods", e);
+                ModWinder.LOGGER.warn("Could not create the list of Ladysnake mods", e);
             }
         });
     }
@@ -150,11 +150,11 @@ public class ModEntry {
                             throw new RuntimeException(e);
                         }
                     }).exceptionally(t -> {
-                LadyLib.LOGGER.error("Could not download logo", t);
+                ModWinder.LOGGER.error("Could not download logo", t);
                 return null;
             });
         } catch (MalformedURLException e) {
-            LadyLib.LOGGER.error("Invalid curse project id " + curseId, e);
+            ModWinder.LOGGER.error("Invalid curse project id " + curseId, e);
         }
         if (this.latestVersion.isEmpty()) {
             // Forge's version check does not have a callback so it is easier to just check ourselves even if the mod is installed
