@@ -1,5 +1,5 @@
 modwinder.status.outdated=Ce mod n'est pas à jour
-modwinder.status.outdated.current_version=Version actuellement installée: %s
+modwinder.status.outdated.latest_version=Dernière version: %s
 
 modwinder.status.downloading.start=Téléchargement de la dernière version
 modwinder.status.downloading.file=Téléchargement du fichier %s

@@ -80,7 +80,8 @@ public class GuiInstallerModList extends GuiScrollingList {
     protected void drawSlot(int slotIdx, int entryRight, int slotTop, int height, Tessellator tess) {
         ModEntry entry = flattenedEntries.get(slotIdx);
         String name = entry.getName();
-        String version = entry.getLatestVersion();
+        String latestVersion = entry.getLatestVersion();
+        String displayedVersion = entry.getInstalledVersion();
         String author = entry.getAuthor();
         FontRenderer font = parent.getFontRenderer();
 
@@ -93,8 +94,6 @@ public class GuiInstallerModList extends GuiScrollingList {
         drawModIcon(slotTop, height, tess, entry, left);
 
         left += height + 5;
-
-        int versionColor = 0x00E6D2;
 
         int iconX = right - (height / 2 + 4 + 12);
         final int iconY = slotTop + (height / 2 - 4);
@@ -110,6 +109,8 @@ public class GuiInstallerModList extends GuiScrollingList {
         }
 
         iconX += 12;
+
+        int versionColor = 0x00E6D2;
 
         // draw status icons
         if (entry.getInstallationState().getStatus().shouldDisplay()) {
@@ -132,22 +133,28 @@ public class GuiInstallerModList extends GuiScrollingList {
             if (isMouseHovering(iconX, iconY, iconWidth, iconHeight)) {
                 parent.setHoveringText(
                         I18n.format("modwinder.status.outdated"),
-                        I18n.format("modwinder.status.outdated.current_version", version)
+                        I18n.format("modwinder.status.outdated.latest_version", latestVersion)
                 );
             }
         }
 
+        int textY = slotTop + 2;
         // write the mod's name
         font.drawString(font.trimStringToWidth(name,    listWidth - 10), left, slotTop +  2, 0xFFFFFF);
         // write the author's name
         if (!Strings.isNullOrEmpty(author)) {
-            font.drawString(font.trimStringToWidth("by " + author, listWidth - 10), left + font.getStringWidth(name) + 5, slotTop + 2, 0x808080);
+            font.drawString(font.trimStringToWidth("by " + author, listWidth - 10), left + font.getStringWidth(name) + 5, textY, 0x808080);
         }
-        // write the mod's latest version
-        font.drawString(font.trimStringToWidth(version, listWidth - (5 + height)), left, slotTop + 12, versionColor);
+        textY += 10;
+        // write the mod's current version
+        if (Strings.isNullOrEmpty(displayedVersion)) {
+            displayedVersion = "Not Installed";
+        }
+        font.drawString(font.trimStringToWidth(displayedVersion, listWidth - (5 + height)), left, textY, versionColor);
+        textY += 10;
         // write the mod's number of DLCs
         if (!entry.getDlcs().isEmpty()) {
-            font.drawString(font.trimStringToWidth(I18n.format("modwinder.dlc", entry.getDlcs().size()), listWidth - (5 + height)), left, slotTop + 22, 0xCCCCCC);
+            font.drawString(font.trimStringToWidth(I18n.format("modwinder.dlc", entry.getDlcs().size()), listWidth - (5 + height)), left, textY, 0xCCCCCC);
         }
 
         GlStateManager.disableAlpha();
