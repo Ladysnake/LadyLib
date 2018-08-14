@@ -206,6 +206,7 @@ public class AddonInstaller {
                 // instantly complete the installation
                 modEntry.setInstallationState(INSTALLATION_COMPLETE);
             }
+            DeleteOldMods.scheduleModDeletion(modEntry.getModId());
             return true;
         } catch (Exception e) {
             ModWinder.LOGGER.error("Could not re-enable mod {}", modEntry.getModId(), e);
@@ -311,6 +312,9 @@ public class AddonInstaller {
             // if the map contains that exact artifact, it will get replaced during list.add()
             artifacts.removeIf(o -> !art_map.containsKey(o.toString()) && artifact.matchesID(o));
 
+            DeleteOldMods.scheduleModDeletion(mod.getModId());
+
+            mod.setLocalArtifact(artifact);
             LOCAL_MODS.add(mod, artifact);
             MOD_LIST.add(artifact);
 
