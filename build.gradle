@@ -111,17 +111,10 @@ signJar {
 }
 
 artifacts {
-    archives(signJar.outputFile) {
-        file signJar.outputFile
-        type 'jar'
-        builtBy signJar
-    }
-    archives (sourceJar) {
-        type 'jar'
-        builtBy sourceJar
-        classifier 'sources'
-    }
+    archives sourceJar
 }
+install.dependsOn(signJar)
+
 
 // configure subprojects
 apply from: 'projects.gradle'
