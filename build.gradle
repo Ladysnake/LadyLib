@@ -116,7 +116,11 @@ artifacts {
         type 'jar'
         builtBy signJar
     }
-    archives sourceJar
+    archives (sourceJar) {
+        type 'jar'
+        builtBy sourceJar
+        classifier 'sources'
+    }
 }
 
 // configure subprojects

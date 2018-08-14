@@ -44,10 +44,11 @@ public class LadyLib {
     private static final PrintStream DEBUG_STREAM = new TracingPrintStream(LogManager.getLogger("DEBUG"), System.out);
     private static final Map<String, LLibContainer> allInstances = new HashMap<>();
 
-    /**
-     * The mod instance
-     */
+    /**The mod instance*/
     public static final LadyLib INSTANCE = new LadyLib();
+    @Deprecated
+    public static final LadyLib instance = INSTANCE;
+
 
     /**
      * Checks if the current minecraft instance is running in a development environment. <br>

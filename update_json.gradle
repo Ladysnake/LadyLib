@@ -40,8 +40,6 @@ class GenerateUpdateJSON extends DefaultTask {
     }
     @TaskAction
     def generate() {
-        println(changelog)
-        println(output)
         if (!changelog.exists())
             println "Changelog does not exist! Aborting!"
         else {
@@ -59,9 +57,6 @@ class GenerateUpdateJSON extends DefaultTask {
                         String mcVer   = split[0]
                         String mainVer = split[1]
                         String modVersion = String.format(versionScheme, mcVer, mainVer)
-                        println modVersion
-                        println mainVer
-                        println mcVer
                         if (!changelogForVersions.containsKey(mcVer)) {
                             promos.put(mcVer+RECOMMENDED, modVersion)
                             promos.put(mcVer+LATEST, modVersion)
@@ -86,7 +81,6 @@ class GenerateUpdateJSON extends DefaultTask {
             mainMap.putAll(changelogForVersions)
             mainMap["homepage"] = curseforgeURL
             mainMap["promos"] = promos
-            println(mainMap)
             def outJson = JsonOutput.toJson(mainMap)
             outJson = JsonOutput.prettyPrint(outJson)
             File outF = output
