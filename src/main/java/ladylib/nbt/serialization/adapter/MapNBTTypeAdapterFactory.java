@@ -94,9 +94,9 @@ public class MapNBTTypeAdapterFactory implements NBTTypeAdapterFactory<Map, NBTT
     public static class MapNBTTypeAdapter<K,V> extends MapNBTTypeAdapterFactory.MapBaseAdapter<K,V> implements NBTTypeAdapter<Map<K,V>, NBTTagList> {
         private final Supplier<Map<K,V>> mapSupplier;
 
-        public MapNBTTypeAdapter(NBTTypeAdapter<K, NBTBase> keyAdapter, NBTTypeAdapter<V, NBTBase> valueAdapter, Supplier<Map<K,V>> MapSupplier) {
+        public MapNBTTypeAdapter(NBTTypeAdapter<K, NBTBase> keyAdapter, NBTTypeAdapter<V, NBTBase> valueAdapter, Supplier<Map<K,V>> mapSupplier) {
             super(keyAdapter, valueAdapter);
-            this.mapSupplier = MapSupplier;
+            this.mapSupplier = mapSupplier;
         }
 
         @Override

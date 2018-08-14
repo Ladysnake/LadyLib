@@ -1,5 +1,6 @@
 package ladylib.modwinder.client.gui;
 
+import ladylib.LadyLib;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiUtilRenderComponents;
@@ -63,10 +64,11 @@ public class GuiModChangelog extends GuiScreen {
     protected void actionPerformed(GuiButton button) throws IOException {
         if (button.enabled) {
             switch (button.id) {
-                case DONE_BUTTON_ID: {
+                case DONE_BUTTON_ID:
                     this.mc.displayGuiScreen(this.previous);
                     return;
-                }
+                default:
+                    LadyLib.LOGGER.info("Unrecognized button id {} ({})", button.id, button);
             }
         }
         super.actionPerformed(button);
@@ -99,7 +101,9 @@ public class GuiModChangelog extends GuiScreen {
         }
 
         @Override
-        protected void elementClicked(int index, boolean doubleClick) { }
+        protected void elementClicked(int index, boolean doubleClick) {
+            // no element needs interaction in this screen
+        }
 
         @Override
         protected boolean isSelected(int index) {
@@ -107,10 +111,14 @@ public class GuiModChangelog extends GuiScreen {
         }
 
         @Override
-        protected void drawBackground() { }
+        protected void drawBackground() {
+            // the default background is already drawn when this is called
+        }
 
         @Override
-        protected void drawSlot(int slotIdx, int entryRight, int slotTop, int slotBuffer, Tessellator tess) { }
+        protected void drawSlot(int slotIdx, int entryRight, int slotTop, int slotBuffer, Tessellator tess) {
+            // no slot to draw
+        }
 
         private List<ITextComponent> resizeContent(List<String> lines) {
             List<ITextComponent> ret = new ArrayList<>();
@@ -144,7 +152,7 @@ public class GuiModChangelog extends GuiScreen {
             for (ITextComponent line : lines) {
                 if (line != null) {
                     GlStateManager.enableBlend();
-                    GuiModChangelog.this.fontRenderer.drawStringWithShadow(line.getFormattedText(), this.left + 4, top, 0xFFFFFF);
+                    GuiModChangelog.this.fontRenderer.drawStringWithShadow(line.getFormattedText(), this.left + 4f, top, 0xFFFFFF);
                     GlStateManager.disableAlpha();
                     GlStateManager.disableBlend();
                 }
@@ -165,12 +173,12 @@ public class GuiModChangelog extends GuiScreen {
             if (line != null) {
                 int k = -4;
                 for (ITextComponent part : line) {
-                    if (!(part instanceof TextComponentString))
-                        continue;
-                    k += GuiModChangelog.this.fontRenderer.getStringWidth(((TextComponentString) part).getText());
-                    if (k >= x) {
-                        GuiModChangelog.this.handleComponentClick(part);
-                        break;
+                    if (part instanceof TextComponentString) {
+                        k += GuiModChangelog.this.fontRenderer.getStringWidth(((TextComponentString) part).getText());
+                        if (k >= x) {
+                            GuiModChangelog.this.handleComponentClick(part);
+                            break;
+                        }
                     }
                 }
             }

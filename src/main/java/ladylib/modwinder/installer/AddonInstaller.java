@@ -45,6 +45,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class AddonInstaller {
+    private AddonInstaller() { }
 
     public static final InstallationState DOWNLOAD_START = new InstallationState(InstallationState.Status.INSTALLING, I18n.format("modwinder.status.downloading.start"));
     public static final InstallationState DOWNLOAD_FAILED = new InstallationState(InstallationState.Status.FAILED, I18n.format("modwinder.status.failed"));
@@ -104,7 +105,8 @@ public class AddonInstaller {
     public static CompletableFuture<List<File>> installLatestFromCurseforge(ModEntry mod) {
         // holder class for required values
         class ParamHolder {
-            private String fileName, fileId;
+            private String fileName;
+            private String fileId;
 
             private ParamHolder(String fileName, String fileId) {
                 this.fileName = fileName;
@@ -145,7 +147,7 @@ public class AddonInstaller {
                         mod.setInstallationState(DOWNLOAD_FAILED);
                         // rethrow the exception in case someone wants to do something else with it
                         Throwables.throwIfUnchecked(t);
-                        throw new RuntimeException(t);
+                        throw new AssertionError(t);
                     } else {
                         mod.setInstallationState(INSTALLATION_COMPLETE);
                         return result;
@@ -186,11 +188,9 @@ public class AddonInstaller {
      */
     public static boolean attemptReEnabling(ModEntry modEntry) {
         try {
-            if (modEntry.isDlc()) {
-                // if any of the parent mods is not up to date, just update everything
-                if (!modEntry.getParentMods().allMatch(AddonInstaller::attemptReEnabling)) {
-                    return false;
-                }
+            // if any of the parent mods is not up to date, just update everything
+            if (modEntry.isDlc() && !modEntry.getParentMods().allMatch(AddonInstaller::attemptReEnabling)) {
+                return false;
             }
             Artifact disabled = LOCAL_MODS.getArtifact(modEntry, MOD_LIST.getRepository());
             if (disabled == null) {
@@ -229,23 +229,12 @@ public class AddonInstaller {
                         if (fileToDownload == null) {
                             throw new InstallationException("Could not find file " + fileName + " in project " + mod.getCurseId());
                         }
+                        // A list of every download triggered by this request
+                        // The queried file is downloaded immediately but dependencies will be downloaded later
                         List<CompletableFuture<List<File>>> downloadedFiles = new ArrayList<>();
-                        for (JsonElement dependency : fileToDownload.get("dependencies").getAsJsonArray()) {
-                            JsonObject dep = dependency.getAsJsonObject();
-                            if (dep.get("type").getAsString().equals("REQUIRED")) {
-                                int depCurseId = dep.get("addOnId").getAsInt();
-                                // If there is an existing entry for that dependency, update it, otherwise use a dummy
-                                ModEntry depEntry = ModEntry.getLadysnakeMods().stream()
-                                        .filter(me -> me.getCurseId() == depCurseId)
-                                        .findAny()
-                                        .orElse(new DummyModEntry(depCurseId));
-                                // check that we actually need to download it first
-                                if (depEntry.getInstallationState().getStatus().canInstall(depEntry)) {
-                                    // We want the exceptions to be thrown when joining, so no handling right now
-                                    downloadedFiles.add(installLatestFromCurseforge(depEntry));
-                                }
-                            }
-                        }
+
+                        installDependencies(fileToDownload, downloadedFiles);
+
                         // download this file from the associated url
                         String downloadURL = fileToDownload.getAsJsonObject().get("downloadURL").getAsString();
                         mod.setInstallationState(new InstallationState(InstallationState.Status.INSTALLING, I18n.format("modwinder.status.downloading.file", fileName)));
@@ -261,6 +250,25 @@ public class AddonInstaller {
                     }, DOWNLOAD_THREAD);  // operate on the download thread to avoid concurrency issues with files
         } catch (MalformedURLException e) {
             throw new InstallationException("Invalid project id " + mod.getCurseId(), e);
+        }
+    }
+
+    private static void installDependencies(JsonObject fileToDownload, List<CompletableFuture<List<File>>> downloadedFiles) {
+        for (JsonElement dependency : fileToDownload.get("dependencies").getAsJsonArray()) {
+            JsonObject dep = dependency.getAsJsonObject();
+            if (dep.get("type").getAsString().equals("REQUIRED")) {
+                int depCurseId = dep.get("addOnId").getAsInt();
+                // If there is an existing entry for that dependency, update it, otherwise use a dummy
+                ModEntry depEntry = ModEntry.getLadysnakeMods().stream()
+                        .filter(me -> me.getCurseId() == depCurseId)
+                        .findAny()
+                        .orElse(new DummyModEntry(depCurseId));
+                // check that we actually need to download it first
+                if (depEntry.getInstallationState().getStatus().canInstall(depEntry)) {
+                    // We want the exceptions to be thrown when joining, so no handling right now
+                    downloadedFiles.add(installLatestFromCurseforge(depEntry));
+                }
+            }
         }
     }
 
@@ -306,7 +314,7 @@ public class AddonInstaller {
             MOD_LIST.add(artifact);
 
             // Extract contained files from the jar
-            libraryManager$extractPacked.invoke(artifact.getFile(), MOD_LIST, new File[] {modsDir});
+            libraryManager$extractPacked.invoke(artifact.getFile(), MOD_LIST, modsDir);
 
             LOCAL_MODS.save();
             MOD_LIST.save();
@@ -334,8 +342,8 @@ public class AddonInstaller {
             Path temp = Files.createTempFile(dest, null);
             URL url = new URL(urlString);
             // download the file into the mods directory
-            ReadableByteChannel rbc = Channels.newChannel(url.openStream());
-            try (FileOutputStream fos = new FileOutputStream(temp.toFile())) {
+            try (ReadableByteChannel rbc = Channels.newChannel(url.openStream());
+                 FileOutputStream fos = new FileOutputStream(temp.toFile())) {
                 fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
             }
             // Make sure temporary files don't linger

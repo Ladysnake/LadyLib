@@ -16,6 +16,8 @@ import java.util.function.Supplier;
 
 @Beta
 public class TagAdapters {
+    private TagAdapters() { }
+
     private static final List<NBTTypeAdapterFactory> factories = new ArrayList<>();
     private static final Map<TypeToken<?>, NBTAdapterEntry> cache = new HashMap<>();
     private static final Map<TypeToken<?>, Supplier<?>> defaultValues = new HashMap<>();

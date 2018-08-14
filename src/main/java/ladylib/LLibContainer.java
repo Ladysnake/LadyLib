@@ -1,6 +1,7 @@
 package ladylib;
 
 import com.google.common.base.Strings;
+import ladylib.misc.ReflectionFailedException;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.common.config.Config;
@@ -68,23 +69,27 @@ public class LLibContainer {
      * @param name the {@link Config#name() name} of the configuration
      * @return the configuration object used by forge for this mod's given config
      */
-    @SuppressWarnings("unchecked")
     public Configuration getMainConfiguration(@Nullable String name) {
         if (Strings.isNullOrEmpty(name)) {
             name = getModId();
         }
         File configDir = Loader.instance().getConfigDir();
         File configFile = new File(configDir, name + ".cfg");
+        return getForgeConfigs().get(configFile.getAbsolutePath());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Configuration> getForgeConfigs() {
         if (configs == null) {
             try {
                 Field configsField = ConfigManager.class.getDeclaredField("CONFIGS");
                 configsField.setAccessible(true);
                 configs = (Map<String, Configuration>) configsField.get(null);
             } catch (NoSuchFieldException | IllegalAccessException e) {
-                throw new RuntimeException("Error while attempting to access internal configuration", e);
+                throw new ReflectionFailedException("Error while attempting to access internal configuration", e);
             }
         }
-        return configs.get(configFile.getAbsolutePath());
+        return configs;
     }
 
     @Nonnull

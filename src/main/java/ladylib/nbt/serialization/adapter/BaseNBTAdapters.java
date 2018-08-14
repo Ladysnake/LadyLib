@@ -10,33 +10,34 @@ import java.util.UUID;
 /**
  * Default adapters for standard NBT objects
  */
-public interface BaseNBTAdapters {
+public final class BaseNBTAdapters {
+    private BaseNBTAdapters() { }
 
     @DefaultValue({byte.class, Byte.class})
-    byte DEFAULT_BYTE = 0;
+    public static final byte DEFAULT_BYTE = 0;
 
     @DefaultValue({short.class, Short.class})
-    short DEFAULT_SHORT = 0;
+    public static final short DEFAULT_SHORT = 0;
 
     @DefaultValue({int.class, Integer.class})
-    int DEFAULT_INT = 0;
+    public static final int DEFAULT_INT = 0;
 
     @DefaultValue({float.class, Float.class})
-    float DEFAULT_FLOAT = 0F;
+    public static final float DEFAULT_FLOAT = 0F;
 
     @DefaultValue({long.class, Long.class})
-    long DEFAULT_LONG = 0L;
+    public static final long DEFAULT_LONG = 0L;
 
     @DefaultValue({double.class, Double.class})
-    double DEFAULT_DOUBLE = 0D;
+    public static final double DEFAULT_DOUBLE = 0D;
 
     @DefaultValue({boolean.class, Boolean.class})
-    boolean DEFAULT_BOOLEAN = false;
+    public static final boolean DEFAULT_BOOLEAN = false;
 
     @DefaultValue(String.class)
-    String DEFAULT = "";
+    public static final String DEFAULT = "";
 
-    class IntAdapter extends AbstractNBTTypeAdapter<Integer, NBTTagInt> {
+    public static class IntAdapter extends AbstractNBTTypeAdapter<Integer, NBTTagInt> {
 
         @Override
         public NBTTagInt toNBT(Integer value) {
@@ -49,7 +50,7 @@ public interface BaseNBTAdapters {
         }
     }
 
-    class DoubleAdapter extends AbstractNBTTypeAdapter<Double, NBTTagDouble> {
+    public static class DoubleAdapter extends AbstractNBTTypeAdapter<Double, NBTTagDouble> {
         @Override
         public NBTTagDouble toNBT(Double value) {
             return new NBTTagDouble(value);
@@ -61,7 +62,7 @@ public interface BaseNBTAdapters {
         }
     }
 
-    class FloatAdapter extends AbstractNBTTypeAdapter<Float, NBTTagFloat> {
+    public static class FloatAdapter extends AbstractNBTTypeAdapter<Float, NBTTagFloat> {
 
         @Override
         public NBTTagFloat toNBT(Float value) {
@@ -74,7 +75,7 @@ public interface BaseNBTAdapters {
         }
     }
 
-    class LongAdapter extends AbstractNBTTypeAdapter<Long, NBTTagLong> {
+    public static class LongAdapter extends AbstractNBTTypeAdapter<Long, NBTTagLong> {
         @Override
         public NBTTagLong toNBT(Long value) {
             return new NBTTagLong(value);
@@ -86,7 +87,7 @@ public interface BaseNBTAdapters {
         }
     }
 
-    class ShortAdapter extends AbstractNBTTypeAdapter<Short, NBTTagShort> {
+    public static class ShortAdapter extends AbstractNBTTypeAdapter<Short, NBTTagShort> {
         @Override
         public NBTTagShort toNBT(Short value) {
             return new NBTTagShort(value);
@@ -98,7 +99,7 @@ public interface BaseNBTAdapters {
         }
     }
 
-    class ByteAdapter extends AbstractNBTTypeAdapter<Byte, NBTTagByte> {
+    public static class ByteAdapter extends AbstractNBTTypeAdapter<Byte, NBTTagByte> {
         @Override
         public NBTTagByte toNBT(Byte value) {
             return new NBTTagByte(value);
@@ -110,7 +111,7 @@ public interface BaseNBTAdapters {
         }
     }
 
-    class BooleanAdapter extends AbstractNBTTypeAdapter<Boolean, NBTTagByte> {
+    public static class BooleanAdapter extends AbstractNBTTypeAdapter<Boolean, NBTTagByte> {
 
         @Override
         public NBTTagByte toNBT(Boolean value) {
@@ -123,7 +124,7 @@ public interface BaseNBTAdapters {
         }
     }
 
-    class StringAdapter extends AbstractNBTTypeAdapter<String, NBTTagString> {
+    public static class StringAdapter extends AbstractNBTTypeAdapter<String, NBTTagString> {
 
         @Override
         public NBTTagString toNBT(String value) {
@@ -136,7 +137,7 @@ public interface BaseNBTAdapters {
         }
     }
 
-    class ItemStackAdapter extends AbstractNBTTypeAdapter<ItemStack, NBTTagCompound> {
+    public static class ItemStackAdapter extends AbstractNBTTypeAdapter<ItemStack, NBTTagCompound> {
 
         @DefaultValue(ItemStack.class)
         public static final ItemStack DEFAULT = ItemStack.EMPTY;
@@ -152,7 +153,7 @@ public interface BaseNBTAdapters {
         }
     }
 
-    class BlockPosAdapter extends AbstractNBTTypeAdapter<BlockPos, NBTTagLong> {
+    public static class BlockPosAdapter extends AbstractNBTTypeAdapter<BlockPos, NBTTagLong> {
 
         @DefaultValue(BlockPos.class)
         public static final BlockPos DEFAULT = BlockPos.ORIGIN;
@@ -168,7 +169,7 @@ public interface BaseNBTAdapters {
         }
     }
 
-    class UUIDAdapter extends AbstractNBTTypeAdapter<UUID, NBTTagString> {
+    public static class UUIDAdapter extends AbstractNBTTypeAdapter<UUID, NBTTagString> {
 
         @DefaultValue(UUID.class)
         public static final UUID DEFAULT = new UUID(0, 0);

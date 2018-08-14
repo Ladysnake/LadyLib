@@ -34,7 +34,7 @@ public class InstallationState {
             return display;
         }
 
-        public int getSheetOffset() {
+        public float getSheetOffset() {
             return sheetOffset;
         }
 

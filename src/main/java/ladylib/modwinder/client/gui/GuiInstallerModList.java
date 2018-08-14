@@ -33,7 +33,7 @@ public class GuiInstallerModList extends GuiScrollingList {
 
     private final GuiModBar parent;
     private List<ModEntry> flattenedEntries;
-    private int selected = -1;
+    private int selectedSlot = -1;
 
     public GuiInstallerModList(GuiModBar parent, List<ModEntry> entries, int listWidth, int slotHeight) {
         super(Minecraft.getMinecraft(), listWidth, parent.height, 32, parent.height - 88 + 4, 10, slotHeight, parent.width, parent.height);
@@ -48,29 +48,27 @@ public class GuiInstallerModList extends GuiScrollingList {
 
     @Override
     protected void elementClicked(int index, boolean doubleClick) {
-        this.selected = index;
+        this.selectedSlot = index;
         this.parent.onModEntrySelected();
         if (doubleClick) {
             ModEntry selected = flattenedEntries.get(index);
-            if (selected.getInstallationState().getStatus().canInstall(selected)) {
-                if (!AddonInstaller.attemptReEnabling(selected)) {
-                    AddonInstaller.installLatestFromCurseforge(selected);
-                    // update DLCs while we are at it
-                    // note: if the mod just got installed or re-enabled, no DLC is active, we only need to update them when the parent mod is updated
-                    selected.getDlcs().stream().filter(ModEntry::isOutdated).forEach(AddonInstaller::installLatestFromCurseforge);
-                }
+            if (selected.getInstallationState().getStatus().canInstall(selected) && !AddonInstaller.attemptReEnabling(selected)) {
+                AddonInstaller.installLatestFromCurseforge(selected);
+                // update DLCs while we are at it
+                // note: if the mod just got installed or re-enabled, no DLC is active, we only need to update them when the parent mod is updated
+                selected.getDlcs().stream().filter(ModEntry::isOutdated).forEach(AddonInstaller::installLatestFromCurseforge);
             }
         }
     }
 
     @Override
     protected boolean isSelected(int index) {
-        return index == selected;
+        return index == selectedSlot;
     }
 
     @Nullable
     public ModEntry getSelected() {
-        return selected >= 0 ? flattenedEntries.get(selected) : null;
+        return selectedSlot >= 0 ? flattenedEntries.get(selectedSlot) : null;
     }
 
     @Override
@@ -92,23 +90,11 @@ public class GuiInstallerModList extends GuiScrollingList {
             left += height + 5;
         }
 
-        Minecraft.getMinecraft().getTextureManager().bindTexture(entry.getLogo());
-        GlStateManager.enableAlpha();
-        ShaderUtil.useShader(MWShaders.ROUNDISH);
-        ShaderUtil.setUniform("saturation", entry.isInstalled() ? 1f : 0f);
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-        BufferBuilder bufferbuilder = tess.getBuffer();
-        bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
-        bufferbuilder.pos((double)(left + 0.0F  ), (double)(slotTop + (float)height), (double)1).tex(0, 1).endVertex();
-        bufferbuilder.pos((double)(left + height), (double)(slotTop + (float)height), (double)1).tex(1, 1).endVertex();
-        bufferbuilder.pos((double)(left + height), (double)(slotTop + 0.0F         ), (double)1).tex(1, 0).endVertex();
-        bufferbuilder.pos((double)(left + 0.0F  ), (double)(slotTop + 0.0F         ), (double)1).tex(0, 0).endVertex();
-        tess.draw();
-        ShaderUtil.revert();
+        drawModIcon(slotTop, height, tess, entry, left);
 
         left += height + 5;
 
-        int color = 0x00E6D2;
+        int versionColor = 0x00E6D2;
 
         int iconX = right - (height / 2 + 4 + 12);
         final int iconY = slotTop + (height / 2 - 4);
@@ -118,27 +104,9 @@ public class GuiInstallerModList extends GuiScrollingList {
 
         GlStateManager.color(1, 1, 1, 1);
 
-        // draw trash can
+        // draw trash can if the entry can be uninstalled
         if (entry.isInstalled() && entry.getInstallationState() == InstallationState.NAUGHT) {
-            int u = 3;
-            int v = 0;
-
-            // if the mouse is hovering the trash can
-            if (mouseX >= iconX && mouseX < iconX + iconWidth && mouseY > iconY && mouseY < iconY + iconHeight) {
-                // the mouse is hovering the bin icon
-                v = 8;
-                if (Mouse.isButtonDown(0)) {
-                    AddonInstaller.uninstall(entry);
-                    this.parent.setTip(I18n.format("modwinder.hint.uninstall"));
-                }
-            }
-
-            if (isSelected(slotIdx)) {
-                Minecraft.getMinecraft().getTextureManager().bindTexture(TRASH_ICONS);
-                GlStateManager.pushMatrix();
-                Gui.drawModalRectWithCustomSizedTexture(iconX, iconY, u * iconWidth, v, iconWidth, iconHeight, 64, 16);
-                GlStateManager.popMatrix();
-            }
+            drawTrashCan(slotIdx, entry, iconX, iconY, iconWidth, iconHeight);
         }
 
         iconX += 12;
@@ -150,18 +118,18 @@ public class GuiInstallerModList extends GuiScrollingList {
             GlStateManager.pushMatrix();
             Gui.drawModalRectWithCustomSizedTexture(iconX, iconY, state.getStatus().getSheetOffset() * iconWidth, flashing ? 8 : 0, iconWidth, iconHeight, 112, 16);
             GlStateManager.popMatrix();
-            if (mouseX > iconX && mouseX < iconX + iconWidth && mouseY > iconY && mouseY < iconY + iconHeight) {
+            if (isMouseHovering(iconX, iconY, iconWidth, iconHeight)) {
                 parent.setHoveringText(state.getMessage());
             }
         } else if (!entry.isInstalled()) {
-            color = 0x9E9E9E;
+            versionColor = 0x9E9E9E;
         } else if (entry.isOutdated()) {
-            color = 0xFF6E00;
+            versionColor = 0xFF6E00;
             Minecraft.getMinecraft().getTextureManager().bindTexture(VERSION_CHECK_ICONS);
             GlStateManager.pushMatrix();
-            Gui.drawModalRectWithCustomSizedTexture(right - (height / 2 + 4), slotTop + (height / 2 - 4), 3 * iconWidth, flashing ? 8 : 0, iconWidth, iconHeight, 64, 16);
+            Gui.drawModalRectWithCustomSizedTexture(right - (height / 2 + 4), slotTop + (height / 2 - 4), 3f * iconWidth, flashing ? 8 : 0, iconWidth, iconHeight, 64, 16);
             GlStateManager.popMatrix();
-            if (mouseX >= iconX && mouseX < iconX + iconWidth && mouseY > iconY && mouseY < iconY + iconHeight) {
+            if (isMouseHovering(iconX, iconY, iconWidth, iconHeight)) {
                 parent.setHoveringText(
                         I18n.format("modwinder.status.outdated"),
                         I18n.format("modwinder.status.outdated.current_version", version)
@@ -176,13 +144,55 @@ public class GuiInstallerModList extends GuiScrollingList {
             font.drawString(font.trimStringToWidth("by " + author, listWidth - 10), left + font.getStringWidth(name) + 5, slotTop + 2, 0x808080);
         }
         // write the mod's latest version
-        font.drawString(font.trimStringToWidth(version, listWidth - (5 + height)), left, slotTop + 12, color);
+        font.drawString(font.trimStringToWidth(version, listWidth - (5 + height)), left, slotTop + 12, versionColor);
         // write the mod's number of DLCs
-        if (entry.getDlcs().size() > 0) {
+        if (!entry.getDlcs().isEmpty()) {
             font.drawString(font.trimStringToWidth(I18n.format("modwinder.dlc", entry.getDlcs().size()), listWidth - (5 + height)), left, slotTop + 22, 0xCCCCCC);
         }
 
         GlStateManager.disableAlpha();
+    }
+
+    private void drawTrashCan(int slotIdx, ModEntry entry, int iconX, int iconY, int iconWidth, int iconHeight) {
+        float u = 3f;
+        float v = 0f;
+
+        // if the mouse is hovering the trash can
+        if (isMouseHovering(iconX, iconY, iconWidth, iconHeight)) {
+            // the mouse is hovering the bin icon
+            v = 8f;
+            if (Mouse.isButtonDown(0)) {
+                AddonInstaller.uninstall(entry);
+                this.parent.setTip(I18n.format("modwinder.hint.uninstall"));
+            }
+        }
+
+        if (isSelected(slotIdx)) {
+            Minecraft.getMinecraft().getTextureManager().bindTexture(TRASH_ICONS);
+            GlStateManager.pushMatrix();
+            Gui.drawModalRectWithCustomSizedTexture(iconX, iconY, u * iconWidth, v, iconWidth, iconHeight, 64, 16);
+            GlStateManager.popMatrix();
+        }
+    }
+
+    private boolean isMouseHovering(int iconX, int iconY, int iconWidth, int iconHeight) {
+        return mouseX >= iconX && mouseX < iconX + iconWidth && mouseY > iconY && mouseY < iconY + iconHeight;
+    }
+
+    private void drawModIcon(int slotTop, int height, Tessellator tess, ModEntry entry, int left) {
+        Minecraft.getMinecraft().getTextureManager().bindTexture(entry.getLogo());
+        GlStateManager.enableAlpha();
+        ShaderUtil.useShader(MWShaders.ROUNDISH);
+        ShaderUtil.setUniform("saturation", entry.isInstalled() ? 1f : 0f);
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        BufferBuilder bufferbuilder = tess.getBuffer();
+        bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
+        bufferbuilder.pos((double)(left + 0.0F  ), (double)(slotTop + (float)height), (double)1).tex(0, 1).endVertex();
+        bufferbuilder.pos((double)(left + height), (double)(slotTop + (float)height), (double)1).tex(1, 1).endVertex();
+        bufferbuilder.pos((double)(left + height), (double)(slotTop + 0.0F         ), (double)1).tex(1, 0).endVertex();
+        bufferbuilder.pos((double)(left + 0.0F  ), (double)(slotTop + 0.0F         ), (double)1).tex(0, 0).endVertex();
+        tess.draw();
+        ShaderUtil.revert();
     }
 
     @Override

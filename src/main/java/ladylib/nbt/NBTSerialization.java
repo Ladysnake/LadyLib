@@ -16,7 +16,8 @@ import java.lang.reflect.Type;
  * <p>
  * Works very similarly to GSON, but using static methods.
  */
-public class NBTSerialization {
+public final class NBTSerialization {
+    private NBTSerialization() { }
 
 
     /**

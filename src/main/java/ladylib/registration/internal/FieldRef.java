@@ -34,7 +34,7 @@ class FieldRef extends AutoRegistryRef<Field> {
                 try {
                     handle.invoke(value, modId + "." + name);
                 } catch (Throwable throwable) {
-                    throwable.printStackTrace();
+                    LadyLib.LOGGER.warn("Could not call setTranslationKey/setUnlocalizedName on {}", referenced, throwable);
                 }
             });
             return value;

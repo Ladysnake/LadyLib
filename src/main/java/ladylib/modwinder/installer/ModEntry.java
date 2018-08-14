@@ -9,6 +9,7 @@ import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import ladylib.modwinder.ModWinder;
 import ladylib.modwinder.ModsFetchedEvent;
+import ladylib.networking.http.HTTPRequestException;
 import ladylib.networking.http.HTTPRequestHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -29,6 +30,7 @@ import java.lang.reflect.Type;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -86,7 +88,7 @@ public class ModEntry {
     private transient InstallationState installationState = InstallationState.NAUGHT;
     private transient String installedVersion = "";
     private transient String latestVersion = "";
-    private transient ResourceLocation logo;
+    private transient ResourceLocation logoTexture;
     /**
      * The list of mods this entry is a DLC of <br>
      */
@@ -140,14 +142,14 @@ public class ModEntry {
                                 return GSON.fromJson(attachment.getAsJsonObject().get("url"), URL.class);
                             }
                         }
-                        throw new RuntimeException("No logo found for project " + json.getAsJsonObject().get("name"));
+                        throw new HTTPRequestException("No logo found for project " + json.getAsJsonObject().get("name"));
                     })
                     .thenAccept(logo -> {
                         try {
                             // create a texture from the url
                             setLogo(ImageIO.read(logo));
                         } catch (IOException e) {
-                            throw new RuntimeException(e);
+                            throw new CompletionException(e);
                         }
                     }).exceptionally(t -> {
                 ModWinder.LOGGER.error("Could not download logo", t);
@@ -160,11 +162,11 @@ public class ModEntry {
             // Forge's version check does not have a callback so it is easier to just check ourselves even if the mod is installed
             HTTPRequestHelper.getJSON(this.getUpdateUrl())
                     .thenAccept(json -> {
-                        String latestVersion = json.getAsJsonObject()
+                        String latest = json.getAsJsonObject()
                                 .get("promos").getAsJsonObject()
                                 .get(MinecraftForge.MC_VERSION + "-latest").getAsString();
-                        this.setLatestVersion(latestVersion);
-                        outdated = (new ComparableVersion(this.installedVersion).compareTo(new ComparableVersion(latestVersion)) < 0);
+                        this.setLatestVersion(latest);
+                        outdated = (new ComparableVersion(this.installedVersion).compareTo(new ComparableVersion(latest)) < 0);
                         Map<String, String> temp = GSON.fromJson(json.getAsJsonObject().get(MinecraftForge.MC_VERSION + ""), new TypeToken<Map<String, String>>() {
                         }.getType());
                         this.setChangelog(temp.keySet().stream().collect(Collectors.toMap(ComparableVersion::new, temp::get)));
@@ -243,16 +245,17 @@ public class ModEntry {
     }
 
     public ResourceLocation getLogo() {
-        return logo;
+        return logoTexture;
     }
 
-    public synchronized void setLogo(@Nullable BufferedImage logo) {
+    public void setLogo(@Nullable BufferedImage logo) {
         // don't try to call graphic methods on a dedicated server
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
             // run in the client thread for the OpenGL context
+            // note that addScheduledTask synchronizes concurrent calls
             Minecraft.getMinecraft().addScheduledTask(() -> {
                 DynamicTexture texture = logo == null ? TextureUtil.MISSING_TEXTURE : new DynamicTexture(logo);
-                this.logo = Minecraft.getMinecraft().getTextureManager().getDynamicTextureLocation("curse-logo-" + getModId(), texture);
+                this.logoTexture = Minecraft.getMinecraft().getTextureManager().getDynamicTextureLocation("curse-logo-" + getModId(), texture);
             });
         }
     }

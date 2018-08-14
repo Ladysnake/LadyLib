@@ -3,7 +3,9 @@ package ladylib.config;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ConfigUtil {
+public final class ConfigUtil {
+    private ConfigUtil() { }
+
     private static final Pattern WILDCARD_PATTERN = Pattern.compile("(.*?)\\*");
 
     public static Pattern wildcardToRegex(String wildcard) {

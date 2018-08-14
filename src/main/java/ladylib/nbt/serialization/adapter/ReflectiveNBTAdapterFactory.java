@@ -139,7 +139,8 @@ public class ReflectiveNBTAdapterFactory implements NBTTypeAdapterFactory<Object
 
     private static class FieldEntry {
         private final String name;
-        private final MethodHandle getter, setter;
+        private final MethodHandle getter;
+        private final MethodHandle setter;
         private final NBTTypeAdapter adapter;
 
         private FieldEntry(String name, MethodHandle getter, @Nullable MethodHandle setter, NBTTypeAdapter adapter) {

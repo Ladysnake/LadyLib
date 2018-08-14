@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
  */
 @Beta
 public class TemplateUtil {
+    private TemplateUtil() { }
 
     private static final ResourceLocation STUB_ITEM_MODEL = new ResourceLocation("ladylib", "models/item/sample_item.json");
     private static final ResourceLocation STUB_BLOCKSTATE = new ResourceLocation("ladylib", "blockstates/sample_blockstate.json");
@@ -163,6 +164,7 @@ public class TemplateUtil {
 
         @Override
         public void initGui(GuiErrorScreen errorScreen, FontRenderer fontRenderer) {
+            // Nothing to do here
         }
 
         @Override

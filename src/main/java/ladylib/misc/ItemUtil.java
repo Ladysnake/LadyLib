@@ -10,7 +10,8 @@ import net.minecraftforge.items.ItemHandlerHelper;
 
 import javax.annotation.Nonnull;
 
-public class ItemUtil {
+public final class ItemUtil {
+    private ItemUtil() { }
 
     /**
      * Gets a stack's NBT compound. If it doesn't exist, it will be created and attached to the item stack.

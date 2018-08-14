@@ -2,6 +2,7 @@ package ladylib.nbt.serialization.internal;
 
 import com.google.gson.reflect.TypeToken;
 import ladylib.LadyLib;
+import ladylib.misc.ReflectionFailedException;
 import ladylib.misc.ReflectionUtil;
 import ladylib.nbt.serialization.DefaultValue;
 import ladylib.nbt.serialization.TagAdapters;
@@ -18,6 +19,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 public class DefaultValuesSearch {
+    private DefaultValuesSearch() { }
 
     @SuppressWarnings("unchecked")
     public static void searchDefaultValues(ASMDataTable asmData) {
@@ -31,7 +33,7 @@ public class DefaultValuesSearch {
                 LadyLib.LOGGER.warn("Unable to inject capability at {}.{} (Invalid Annotation)", targetClass, targetName);
                 continue;
             }
-            boolean isMethod = entry.getObjectName().indexOf('(') > 0;
+            boolean isMethod = entry.getObjectName().indexOf('(') >= 0;
             for (Type type : types) {
                 try {
                     Class clazz = Class.forName(targetClass, false, DefaultValuesSearch.class.getClassLoader());
@@ -39,7 +41,7 @@ public class DefaultValuesSearch {
                     if (isMethod) {
                         Method method = clazz.getDeclaredMethod(targetName);
                         if (!Modifier.isStatic(method.getModifiers()) || Modifier.isAbstract(method.getModifiers())) {
-                            throw new RuntimeException("Default value supplying methods must be static and non abstract");
+                            throw new ReflectionFailedException("Default value supplying methods must be static and non abstract");
                         }
                         MethodHandles.Lookup lookup = MethodHandles.lookup();
                         MethodHandle mh = lookup.unreflect(method);
@@ -55,7 +57,7 @@ public class DefaultValuesSearch {
                     } else {
                         Field f = clazz.getDeclaredField(targetName);
                         if (!Modifier.isStatic(f.getModifiers()) || !Modifier.isFinal(f.getModifiers())) {
-                            throw new RuntimeException("Default value fields must be static and final");
+                            throw new ReflectionFailedException("Default value fields must be static and final");
                         }
                         Object o = f.get(null);
                         TagAdapters.setDefaultValue(TypeToken.get(typeClass), () -> o);

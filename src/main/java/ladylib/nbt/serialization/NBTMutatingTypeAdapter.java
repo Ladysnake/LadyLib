@@ -17,6 +17,7 @@ public interface NBTMutatingTypeAdapter<T, NBT extends NBTBase> extends NBTTypeA
         throw new UnsupportedOperationException();
     }
 
+    @Override
     T fromNBT(T value, NBTBase nbt);
 
 }

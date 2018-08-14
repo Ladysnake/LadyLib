@@ -19,6 +19,7 @@ public class GuiWaitingModInstall extends GuiScreen {
      * Adds the buttons (and other controls) to the screen in question. Called when the GUI is displayed and when the
      * window resizes, the buttonList is cleared beforehand.
      */
+    @Override
     public void initGui() {
         this.buttonList.clear();
         this.buttonList.add(new GuiButton(0, this.width / 2 - 100, this.height / 4 + 120 + 12, I18n.format("gui.cancel")));
@@ -27,6 +28,7 @@ public class GuiWaitingModInstall extends GuiScreen {
     /**
      * Draws the screen and all the components in it.
      */
+    @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         this.drawBackground(0);
         this.drawCenteredString(this.fontRenderer, I18n.format("modwinder.waiting"), this.width / 2, this.height / 2 - 50, 16777215);

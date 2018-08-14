@@ -100,10 +100,7 @@ public class LLParticleManager {
         float xz = ActiveRenderInfo.getRotationXZ();
         EntityPlayer player = Minecraft.getMinecraft().player;
         if (player != null) {
-            Particle.interpPosX = player.lastTickPosX + (player.posX - player.lastTickPosX) * partialTicks;
-            Particle.interpPosY = player.lastTickPosY + (player.posY - player.lastTickPosY) * partialTicks;
-            Particle.interpPosZ = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * partialTicks;
-            Particle.cameraViewDir = player.getLook(partialTicks);
+            updateParticleFields(partialTicks, player);
 
             GlStateManager.pushMatrix();
 
@@ -147,6 +144,13 @@ public class LLParticleManager {
             GlStateManager.alphaFunc(GL11.GL_GREATER, 0.1F);
             GlStateManager.popMatrix();
         }
+    }
+
+    private static void updateParticleFields(float partialTicks, EntityPlayer player) {
+        Particle.interpPosX = player.lastTickPosX + (player.posX - player.lastTickPosX) * partialTicks;
+        Particle.interpPosY = player.lastTickPosY + (player.posY - player.lastTickPosY) * partialTicks;
+        Particle.interpPosZ = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * partialTicks;
+        Particle.cameraViewDir = player.getLook(partialTicks);
     }
 
     public void addParticle(ISpecialParticle p) {

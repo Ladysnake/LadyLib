@@ -21,6 +21,6 @@ import javax.annotation.Nullable;
 public interface NBTTypeAdapterFactory<T, NBT extends NBTBase> {
 
     @Nullable
-    NBTTypeAdapter<? extends T, ? extends NBT> create(TypeToken type, boolean allowMutating);
+    NBTTypeAdapter<T, NBT> create(TypeToken type, boolean allowMutating);
 
 }

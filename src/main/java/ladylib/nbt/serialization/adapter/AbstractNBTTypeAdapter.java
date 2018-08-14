@@ -23,7 +23,7 @@ public abstract class AbstractNBTTypeAdapter<T, NBT extends NBTBase> implements 
         if (superclass instanceof ParameterizedType) {
             superclassType = ((ParameterizedType) superclass).getActualTypeArguments()[0];
         } else {
-            throw new RuntimeException("Missing specific type parameter. Use the explicit constructor instead.");
+            throw new IllegalArgumentException("Missing specific type parameter. Use the explicit constructor instead.");
         }
         typeToken = (TypeToken<T>) TypeToken.get(superclassType);
     }

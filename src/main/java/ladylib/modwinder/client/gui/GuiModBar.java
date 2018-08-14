@@ -1,5 +1,6 @@
 package ladylib.modwinder.client.gui;
 
+import ladylib.LadyLib;
 import ladylib.misc.ReflectionUtil;
 import ladylib.modwinder.ModWinder;
 import ladylib.modwinder.ModsFetchedEvent;
@@ -51,37 +52,37 @@ public class GuiModBar extends GuiScreen {
         final Minecraft mc = Minecraft.getMinecraft();
         mc.addScheduledTask(() -> {
             if (mc.currentScreen instanceof GuiMainMenu) {
-                List<GuiButton> buttonList = ReflectionUtil.getPrivateValue(Minecraft.class, mc, "field_146292_n", List.class);
+                List<GuiButton> buttonList = ReflectionUtil.getPrivateValue(GuiScreen.class, mc.currentScreen, "field_146292_n", List.class);
                 addModBarButton(buttonList);
             }
         });
     }
 
-    private static void addModBarButton(List<GuiButton> buttons) {
+    private static void addModBarButton(final List<GuiButton> buttons) {
         if (ModEntry.getLadysnakeMods().isEmpty()) {
             return;
         }
-        String target = I18n.format("fml.menu.mods");
+        final String targetDisplayString = I18n.format("fml.menu.mods");
 
-        for (GuiButton b : buttons)
-            if (target.equals(b.displayString)) {
-                GuiButton installer = new GuiButtonModBar(MODWINDER_BUTTON_ID, b.x -24, b.y);
-                // check for colliding buttons
-                boolean collision;
-                // we are only moving along the x axis, we shouldn't have to check buttons that are not on the same line
-                List<GuiButton> possibleCollisions = buttons.stream().filter(other -> other.y < installer.y + installer.height && other.y + other.height > installer.y).collect(Collectors.toList());
-                do {
-                    collision = false;
-                    for (GuiButton other : possibleCollisions) {
-                        if (other.x < installer.x + installer.width && other.x + other.width > installer.x) {
-                            installer.x = other.x - installer.width - 4;
-                            collision = true;
-                        }
+        buttons.stream().filter(b -> targetDisplayString.equals(b.displayString)).findAny().ifPresent(target -> {
+            GuiButton installer = new GuiButtonModBar(MODWINDER_BUTTON_ID, target.x -24, target.y);
+            // check for colliding buttons
+            boolean collision;
+            // we are only moving along the x axis, we shouldn't have to check buttons that are not on the same line
+            List<GuiButton> possibleCollisions = buttons.stream()
+                    .filter(other -> other.y < installer.y + installer.height && other.y + other.height > installer.y)
+                    .collect(Collectors.toList());
+            do {
+                collision = false;
+                for (GuiButton other : possibleCollisions) {
+                    if (other.x < installer.x + installer.width && other.x + other.width > installer.x) {
+                        installer.x = other.x - installer.width - 4;
+                        collision = true;
                     }
-                } while (collision);
-                buttons.add(installer);
-                return;
-            }
+                }
+            } while (collision);
+            buttons.add(installer);
+        });
     }
 
     @SubscribeEvent
@@ -94,6 +95,8 @@ public class GuiModBar extends GuiScreen {
             } else {
                 Minecraft.getMinecraft().displayGuiScreen(new GuiModBar(event.getGui()));
             }
+            event.getButton().playPressSound(Minecraft.getMinecraft().getSoundHandler());
+            event.setCanceled(true);
         }
     }
 
@@ -101,14 +104,16 @@ public class GuiModBar extends GuiScreen {
      * reee forge stop making your useful classes private
      */
     public enum SortType implements Comparator<ModEntry> {
-        NORMAL(24),
-        A_TO_Z(25){ @Override protected int compare(String name1, String name2){ return name1.compareTo(name2); }},
-        Z_TO_A(26){ @Override protected int compare(String name1, String name2){ return name2.compareTo(name1); }};
+        NORMAL(24, (s1, s2) -> 0),
+        A_TO_Z(25, String::compareTo),
+        Z_TO_A(26, (s1, s2) -> s2.compareTo(s1));
 
         private int buttonID;
+        private Comparator<String> modNameComparator;
 
-        SortType(int buttonID) {
+        SortType(int buttonID, Comparator<String> modNameComparator) {
             this.buttonID = buttonID;
+            this.modNameComparator = modNameComparator;
         }
 
         @Nullable
@@ -121,20 +126,23 @@ public class GuiModBar extends GuiScreen {
             return null;
         }
 
-        protected int compare(String name1, String name2){ return 0; }
+        public static boolean isSortingButton(GuiButton button) {
+            return getTypeForButton(button) != null;
+        }
 
         @Override
         public int compare(ModEntry o1, ModEntry o2) {
             String name1 = StringUtils.stripControlCodes(o1.getName()).toLowerCase();
             String name2 = StringUtils.stripControlCodes(o2.getName()).toLowerCase();
-            return compare(name1, name2);
+            return modNameComparator.compare(name1, name2);
         }
     }
 
     private GuiScreen mainMenu;
     private GuiInstallerModList modList;
 
-    private GuiButton changelogButton, descriptionButton;
+    private GuiButton changelogButton;
+    private GuiButton descriptionButton;
 
     private int numButtons = SortType.values().length;
 
@@ -173,7 +181,8 @@ public class GuiModBar extends GuiScreen {
 
         // Sorting buttons
         int width = (this.modList.getListWidth() / 3 / numButtons);
-        int x = 10, y = 10;
+        int x = 10;
+        int y = 10;
         int buttonMargin = 1;
         GuiButton normalSort = new GuiButton(SortType.NORMAL.buttonID, x, y, width - buttonMargin, 20, I18n.format("fml.menu.mods.normal"));
         normalSort.enabled = false;
@@ -256,64 +265,70 @@ public class GuiModBar extends GuiScreen {
      * Called by the controls from the buttonList when activated. (Mouse pressed for buttons)
      */
     @Override
-    protected void actionPerformed(GuiButton button) throws IOException {
+    protected void actionPerformed(GuiButton button) {
         if (button.enabled) {
             SortType type = SortType.getTypeForButton(button);
 
             if (type != null) {
-                for (GuiButton b : buttonList) {
-                    if (SortType.getTypeForButton(b) != null) {
-                        b.enabled = true;
-                    }
-                }
+                buttonList.stream().filter(SortType::isSortingButton).forEach(b -> b.enabled = true);
                 button.enabled = false;
                 sorted = false;
                 sortType = type;
             } else {
                 switch (button.id) {
-                    case DONE_BUTTON_ID: {
-                        if (ModEntry.getLadysnakeMods().stream()
-                                .map(ModEntry::getInstallationState)
-                                .map(InstallationState::getStatus)
-                                .anyMatch(status -> status == InstallationState.Status.INSTALLING || status == InstallationState.Status.INSTALLED)) {
-                            this.mc.displayGuiScreen(new GuiYesNo((confirm, i) -> {
-                                if (confirm) {
-                                    this.mc.displayGuiScreen(new GuiWaitingModInstall(this));
-                                } else {
-                                    this.mc.displayGuiScreen(this.mainMenu);
-                                }
-                            }, I18n.format("modwinder.restart.1"), I18n.format("modwinder.restart.2"), DONE_BUTTON_ID));
-                        } else {
-                            this.mc.displayGuiScreen(this.mainMenu);
-                        }
+                    case DONE_BUTTON_ID:
+                        exitModBar();
                         return;
-                    }
-                    case CHANGELOG_BUTTON_ID: {
-                        ModEntry selected = this.modList.getSelected();
-                        if (selected != null && selected.getChangelog() != null) {
-                            this.mc.displayGuiScreen(new GuiModChangelog(this, selected.getChangelog()));
-                        }
+                    case CHANGELOG_BUTTON_ID:
+                        displayChangelog();
                         return;
-                    }
-                    case DESCRIPTION_BUTTON_ID: {
-                        ModEntry selected = this.modList.getSelected();
-                        if (selected != null) {
-                            String cfLink = "https://minecraft.curseforge.com/projects/" + selected.getCurseId();
-                            try {
-                                this.clickedLinkURI = new URI(cfLink);
-                                GuiConfirmOpenLink link = new GuiConfirmOpenLink(this, cfLink, 31102009, false);
-                                link.disableSecurityWarning();
-                                this.mc.displayGuiScreen(link);
-                            } catch (URISyntaxException e) {
-                                ModWinder.LOGGER.error("Can't open url for {}", cfLink, e);
-                            }
-                        }
+                    case DESCRIPTION_BUTTON_ID:
+                        openCurseforgeDescription();
                         return;
-                    }
+                    default:
+                        LadyLib.LOGGER.warn("Unrecognized button id {} ({})", button.id, button);
                 }
             }
         }
-        super.actionPerformed(button);
+    }
+
+    private void openCurseforgeDescription() {
+        ModEntry selected = this.modList.getSelected();
+        if (selected != null) {
+            String cfLink = "https://minecraft.curseforge.com/projects/" + selected.getCurseId();
+            try {
+                this.clickedLinkURI = new URI(cfLink);
+                GuiConfirmOpenLink link = new GuiConfirmOpenLink(this, cfLink, 31102009, false);
+                link.disableSecurityWarning();
+                this.mc.displayGuiScreen(link);
+            } catch (URISyntaxException e) {
+                ModWinder.LOGGER.error("Can't open url for {}", cfLink, e);
+            }
+        }
+    }
+
+    private void displayChangelog() {
+        ModEntry selected = this.modList.getSelected();
+        if (selected != null && selected.getChangelog() != null) {
+            this.mc.displayGuiScreen(new GuiModChangelog(this, selected.getChangelog()));
+        }
+    }
+
+    private void exitModBar() {
+        if (ModEntry.getLadysnakeMods().stream()
+                .map(ModEntry::getInstallationState)
+                .map(InstallationState::getStatus)
+                .anyMatch(status -> status == InstallationState.Status.INSTALLING || status == InstallationState.Status.INSTALLED)) {
+            this.mc.displayGuiScreen(new GuiYesNo((confirm, i) -> {
+                if (confirm) {
+                    this.mc.displayGuiScreen(new GuiWaitingModInstall(this));
+                } else {
+                    this.mc.displayGuiScreen(this.mainMenu);
+                }
+            }, I18n.format("modwinder.restart.1"), I18n.format("modwinder.restart.2"), DONE_BUTTON_ID));
+        } else {
+            this.mc.displayGuiScreen(this.mainMenu);
+        }
     }
 
     /**

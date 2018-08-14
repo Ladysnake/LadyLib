@@ -2,7 +2,9 @@ package ladylib.registration.internal;
 
 import com.google.common.collect.ImmutableList;
 import joptsimple.internal.Strings;
+import ladylib.LadyLib;
 import ladylib.capability.internal.CapabilityRegistrar;
+import ladylib.misc.ReflectionFailedException;
 import ladylib.registration.AutoRegister;
 import ladylib.registration.AutoRegisterTile;
 import ladylib.registration.BlockRegistrar;
@@ -62,7 +64,7 @@ public class AutoRegistrar {
                     references.add(new FieldRef(modId, clazz.getDeclaredField(annotationTarget)));
                 }
             } catch (ClassNotFoundException | NoSuchFieldException e) {
-                e.printStackTrace();
+                LadyLib.LOGGER.warn("Could not automatically register annotated registrar element", e);
             }
         }
     }
@@ -85,7 +87,7 @@ public class AutoRegistrar {
                     ClientRegistrar.registerTESR(teClass, (Type) data.getAnnotationInfo().get("renderer"));
                 }
             } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+                LadyLib.LOGGER.warn("Could not look automatically register tile entity class {}", className, e);
             }
         }
     }
@@ -151,7 +153,7 @@ public class AutoRegistrar {
                 intLevelF.set(privateConfig, intLevel);
             }
         } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new RuntimeException(e);
+            throw new ReflectionFailedException("Could not make Forge shut up", e);
         }
     }
 

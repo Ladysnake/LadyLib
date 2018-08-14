@@ -12,7 +12,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
-public class ReflectionUtil {
+public final class ReflectionUtil {
+    private ReflectionUtil() { }
 
     private static final MethodHandles.Lookup TRUSTED_LOOKUP;
 
@@ -25,7 +26,7 @@ public class ReflectionUtil {
             internal.setAccessible(true);
             TRUSTED_LOOKUP = (MethodHandles.Lookup) internal.get(original);
         } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new RuntimeException(e);
+            throw new ReflectionFailedException("Could not access trusted lookup", e);
         }
     }
 
@@ -74,7 +75,7 @@ public class ReflectionUtil {
      * @return The method with the specified name and parameters in the given class.
      * @throws UnableToFindMethodException if an issue prevents the method from being reflected
      */
-    public static Method findMethodFromObfName(Class<?> clazz, String methodObfName, Class<?> returnType, Class<?>... parameterTypes) throws UnableToFindMethodException {
+    public static Method findMethodFromObfName(Class<?> clazz, String methodObfName, Class<?> returnType, Class<?>... parameterTypes) {
         String methodDesc = Type.getMethodDescriptor(Type.getType(returnType), Arrays.stream(parameterTypes).map(Type::getType).toArray(Type[]::new));
         String deobfName = FMLDeobfuscatingRemapper.INSTANCE.mapMethodName(clazz.getName().replace('.', '/'), methodObfName, methodDesc);
         return ReflectionHelper.findMethod(clazz, deobfName, methodObfName, parameterTypes);
@@ -92,7 +93,7 @@ public class ReflectionUtil {
      * @return The field with the specified name and type in the given class.
      * @throws UnableToFindFieldException if an issue prevents the field from being reflected
      */
-    public static Field findFieldFromObfName(Class<?> clazz, String fieldObfName, Class<?> type) throws UnableToFindFieldException {
+    public static Field findFieldFromObfName(Class<?> clazz, String fieldObfName, Class<?> type) {
         String deobfName = FMLDeobfuscatingRemapper.INSTANCE.mapFieldName(clazz.getName().replace('.', '/'), fieldObfName, Type.getType(type).getDescriptor());
         // Since deobfName will be the obfuscated name when in an obfuscated environment, it's the only value we need to pass
         return ReflectionHelper.findField(clazz, deobfName);
@@ -111,7 +112,7 @@ public class ReflectionUtil {
      * @return The value of the field for the given instance.
      * @throws UnableToFindFieldException if an issue prevents the field from being reflected
      */
-    public static <C, T> T getPrivateValue(Class<C> clazz, @Nullable C instance, String fieldObfName, Class<? super T> type) throws UnableToFindFieldException {
+    public static <C, T> T getPrivateValue(Class<C> clazz, @Nullable C instance, String fieldObfName, Class<? super T> type) {
         String deobfName = FMLDeobfuscatingRemapper.INSTANCE.mapFieldName(clazz.getName().replace('.', '/'), fieldObfName, Type.getType(type).getDescriptor());
         // Since deobfName will be the obfuscated name when in an obfuscated environment, it's the only value we need to pass
         return ReflectionHelper.getPrivateValue(clazz, instance, deobfName);
@@ -131,7 +132,7 @@ public class ReflectionUtil {
      * @return A handle for the method with the specified name and parameters in the given class.
      * @throws UnableToFindMethodException if an issue prevents the method from being reflected
      */
-    public static MethodHandle findMethodHandleFromObfName(Class<?> clazz, String methodObfName, Class<?> returnType, Class<?>... parameterTypes) throws UnableToFindMethodException {
+    public static MethodHandle findMethodHandleFromObfName(Class<?> clazz, String methodObfName, Class<?> returnType, Class<?>... parameterTypes) {
         try {
             return MethodHandles.lookup().unreflect(findMethodFromObfName(clazz, methodObfName, returnType, parameterTypes));
         } catch (IllegalAccessException e) {
@@ -151,7 +152,7 @@ public class ReflectionUtil {
      * @return A handle for the getter of the field with the specified name and type in the given class.
      * @throws UnableToFindFieldException if an issue prevents the field from being reflected
      */
-    public static MethodHandle findGetterFromObfName(Class<?> clazz, String fieldObfName, Class<?> type) throws UnableToFindFieldException {
+    public static MethodHandle findGetterFromObfName(Class<?> clazz, String fieldObfName, Class<?> type) {
         try {
             return MethodHandles.lookup().unreflectGetter(findFieldFromObfName(clazz, fieldObfName, type));
         } catch (IllegalAccessException e) {
@@ -171,7 +172,7 @@ public class ReflectionUtil {
      * @return A handle for the setter of the field with the specified name and type in the given class.
      * @throws UnableToFindFieldException if an issue prevents the field from being reflected
      */
-    public static MethodHandle findSetterFromObfName(Class<?> clazz, String fieldObfName, Class<?> type) throws UnableToFindFieldException {
+    public static MethodHandle findSetterFromObfName(Class<?> clazz, String fieldObfName, Class<?> type) {
         try {
             return MethodHandles.lookup().unreflectSetter(findFieldFromObfName(clazz, fieldObfName, type));
         } catch (IllegalAccessException e) {

@@ -5,7 +5,9 @@ import ladylib.client.ClientHandler;
 import ladylib.client.LLibClientContainer;
 import ladylib.client.internal.ClientHandlerImpl;
 import ladylib.client.particle.LLParticleManager;
+import ladylib.misc.ReflectionFailedException;
 import ladylib.nbt.serialization.internal.DefaultValuesSearch;
+import ladylib.networking.minecraft.PacketHandler;
 import ladylib.registration.BlockRegistrar;
 import ladylib.registration.ItemRegistrar;
 import ladylib.registration.internal.AutoRegistrar;
@@ -46,6 +48,7 @@ public class LadyLib {
 
     /**The mod instance*/
     public static final LadyLib INSTANCE = new LadyLib();
+    /**@deprecated use {@link #INSTANCE} instead*/
     @Deprecated
     public static final LadyLib instance = INSTANCE;
 
@@ -113,7 +116,7 @@ public class LadyLib {
      */
     @Mod.EventHandler
     public void init(@Nonnull FMLInitializationEvent event) {
-
+        PacketHandler.initPackets();
     }
 
     /**
@@ -131,7 +134,7 @@ public class LadyLib {
                 }
             }
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            throw new RuntimeException(e);
+            throw new ReflectionFailedException("Could not inject LadyLib container instances", e);
         }
     }
 

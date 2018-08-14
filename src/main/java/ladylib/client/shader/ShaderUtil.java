@@ -44,10 +44,13 @@ import static org.lwjgl.opengl.GL20.*;
  * A class offering several utility methods to create, use and configure shaders
  */
 @SideOnly(Side.CLIENT)
-public class ShaderUtil {
+public final class ShaderUtil {
+    private ShaderUtil() { }
 
-    private static int prevProgram = 0, currentProgram = 0;
-    static final String SHADER_LOCATION_PREFIX = "shaders/";
+    public static final String SHADER_LOCATION_PREFIX = "shaders/";
+
+    private static int prevProgram = 0;
+    private static int currentProgram = 0;
     private static final Map<ResourceLocation, ShaderGroup> screenShaders = new HashMap<>();
     private static boolean resetScreenShaders;
     private static int oldDisplayWidth = Minecraft.getMinecraft().displayWidth;
@@ -141,6 +144,8 @@ public class ShaderUtil {
                 case 4:
                     GL20.glUniform4f(uniform, values[0], values[1], values[2], values[3]);
                     break;
+                default:
+                    throw new IllegalArgumentException("Shader float uniforms only support between 1 and 4 values");
             }
         }
     }
@@ -372,7 +377,7 @@ public class ShaderUtil {
         OpenGlHelper.glLinkProgram(programId);
         // check potential linkage errors
         if (glGetProgrami(programId, GL_LINK_STATUS) == 0) {
-            throw new RuntimeException("Error linking Shader code: " + glGetProgramInfoLog(programId, 1024));
+            throw new ShaderException("Error linking Shader code: " + glGetProgramInfoLog(programId, 1024));
         }
 
         // free up the vertex and fragment shaders
@@ -388,7 +393,7 @@ public class ShaderUtil {
         if (LadyLib.isDevEnv()) {
             glValidateProgram(programId);
             if (glGetProgrami(programId, GL_VALIDATE_STATUS) == 0) {
-                System.err.println("Warning validating Shader code:" + glGetProgramInfoLog(programId, 1024));
+                LadyLib.LOGGER.warn("Warning validating Shader code:" + glGetProgramInfoLog(programId, 1024));
             }
         }
 

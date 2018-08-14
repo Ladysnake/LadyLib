@@ -19,6 +19,7 @@ public class GuiButtonModBar extends GuiButton {
     /**
      * Draws this button to the screen.
      */
+    @Override
     public void drawButton(@Nonnull Minecraft mc, int mouseX, int mouseY, float partialTicks) {
         if (this.visible) {
             mc.getTextureManager().bindTexture(BUTTON_TEXTURE);

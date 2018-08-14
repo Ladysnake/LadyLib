@@ -19,7 +19,8 @@ public class ClientHandlerImpl implements ClientHandler {
     public static void hookResourceProxy() {
         // the resource proxy needs to be registered here to exist when Minecraft looks for resource packs
         List<IResourcePack> packs = ReflectionUtil.getPrivateValue(Minecraft.class, Minecraft.getMinecraft(), "field_110449_ao", List.class);
-        packs.add(resourceProxy = new ResourceProxy("minecraft"));
+        resourceProxy = new ResourceProxy("minecraft");
+        packs.add(resourceProxy);
     }
 
     public ClientHandlerImpl() {

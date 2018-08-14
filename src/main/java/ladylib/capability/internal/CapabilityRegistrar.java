@@ -23,7 +23,7 @@ import java.util.function.Predicate;
 
 public class CapabilityRegistrar {
 
-    public <T> void findCapabilityImplementations(ASMDataTable asmData) {
+    public void findCapabilityImplementations(ASMDataTable asmData) {
         // find all classes that will be handled by this registrar
         Set<ASMDataTable.ASMData> allRegistryHandlers = asmData.getAll(AutoCapability.class.getName());
         CapabilityEventHandler handler = new CapabilityEventHandler();
@@ -33,28 +33,32 @@ public class CapabilityRegistrar {
             @SuppressWarnings("unchecked") Map<String, Capability<?>> providers =
                     (Map<String, Capability<?>>) providersField.get(CapabilityManager.INSTANCE);
             for (ASMDataTable.ASMData data : allRegistryHandlers) {
-                String className = data.getClassName();
-                Map<String, Object> annotationInfo = data.getAnnotationInfo();
-                org.objectweb.asm.Type implName = (org.objectweb.asm.Type) annotationInfo.get("value");
-                try {
-                    ClassLoader classLoader = getClass().getClassLoader();
-                    @SuppressWarnings("unchecked")
-                    Class<T> clazz = (Class<T>) Class.forName(className, false, classLoader);
-                    @SuppressWarnings("unchecked")
-                    Class<? extends T> impl = implName.getSort() == org.objectweb.asm.Type.OBJECT
-                            ? (Class<? extends T>) Class.forName(implName.getClassName(), false, classLoader)
-                            : clazz;
-                    if (!clazz.isAssignableFrom(impl)) {
-                        throw new IllegalArgumentException("The given implementation " + impl + " does not implement the capability " + clazz);
-                    }
-                    Capability.IStorage<T> storage = createStorage(impl, (org.objectweb.asm.Type) annotationInfo.get("storage"));
-                    createRegisterCapability(clazz, impl, storage, handler, providers);
-                } catch (IllegalArgumentException | ReflectionUtil.UnableToGetFactoryException | ClassNotFoundException | InstantiationException e) {
-                    LadyLib.LOGGER.error(new FormattedMessage("Could not register a capability for the class {}", className), e);
-                }
+                findCapabilityImplementation(handler, providers, data);
             }
         } catch (NoSuchFieldException | IllegalAccessException e) {
             LadyLib.LOGGER.fatal("Unable to process capabilities", e);
+        }
+    }
+
+    private <T> void findCapabilityImplementation(CapabilityEventHandler handler, Map<String, Capability<?>> providers, ASMDataTable.ASMData data) throws IllegalAccessException {
+        String className = data.getClassName();
+        Map<String, Object> annotationInfo = data.getAnnotationInfo();
+        org.objectweb.asm.Type implName = (org.objectweb.asm.Type) annotationInfo.get("value");
+        try {
+            ClassLoader classLoader = getClass().getClassLoader();
+            @SuppressWarnings("unchecked")
+            Class<T> clazz = (Class<T>) Class.forName(className, false, classLoader);
+            @SuppressWarnings("unchecked")
+            Class<? extends T> impl = implName.getSort() == org.objectweb.asm.Type.OBJECT
+                    ? (Class<? extends T>) Class.forName(implName.getClassName(), false, classLoader)
+                    : clazz;
+            if (!clazz.isAssignableFrom(impl)) {
+                throw new IllegalArgumentException("The given implementation " + impl + " does not implement the capability " + clazz);
+            }
+            Capability.IStorage<T> storage = createStorage(impl, (org.objectweb.asm.Type) annotationInfo.get("storage"));
+            createRegisterCapability(clazz, impl, storage, handler, providers);
+        } catch (IllegalArgumentException | ReflectionUtil.UnableToGetFactoryException | ClassNotFoundException | InstantiationException e) {
+            LadyLib.LOGGER.error(new FormattedMessage("Could not register a capability for the class {}", className), e);
         }
     }
 
@@ -81,49 +85,7 @@ public class CapabilityRegistrar {
     private <T> void addAttachHandlers(Capability<T> capability, Class<T> capClass, Callable<? extends T> factory, CapabilityEventHandler handler) {
         boolean attached = false;
         for (Method method : capClass.getMethods()) {
-            AutoCapability.AttachCapabilityCheckHandler checker = method.getAnnotation(AutoCapability.AttachCapabilityCheckHandler.class);
-            if (checker == null) {
-                continue;
-            }
-
-            ResourceLocation key = new ResourceLocation(checker.value());
-            if (!Modifier.isStatic(method.getModifiers())) {
-                logBadSignature(method, " Such methods should be static.");
-                continue;
-            }
-            if (method.getParameterTypes().length > 0) {
-                logBadSignature(method, "Such methods should not have any parameter.");
-                continue;
-            }
-            Type retType = method.getGenericReturnType();
-            if (!(retType instanceof ParameterizedType) || !Predicate.class.isAssignableFrom(method.getReturnType())) {
-                logBadSignature(method, "Such methods should have a generic return value implementing Predicate.");
-                continue;
-            }
-            Type retParamType = ((ParameterizedType) retType).getActualTypeArguments()[0];
-            if (retParamType instanceof Class) {
-                Class<?> retClass = (Class) retParamType;
-                Predicate predicate;
-                try {
-                    predicate = (Predicate) method.invoke(null);
-                } catch (IllegalAccessException | InvocationTargetException e) {
-                    LadyLib.LOGGER.error("Error while calling AttachCapabilityCheckHandler method", e);
-                    continue;
-                }
-                @SuppressWarnings("unchecked") CapabilityEventHandler.ProviderInfo info = new CapabilityEventHandler.ProviderInfo<>(key, predicate, capability, factory);
-                attached = true;
-                if (Entity.class.isAssignableFrom(retClass)) {
-                    addProvider(info, handler.entityProviders);
-                    continue;
-                } else if (ItemStack.class.isAssignableFrom(retClass)) {
-                    addProvider(info, handler.itemProviders);
-                    continue;
-                } else if (TileEntity.class.isAssignableFrom(retClass)) {
-                    addProvider(info, handler.teProviders);
-                    continue;
-                }
-            }
-            logBadSignature(method, "The returned predicate should have a generic type of either Entity, ItemStack or TileEntity.");
+            attached |= addAttachedHandler(capability, factory, handler, method);
         }
         // Only register the event handler if at least one capability needs it
         // this can be called multiple times safely, the event bus will ignore the superfluous registrations
@@ -132,13 +94,59 @@ public class CapabilityRegistrar {
         }
     }
 
+    private <T> boolean addAttachedHandler(Capability<T> capability, Callable<? extends T> factory, CapabilityEventHandler handler, Method method) {
+        AutoCapability.AttachCapabilityCheckHandler checker = method.getAnnotation(AutoCapability.AttachCapabilityCheckHandler.class);
+        if (checker == null) {
+            return false;
+        }
+
+        ResourceLocation key = new ResourceLocation(checker.value());
+        if (!Modifier.isStatic(method.getModifiers())) {
+            logBadSignature(method, " Such methods should be static.");
+            return false;
+        }
+        if (method.getParameterTypes().length > 0) {
+            logBadSignature(method, "Such methods should not have any parameter.");
+            return false;
+        }
+        Type retType = method.getGenericReturnType();
+        if (!(retType instanceof ParameterizedType) || !Predicate.class.isAssignableFrom(method.getReturnType())) {
+            logBadSignature(method, "Such methods should have a generic return value implementing Predicate.");
+            return false;
+        }
+        Type retParamType = ((ParameterizedType) retType).getActualTypeArguments()[0];
+        if (retParamType instanceof Class) {
+            Class<?> retClass = (Class) retParamType;
+            Predicate predicate;
+            try {
+                predicate = (Predicate) method.invoke(null);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                LadyLib.LOGGER.error("Error while calling AttachCapabilityCheckHandler method", e);
+                return false;
+            }
+            @SuppressWarnings("unchecked") CapabilityEventHandler.ProviderInfo info = new CapabilityEventHandler.ProviderInfo<>(key, predicate, capability, factory);
+            if (Entity.class.isAssignableFrom(retClass)) {
+                addProvider(info, handler.entityProviders);
+                return true;
+            } else if (ItemStack.class.isAssignableFrom(retClass)) {
+                addProvider(info, handler.itemProviders);
+                return true;
+            } else if (TileEntity.class.isAssignableFrom(retClass)) {
+                addProvider(info, handler.teProviders);
+                return true;
+            }
+        }
+        logBadSignature(method, "The returned predicate should have a generic type of either Entity, ItemStack or TileEntity.");
+        return false;
+    }
+
     @SuppressWarnings("unchecked")
     private void addProvider(CapabilityEventHandler.ProviderInfo info, List list) {
         list.add(info);
     }
 
     private void logBadSignature(Method method, String s) {
-        LadyLib.LOGGER.error("Found unexpected method signature {} for annotation AttachCapabilityCheckHandler.", method);
+        LadyLib.LOGGER.error("Found unexpected method signature {} for annotation AttachCapabilityCheckHandler: {}", method, s);
     }
 
 }

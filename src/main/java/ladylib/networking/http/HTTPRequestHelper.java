@@ -86,7 +86,7 @@ public class HTTPRequestHelper {
             if (page instanceof HttpURLConnection) {
                 int code = ((HttpURLConnection) page).getResponseCode();
                 if (code < 200 || code > 299) {
-                    throw new RuntimeException("Got a bad response code from the server (code " + code + ")");
+                    throw new HTTPRequestException("Got a bad response code from the server (code " + code + ")");
                 }
             }
             page.connect();
@@ -94,9 +94,9 @@ public class HTTPRequestHelper {
                 return GSON.fromJson(in, JsonElement.class);
             }
         } catch (IOException e) {
-            throw new RuntimeException("Could not connect to " + url + ". Maybe you're offline ?", e);
+            throw new HTTPRequestException("Could not connect to " + url + ". Maybe you're offline ?", e);
         } catch (JsonParseException e) {
-            throw new RuntimeException("Bad json coming from " + url + ". This should be reported.", e);
+            throw new HTTPRequestException("Bad json coming from " + url + ". This should be reported.", e);
         }
     }
 
