@@ -59,13 +59,13 @@ public class AddonInstaller {
      */
     private static final Executor DOWNLOAD_THREAD = Executors.newSingleThreadExecutor(r -> new Thread(r, "Ladylib Installer"));
     private static final Gson GSON = new GsonBuilder().setLenient().setPrettyPrinting().create();
-    private static final ModWinderModList LOCAL_MODS;
-    private static final ModList MOD_LIST;
+    static final LocalModList LOCAL_MODS;
+    static final ModList MOD_LIST;
     private static final MethodHandle libraryManager$extractPacked = ReflectionUtil.findMethodHandleFromObfName(LibraryManager.class, "extractPacked", Pair.class, File.class, ModList.class, File[].class);
 
     static {
         Path modsPath = Paths.get( "mods", MinecraftForge.MC_VERSION);
-        LOCAL_MODS = ModWinderModList.create(modsPath.resolve("modwinder_local_mods.json"));
+        LOCAL_MODS = LocalModList.create(modsPath.resolve("modwinder_local_mods.json"));
         File modsDir = modsPath.toFile();
         File modList = new File(modsDir, "mod_list.json");
         if (!modList.exists()) {
@@ -162,19 +162,20 @@ public class AddonInstaller {
             }
             List<Artifact> artifacts = ReflectionHelper.getPrivateValue(ModList.class, MOD_LIST, "artifacts");
             Map<String, Artifact> art_map = ReflectionHelper.getPrivateValue(ModList.class, MOD_LIST, "art_map");
-            File modSource = Loader.instance().getIndexedModList().get(modEntry.getModId()).getSource();
             artifacts.removeIf(artifact -> {
-                if (Objects.equals(artifact.getFile(), modSource)) {
+                if (artifact.matchesID(modEntry.getLocalArtifact())) {
                     art_map.remove(artifact.toString());
-                    // just in case someone added the entry in the mod list manually, it doesn't hurt to add it here
-                    LOCAL_MODS.add(modEntry, artifact);
                     return true;
                 }
                 return false;
             });
             MOD_LIST.save();
             LOCAL_MODS.save();
-            modEntry.setInstallationState(UNINSTALLED);
+            if (modEntry.isInstalled()) {
+                modEntry.setInstallationState(UNINSTALLED);
+            } else {
+                modEntry.setInstallationState(InstallationState.NAUGHT);
+            }
         } catch (Exception e) {
             ModWinder.LOGGER.error("Could not uninstall mod {} ({})", modEntry.getName(), modEntry.getModId(), e);
             modEntry.setInstallationState(UNINSTALL_FAILED);
@@ -192,14 +193,14 @@ public class AddonInstaller {
             if (modEntry.isDlc() && !modEntry.getParentMods().allMatch(AddonInstaller::attemptReEnabling)) {
                 return false;
             }
-            Artifact disabled = LOCAL_MODS.getArtifact(modEntry, MOD_LIST.getRepository());
+            Artifact disabled = modEntry.getLocalArtifact();
             if (disabled == null) {
                 return false;
             }
             MOD_LIST.add(disabled);
             MOD_LIST.save();
-            if (Loader.isModLoaded(modEntry.getModId())) {
-                // mod is already loaded, just remove the current indication
+            if (Loader.isModLoaded(modEntry.getModId()) && !modEntry.isOutdated()) {
+                // mod is already loaded and up to date, just remove the current indication
                 modEntry.setInstallationState(InstallationState.NAUGHT);
             } else {
                 // instantly complete the installation

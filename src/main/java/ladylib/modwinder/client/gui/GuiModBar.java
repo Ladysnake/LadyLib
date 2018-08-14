@@ -53,7 +53,10 @@ public class GuiModBar extends GuiScreen {
         mc.addScheduledTask(() -> {
             if (mc.currentScreen instanceof GuiMainMenu) {
                 List<GuiButton> buttonList = ReflectionUtil.getPrivateValue(GuiScreen.class, mc.currentScreen, "field_146292_n", List.class);
-                addModBarButton(buttonList);
+                // check that the button isn't already here
+                if (buttonList.stream().mapToInt(b -> b.id).noneMatch(id -> id == MODWINDER_BUTTON_ID)) {
+                    addModBarButton(buttonList);
+                }
             }
         });
     }

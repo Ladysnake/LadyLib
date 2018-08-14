@@ -14,13 +14,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
-public class ModWinderModList {
-    private static final Map<Path, ModWinderModList> CACHE = new HashMap<>();
+public class LocalModList {
+    private static final Map<Path, LocalModList> CACHE = new HashMap<>();
 
-    public static ModWinderModList create(Path modList) {
+    public static LocalModList create(Path modList) {
         return CACHE.computeIfAbsent(modList, ml -> {
-            ModWinderModList ret = new ModWinderModList();
+            LocalModList ret = new LocalModList();
             try {
                 if (ml.toFile().exists()) {
                     Type type = new TypeToken<Map<String, LocalModEntry>>(){}.getType();
@@ -37,10 +38,18 @@ public class ModWinderModList {
     private Map<String, LocalModEntry> allMods = new HashMap<>();
     private transient Path saveFile;
 
+    private LocalModList() {
+        super();
+    }
+
     public void add(ModEntry modEntry, Artifact artifact) {
         // If it just got installed, assume it is the latest version
         String version = modEntry.isInstalled() ? modEntry.getInstalledVersion() : modEntry.getLatestVersion();
         allMods.put(modEntry.getModId(), new LocalModEntry(artifact.toString(), artifact.isSnapshot() ? artifact.getTimestamp() : null, version));
+    }
+
+    public Optional<LocalModEntry> get(String modId) {
+        return Optional.ofNullable(allMods.get(modId));
     }
 
     @Nullable
@@ -63,7 +72,7 @@ public class ModWinderModList {
         }
     }
 
-    private static class LocalModEntry {
+    public static class LocalModEntry {
         private String modRef;
         private String timeStamp;
         private String version;
@@ -77,6 +86,18 @@ public class ModWinderModList {
             this.modRef = modRef;
             this.timeStamp = timeStamp;
             this.version = version;
+        }
+
+        public String getModRef() {
+            return modRef;
+        }
+
+        public String getTimeStamp() {
+            return timeStamp;
+        }
+
+        public String getVersion() {
+            return version;
         }
     }
 }

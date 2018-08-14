@@ -21,6 +21,7 @@ import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.versioning.ComparableVersion;
 import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.libraries.Artifact;
 
 import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
@@ -89,9 +90,8 @@ public class ModEntry {
     private transient String installedVersion = "";
     private transient String latestVersion = "";
     private transient ResourceLocation logoTexture;
-    /**
-     * The list of mods this entry is a DLC of <br>
-     */
+    private transient Artifact localArtifact;
+    /**The list of mods this entry is a DLC of*/
     private transient Set<ModEntry> parents = new HashSet<>();
     private Map<ComparableVersion, String> changelog;
 
@@ -123,9 +123,12 @@ public class ModEntry {
             return;
         }
         ModContainer installedMod = Loader.instance().getIndexedModList().get(modId);
+        this.localArtifact = AddonInstaller.LOCAL_MODS.getArtifact(this, AddonInstaller.MOD_LIST.getRepository());
         if (installedMod != null) {
             this.installed = true;
             this.installedVersion = installedMod.getVersion();
+        } else {
+            this.installedVersion = AddonInstaller.LOCAL_MODS.get(this.modId).map(LocalModList.LocalModEntry::getVersion).orElse("");
         }
         // get the logo
         getLogo:
@@ -182,6 +185,15 @@ public class ModEntry {
 
     public synchronized void setChangelog(Map<ComparableVersion, String> changelog) {
         this.changelog = changelog;
+    }
+
+    @Nullable
+    public synchronized Artifact getLocalArtifact() {
+        return localArtifact;
+    }
+
+    public synchronized void setLocalArtifact(@Nullable Artifact localArtifact) {
+        this.localArtifact = localArtifact;
     }
 
     public boolean isDlc() {
