@@ -37,10 +37,11 @@ import java.util.Map;
 import java.util.function.Function;
 
 // note: mod information is contained in mcmod.info
-@Mod(modid = LadyLib.MOD_ID, version = "@VERSION@")
+@Mod(modid = LadyLib.MOD_ID, version = LadyLib.VERSION)
 public class LadyLib {
     public static final String MOD_ID = "ladylib";
     public static final String MOD_NAME = "LadyLib";
+    public static final String VERSION = "@VERSION@";
 
     public static final Logger LOGGER = LogManager.getLogger(MOD_NAME);
     private static final PrintStream DEBUG_STREAM = new TracingPrintStream(LogManager.getLogger("DEBUG"), System.out);

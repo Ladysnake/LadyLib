@@ -11,6 +11,8 @@ class GenerateUpdateJSON extends DefaultTask {
     static def RECOMMENDED = "-recommended"
     static def LATEST = "-latest"
 
+    /**If the mod is in beta, no recommended release will be set*/
+    boolean beta = false
     String versionScheme = '%2$s'
     String curseforgeURL
     File changelog
