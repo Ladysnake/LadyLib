@@ -5,6 +5,7 @@ import ladylib.client.ClientHandler;
 import ladylib.client.LLibClientContainer;
 import ladylib.client.internal.ClientHandlerImpl;
 import ladylib.client.particle.LLParticleManager;
+import ladylib.compat.internal.EnhancedEventSubscriber;
 import ladylib.misc.ReflectionFailedException;
 import ladylib.nbt.serialization.internal.DefaultValuesSearch;
 import ladylib.networking.minecraft.PacketHandler;
@@ -15,9 +16,7 @@ import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.*;
 import net.minecraftforge.fml.common.discovery.ASMDataTable;
-import net.minecraftforge.fml.common.event.FMLConstructionEvent;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.event.*;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.logging.log4j.LogManager;
@@ -86,9 +85,14 @@ public class LadyLib {
     private AutoRegistrar registrar;
     private ClientHandlerImpl clientHandler;
 
+    /**
+     * LadyLib construction
+     * This one is only used for time-critical operations
+     */
     @Mod.EventHandler
     public void construction(FMLConstructionEvent event) {
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
+            // the resource proxy needs to be registered here to exist when Minecraft looks for resource packs
             ClientHandlerImpl.hookResourceProxy();
         }
     }
@@ -110,6 +114,8 @@ public class LadyLib {
         registrar.autoRegisterTileEntities(dataTable);
         injectContainers(dataTable);
         DefaultValuesSearch.searchDefaultValues(dataTable);
+        EnhancedEventSubscriber.inject(dataTable);
+        EnhancedEventSubscriber.redistributeEvent(event);
     }
 
     /**
@@ -118,6 +124,20 @@ public class LadyLib {
     @Mod.EventHandler
     public void init(@Nonnull FMLInitializationEvent event) {
         PacketHandler.initPackets();
+        EnhancedEventSubscriber.redistributeEvent(event);
+    }
+
+    /**
+     * LadyLib post-initialization
+     */
+    @Mod.EventHandler
+    public void postInit(@Nonnull FMLPostInitializationEvent event) {
+        EnhancedEventSubscriber.redistributeEvent(event);
+    }
+
+    @Mod.EventHandler
+    public void serverStarting(@Nonnull FMLServerStartingEvent event) {
+        EnhancedEventSubscriber.redistributeEvent(event);
     }
 
     /**
