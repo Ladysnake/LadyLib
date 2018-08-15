@@ -7,6 +7,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import ladylib.misc.ReflectionUtil;
 import ladylib.modwinder.ModWinder;
+import ladylib.modwinder.data.DummyModEntry;
+import ladylib.modwinder.data.LocalModList;
+import ladylib.modwinder.data.ModEntry;
 import ladylib.networking.http.HTTPRequestHelper;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.launchwrapper.Launch;
@@ -21,13 +24,10 @@ import org.apache.logging.log4j.message.FormattedMessage;
 import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -44,8 +44,14 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+/**
+ * This class offers methods to install and manage mods using Forge's {@link ModList} system.
+ *
+ * @see ModDeleter
+ */
 public class AddonInstaller {
-    private AddonInstaller() { }
+    private AddonInstaller() {
+    }
 
     public static final InstallationState DOWNLOAD_START = new InstallationState(InstallationState.Status.INSTALLING, I18n.format("modwinder.status.downloading.start"));
     public static final InstallationState DOWNLOAD_FAILED = new InstallationState(InstallationState.Status.FAILED, I18n.format("modwinder.status.failed"));
@@ -55,16 +61,23 @@ public class AddonInstaller {
     public static final InstallationState UNINSTALL_FAILED = new InstallationState(InstallationState.Status.FAILED, I18n.format("modwinder.status.uninstalled.failed"));
 
     /**
-     * A single thread used to download and manage files.
+     * The list of every artifact available in the mods repository
+     */
+    public static final LocalModList LOCAL_MODS;
+    /**
+     * The list of every artifact loaded by Forge
+     */
+    public static final ModList MOD_LIST;
+
+    /**
+     * A single thread used to download and manage files
      */
     private static final Executor DOWNLOAD_THREAD = Executors.newSingleThreadExecutor(r -> new Thread(r, "Ladylib Installer"));
     private static final Gson GSON = new GsonBuilder().setLenient().setPrettyPrinting().create();
-    static final LocalModList LOCAL_MODS;
-    static final ModList MOD_LIST;
     private static final MethodHandle libraryManager$extractPacked = ReflectionUtil.findMethodHandleFromObfName(LibraryManager.class, "extractPacked", Pair.class, File.class, ModList.class, File[].class);
 
     static {
-        Path modsPath = Paths.get( "mods", MinecraftForge.MC_VERSION);
+        Path modsPath = Paths.get("mods", MinecraftForge.MC_VERSION);
         LOCAL_MODS = LocalModList.create(modsPath.resolve("modwinder_local_mods.json"));
         File modsDir = modsPath.toFile();
         File modList = new File(modsDir, "mod_list.json");
@@ -103,7 +116,7 @@ public class AddonInstaller {
      * @return a future that can be used to trigger other tasks once the installation has ended
      */
     public static CompletableFuture<List<File>> installLatestFromCurseforge(ModEntry mod) {
-        // holder class for required values
+        // local holder class for required values
         class ParamHolder {
             private String fileName;
             private String fileId;
@@ -155,6 +168,13 @@ public class AddonInstaller {
                 });
     }
 
+    /**
+     * Uninstalls the given mod by removing it from Forge's mod list. <br>
+     * The mod file is not removed from the mods repository and can be reinstalled instantly using {@link #attemptReEnabling(ModEntry)}
+     *
+     * @param modEntry the entry of the mod to uninstall
+     * @see #attemptReEnabling(ModEntry)
+     */
     public static void uninstall(ModEntry modEntry) {
         try {
             for (ModEntry dlc : modEntry.getDlcs()) {
@@ -184,8 +204,10 @@ public class AddonInstaller {
 
     /**
      * Re-enables a mod that has been uninstalled but is still loaded in the minecraft instance
+     *
      * @param modEntry the information regarding the mod to re-enable
      * @return true if the mod has been re-enabled, false if it needs to be installed from scratch
+     * @see #uninstall(ModEntry)
      */
     public static boolean attemptReEnabling(ModEntry modEntry) {
         try {
@@ -205,8 +227,9 @@ public class AddonInstaller {
             } else {
                 // instantly complete the installation
                 modEntry.setInstallationState(INSTALLATION_COMPLETE);
+                // In case someone installed an old version manually after disabling the automatic one, people are weird
+                ModDeleter.scheduleModDeletion(modEntry.getModId());
             }
-            DeleteOldMods.scheduleModDeletion(modEntry.getModId());
             return true;
         } catch (Exception e) {
             ModWinder.LOGGER.error("Could not re-enable mod {}", modEntry.getModId(), e);
@@ -240,7 +263,7 @@ public class AddonInstaller {
                         // download this file from the associated url
                         String downloadURL = fileToDownload.getAsJsonObject().get("downloadURL").getAsString();
                         mod.setInstallationState(new InstallationState(InstallationState.Status.INSTALLING, I18n.format("modwinder.status.downloading.file", fileName)));
-                        Path temp = downloadFile(fileName, downloadURL);
+                        Path temp = HTTPRequestHelper.downloadFile(fileName, downloadURL);
                         mod.setInstallationState(new InstallationState(InstallationState.Status.INSTALLING, I18n.format("modwinder.status.installing", fileName)));
                         // read required information and move to mod repository
                         File archived = moveToModRepository(temp, mod);
@@ -274,6 +297,13 @@ public class AddonInstaller {
         }
     }
 
+    /**
+     * Moves a previously downloaded file to Forge's mod repository
+     *
+     * @param artifactPath the path to the downloaded file
+     * @param mod          the mod being installed
+     * @return the new location of the artifact
+     */
     @Nullable
     private static File moveToModRepository(Path artifactPath, ModEntry mod) {
         Attributes meta;
@@ -312,7 +342,8 @@ public class AddonInstaller {
             // if the map contains that exact artifact, it will get replaced during list.add()
             artifacts.removeIf(o -> !art_map.containsKey(o.toString()) && artifact.matchesID(o));
 
-            DeleteOldMods.scheduleModDeletion(mod.getModId());
+            // Remove manually installed mods.
+            ModDeleter.scheduleModDeletion(mod.getModId());
 
             mod.setLocalArtifact(artifact);
             LOCAL_MODS.add(mod, artifact);
@@ -340,23 +371,6 @@ public class AddonInstaller {
             throw new InstallationException("The Maven-Artifact attribute is absent");
         }
         return new Artifact(repo, mavenArtifact, timestamp);
-    }
-
-    private static Path downloadFile(String dest, String urlString) {
-        try {
-            Path temp = Files.createTempFile(dest, null);
-            URL url = new URL(urlString);
-            // download the file into the mods directory
-            try (ReadableByteChannel rbc = Channels.newChannel(url.openStream());
-                 FileOutputStream fos = new FileOutputStream(temp.toFile())) {
-                fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
-            }
-            // Make sure temporary files don't linger
-            temp.toFile().deleteOnExit();
-            return temp;
-        } catch (IOException e) {
-            throw new InstallationException("Could not download file " + dest, e);
-        }
     }
 
 }

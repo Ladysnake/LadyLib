@@ -1,4 +1,4 @@
-package ladylib.modwinder.installer;
+package ladylib.modwinder.data;
 
 import com.google.common.collect.ImmutableList;
 import com.google.gson.FieldNamingPolicy;
@@ -9,6 +9,8 @@ import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import ladylib.modwinder.ModWinder;
 import ladylib.modwinder.ModsFetchedEvent;
+import ladylib.modwinder.installer.AddonInstaller;
+import ladylib.modwinder.installer.InstallationState;
 import ladylib.networking.http.HTTPRequestException;
 import ladylib.networking.http.HTTPRequestHelper;
 import net.minecraft.client.Minecraft;

@@ -1,6 +1,6 @@
 package ladylib.modwinder;
 
-import ladylib.modwinder.installer.ModEntry;
+import ladylib.modwinder.data.ModEntry;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.Cancelable;
 import net.minecraftforge.fml.common.eventhandler.Event;

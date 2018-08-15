@@ -1,5 +1,7 @@
 package ladylib.modwinder.installer;
 
+import ladylib.modwinder.data.ModEntry;
+
 public class InstallationState {
     public static final InstallationState NAUGHT = new InstallationState(Status.NONE, "");
 

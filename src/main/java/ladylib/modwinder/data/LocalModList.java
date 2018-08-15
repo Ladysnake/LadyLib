@@ -1,4 +1,4 @@
-package ladylib.modwinder.installer;
+package ladylib.modwinder.data;
 
 import com.google.gson.reflect.TypeToken;
 import ladylib.LadyLib;

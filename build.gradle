@@ -91,11 +91,6 @@ allprojects {
 
 apply plugin: 'maven'
 
-configurations {
-    contained
-    contained.transitive = false
-}
-
 jar {
     archiveName = "${archivesBaseName}-${mcVersion}-${project.version}.jar"
     manifest {

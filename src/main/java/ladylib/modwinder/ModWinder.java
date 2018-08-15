@@ -1,7 +1,7 @@
 package ladylib.modwinder;
 
 import ladylib.LadyLib;
-import ladylib.modwinder.installer.ModEntry;
+import ladylib.modwinder.data.ModEntry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.apache.logging.log4j.LogManager;

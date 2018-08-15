@@ -1,7 +1,7 @@
 package ladylib.modwinder.client.gui;
 
+import ladylib.modwinder.data.ModEntry;
 import ladylib.modwinder.installer.InstallationState;
-import ladylib.modwinder.installer.ModEntry;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.resources.I18n;
