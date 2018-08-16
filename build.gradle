@@ -18,7 +18,9 @@ plugins {
 allprojects {
 
     group = modGroup
-    version = project.findProperty("${project.name}Version")
+    if (project.hasProperty("${project.name}Version")) {
+        version = project.findProperty("${project.name}Version")
+    }
 
     apply plugin: "net.minecraftforge.gradle.forge"
     apply plugin: 'signing'
