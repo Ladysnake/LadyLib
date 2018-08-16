@@ -32,6 +32,13 @@ public @interface AutoRegister {
     String value();
 
     /**
+     * If set to true, this annotation should also act as {@link ObjectHolder}. <br>
+     * {@link Ignore} will apply, and <code>public static final</code> fields that are not {@link net.minecraftforge.registries.IForgeRegistryEntry}
+     * will be ignored.
+     */
+    boolean injectObjectHolder() default false;
+
+    /**
      * If put on a field inside a class annotated with AutoRegister, that field will be excluded from automatic registration.
      * This allows you to exclude unwanted entries or to do a more specific registration yourself.
      */

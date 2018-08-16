@@ -16,16 +16,17 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.FMLLog;
+import net.minecraftforge.fml.common.LoaderException;
 import net.minecraftforge.fml.common.discovery.ASMDataTable;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.registries.IForgeRegistryEntry;
+import net.minecraftforge.registries.ObjectHolderRegistry;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.Type;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
 import java.util.*;
 
 /**
@@ -51,17 +52,21 @@ public class AutoRegistrar {
     private void findRegistryHandlers(ASMDataTable asmData) {
         // find all classes that will be handled by this registrar
         Set<ASMDataTable.ASMData> allRegistryHandlers = asmData.getAll(AutoRegister.class.getName());
+
         for (ASMDataTable.ASMData data : allRegistryHandlers) {
             String modId = (String) data.getAnnotationInfo().get("value");
+            boolean injectObjectHolder = Boolean.TRUE.equals(data.getAnnotationInfo().get("injectObjectHolder"));
             String className = data.getClassName();
             String annotationTarget = data.getObjectName();
             boolean isClass = className.equals(annotationTarget);
             try {
                 Class<?> clazz = Class.forName(data.getClassName(), false, getClass().getClassLoader());
                 if (isClass) {
-                    scanClassForFields(modId, clazz);
+                    scanClassForFields(modId, clazz, injectObjectHolder);
                 } else {
-                    references.add(new FieldRef(modId, clazz.getDeclaredField(annotationTarget)));
+                    Field target = clazz.getDeclaredField(annotationTarget);
+                    references.add(new FieldRef(modId, target));
+                    if (injectObjectHolder) injectObjectHolderReference(modId, target);
                 }
             } catch (ClassNotFoundException | NoSuchFieldException e) {
                 LadyLib.LOGGER.warn("Could not automatically register annotated registrar element", e);
@@ -92,7 +97,7 @@ public class AutoRegistrar {
         }
     }
 
-    private void scanClassForFields(String modId, Class<?> autoRegisterClass) {
+    private void scanClassForFields(String modId, Class<?> autoRegisterClass, boolean injectObjectHolder) {
         for (Field f : autoRegisterClass.getFields()) {
             int mods = f.getModifiers();
             // use the same criteria as ObjectHolderRegistry to detect candidates
@@ -102,6 +107,7 @@ public class AutoRegistrar {
             if (isMatch && IForgeRegistryEntry.class.isAssignableFrom(f.getType()) &&
                     !f.isAnnotationPresent(AutoRegister.Ignore.class) && !f.isAnnotationPresent(AutoRegister.class)) {
                 references.add(new FieldRef(modId, f));
+                if (injectObjectHolder) injectObjectHolderReference(modId, f);
             }
         }
     }
@@ -178,5 +184,37 @@ public class AutoRegistrar {
 
     public ItemRegistrar getItemRegistrar() {
         return itemRegistrar;
+    }
+
+
+    private static Constructor<?> objectHolderRefConstr;
+    private static Method objectHolderRegistry$addHolderReference;
+
+    /**
+     * Injects an object holder reference into {@link ObjectHolderRegistry}. Reflection fest warning.
+     */
+    private static void injectObjectHolderReference(String modId, Field field) {
+        if (objectHolderRefConstr == null || objectHolderRegistry$addHolderReference == null) {
+            try {
+                // private class
+                Class<?> objectHolderRefClass = Class.forName("net.minecraftforge.registries.ObjectHolderRef");
+                // package-private constructor
+                objectHolderRefConstr = objectHolderRefClass.getDeclaredConstructor(Field.class, ResourceLocation.class, boolean.class);
+                objectHolderRefConstr.setAccessible(true);
+                // private method
+                objectHolderRegistry$addHolderReference = ObjectHolderRegistry.class.getDeclaredMethod("addHolderReference", objectHolderRefClass);
+                objectHolderRegistry$addHolderReference.setAccessible(true);
+            } catch (ClassNotFoundException | NoSuchMethodException e) {
+                LadyLib.LOGGER.error("Could not setup Object Holder injection", e);
+                throw new LoaderException(e);
+            }
+        }
+        try {
+            ResourceLocation injectedObject = new ResourceLocation(modId, field.getName().toLowerCase(Locale.ENGLISH));
+            Object objectHolderRef = objectHolderRefConstr.newInstance(field, injectedObject, false);
+            objectHolderRegistry$addHolderReference.invoke(ObjectHolderRegistry.INSTANCE, objectHolderRef);
+        } catch (IllegalAccessException | InvocationTargetException | InstantiationException e) {
+            LadyLib.LOGGER.warn("Could not inject ObjectHolderRef", e);
+        }
     }
 }

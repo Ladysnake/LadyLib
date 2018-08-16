@@ -20,6 +20,8 @@ allprojects {
     group = modGroup
     if (project.hasProperty("${project.name}Version")) {
         version = project.findProperty("${project.name}Version")
+    } else if (version == null && project.hasProperty("VERSION")) {
+        version = project.findProperty("VERSION")
     }
 
     apply plugin: "net.minecraftforge.gradle.forge"
