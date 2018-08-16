@@ -5,7 +5,7 @@ import ladylib.client.ClientHandler;
 import ladylib.client.LLibClientContainer;
 import ladylib.client.internal.ClientHandlerImpl;
 import ladylib.client.particle.LLParticleManager;
-import ladylib.compat.internal.EnhancedEventSubscriber;
+import ladylib.compat.internal.EnhancedAutomaticEventSubscriber;
 import ladylib.misc.ReflectionFailedException;
 import ladylib.nbt.serialization.internal.DefaultValuesSearch;
 import ladylib.networking.minecraft.PacketHandler;
@@ -114,8 +114,8 @@ public class LadyLib {
         registrar.autoRegisterTileEntities(dataTable);
         injectContainers(dataTable);
         DefaultValuesSearch.searchDefaultValues(dataTable);
-        EnhancedEventSubscriber.inject(dataTable);
-        EnhancedEventSubscriber.redistributeEvent(event);
+        EnhancedAutomaticEventSubscriber.inject(dataTable);
+        EnhancedAutomaticEventSubscriber.redistributeEvent(event);
     }
 
     /**
@@ -124,7 +124,7 @@ public class LadyLib {
     @Mod.EventHandler
     public void init(@Nonnull FMLInitializationEvent event) {
         PacketHandler.initPackets();
-        EnhancedEventSubscriber.redistributeEvent(event);
+        EnhancedAutomaticEventSubscriber.redistributeEvent(event);
     }
 
     /**
@@ -132,12 +132,12 @@ public class LadyLib {
      */
     @Mod.EventHandler
     public void postInit(@Nonnull FMLPostInitializationEvent event) {
-        EnhancedEventSubscriber.redistributeEvent(event);
+        EnhancedAutomaticEventSubscriber.redistributeEvent(event);
     }
 
     @Mod.EventHandler
     public void serverStarting(@Nonnull FMLServerStartingEvent event) {
-        EnhancedEventSubscriber.redistributeEvent(event);
+        EnhancedAutomaticEventSubscriber.redistributeEvent(event);
     }
 
     /**

@@ -2,6 +2,7 @@ package ladylib.compat.internal;
 
 import ladylib.LadyLib;
 import ladylib.compat.EnhancedBusSubscriber;
+import ladylib.compat.StateEventReceiver;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Loader;
@@ -12,12 +13,15 @@ import net.minecraftforge.fml.common.event.*;
 import net.minecraftforge.fml.relauncher.Side;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class EnhancedEventSubscriber {
-    private static final List<EnhancedBusSubscriber.StateEventReceiver> STATE_EVENT_RECEIVERS = new ArrayList<>();
+public class EnhancedAutomaticEventSubscriber {
+    private static final List<StateEventReceiver> STATE_EVENT_RECEIVERS = new ArrayList<>();
 
     public static void inject(ASMDataTable data) {
         Set<ASMDataTable.ASMData> targets = data.getAll(EnhancedBusSubscriber.class.getName());
@@ -40,14 +44,29 @@ public class EnhancedEventSubscriber {
                 }
                 LadyLib.LOGGER.debug("Registering @EventBusSubscriber for {}", targ.getClassName());
                 Class<?> subscriptionTarget = Class.forName(targ.getClassName(), true, mcl);
-                Constructor<?> constructor = subscriptionTarget.getDeclaredConstructor();
-                constructor.setAccessible(true);
-                Object instance = constructor.newInstance();
+                Object instance = null;
+                // Search for an existing instance field
+                for (Field f : subscriptionTarget.getDeclaredFields()) {
+                    if (isInstanceField(f, subscriptionTarget)) {
+                        f.setAccessible(true);
+                        instance = f.get(null);
+                        break;
+                    }
+                }
+                // Create the instance as none already exists
+                if (instance == null) {
+                    Constructor<?> constructor = subscriptionTarget.getDeclaredConstructor();
+                    constructor.setAccessible(true);
+                    instance = constructor.newInstance();
+                }
                 MinecraftForge.EVENT_BUS.register(instance);
-                if (instance instanceof EnhancedBusSubscriber.StateEventReceiver) {
-                    STATE_EVENT_RECEIVERS.add((EnhancedBusSubscriber.StateEventReceiver) instance);
+                if (instance instanceof StateEventReceiver) {
+                    STATE_EVENT_RECEIVERS.add((StateEventReceiver) instance);
                 }
                 LadyLib.LOGGER.debug("Injected @EventBusSubscriber class {}", targ.getClassName());
+            } catch (InstantiationException | InvocationTargetException | NoSuchMethodException e) {
+                LadyLib.LOGGER.error("The class {} cannot be instantiated. Please add a valid constructor or an instance field", targ.getClassName(), e);
+                throw new LoaderException(e);
             } catch (Throwable e) {
                 LadyLib.LOGGER.error("An error occurred trying to load an EventBusSubscriber {}", targ.getClassName(), e);
                 throw new LoaderException(e);
@@ -55,9 +74,14 @@ public class EnhancedEventSubscriber {
         }
     }
 
+    private static boolean isInstanceField(Field f, Class<?> subscriptionTarget) {
+        return f.getName().equalsIgnoreCase("instance") && subscriptionTarget.isAssignableFrom(f.getType())
+                && Modifier.isStatic(f.getModifiers()) && Modifier.isFinal(f.getModifiers());
+    }
+
     public static void redistributeEvent(FMLStateEvent event) {
         // Doing it like this because only 4 events and lazy
-        for (EnhancedBusSubscriber.StateEventReceiver receiver : STATE_EVENT_RECEIVERS) {
+        for (StateEventReceiver receiver : STATE_EVENT_RECEIVERS) {
             if (event instanceof FMLPreInitializationEvent) {
                 receiver.preInit((FMLPreInitializationEvent) event);
             } else if (event instanceof FMLInitializationEvent) {
