@@ -2,15 +2,16 @@ package ladylib.client;
 
 import com.google.common.collect.ImmutableSet;
 import ladylib.LadyLib;
+import ladylib.misc.ReflectionUtil;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.AbstractResourcePack;
+import net.minecraft.client.resources.IResourcePack;
 import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.fml.common.LoaderState;
 
 import javax.annotation.Nonnull;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A resource proxy, allowing a mod to programmatically override any resource <br>
@@ -36,6 +37,16 @@ public class ResourceProxy extends AbstractResourcePack {
         this.resourceDomains = ImmutableSet.copyOf(resourceDomains);
     }
 
+    public void hook() {
+        if (Loader.instance().hasReachedState(LoaderState.PREINITIALIZATION)) {
+            throw new IllegalStateException("Resource proxies should be registered before pre-initialization");
+        }
+        List<IResourcePack> defaultPacks = ReflectionUtil.getPrivateValue(Minecraft.class, Minecraft.getMinecraft(), "field_110449_ao", List.class);
+        if (!defaultPacks.contains(this)) {
+            defaultPacks.add(this);
+        }
+    }
+
     /**
      * Adds a resource to be loaded as an override
      * <p>
@@ -46,12 +57,19 @@ public class ResourceProxy extends AbstractResourcePack {
      * @param dir       the path to the parent directory of the resource
      * @param files     the name of one or more files, extension included
      */
-    public void addResource(String owner, String namespace, String dir, String... files) {
+    public void addResourceOverride(String owner, String namespace, String dir, String... files) {
+        if (!resourceDomains.contains(namespace)) {
+            throw new IllegalArgumentException("Can't override resource in unsupported domain " + namespace);
+        }
         for (String file : files) {
             String bare = String.format(BARE_FORMAT, namespace, dir, file);
-            String override = String.format(OVERRIDE_FORMAT, owner, dir, file);
+            String override = getOverrideLocation(owner, namespace, dir, file);
             overrides.put(bare, override);
         }
+    }
+
+    protected String getOverrideLocation(String owner, String namespace, String dir, String file) {
+        return String.format(OVERRIDE_FORMAT, owner, dir, file);
     }
 
     @Nonnull
