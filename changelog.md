@@ -1,4 +1,4 @@
-#####Version 1.12.2-2.2.0
+#####Version 1.12.2-2.2.0 - BUILT
 Main changes:
 - Introduced ModWinder, an in-game mod installer
 - Moved the NBT serialization facilities around
@@ -9,6 +9,10 @@ Shaders:
 - Added the `saturation` base shader
 - Added some convenience methods for shader registration
 - Improved shader compilation error handling
+
+Annotation Magic:
+- Added `@EnhancedBusSubscriber`, an alternative to `@EventBusSubscriber`
+- Allowed `@AutoRegister` to substitute `@ObjectHolder` for when the latter is too rigid
 
 Miscellaneous:
 - Added package-level documentation
