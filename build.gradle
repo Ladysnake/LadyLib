@@ -49,7 +49,9 @@ allprojects {
 
     jar {
         from sourceSets.api.output
-        from sourceSets.main.output
+        from(sourceSets.main.output) {
+            exclude "*.pdn"
+        }
         manifest {
             attributes([
                     'Maven-Artifact': "${project.group}:${archivesBaseName}:${project.version}",

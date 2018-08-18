@@ -7,7 +7,7 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@Mod(modid = ModWinder.MOD_ID, version = "1.0")
+@Mod(modid = ModWinder.MOD_ID, version = "1.0", dependencies = LadyLib.DEPENDENCIES)
 public class ModWinder {
 
     public static final String MOD_ID = "modwinder";

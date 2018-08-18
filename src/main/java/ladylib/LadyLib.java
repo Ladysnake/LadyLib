@@ -36,11 +36,16 @@ import java.util.Map;
 import java.util.function.Function;
 
 // note: mod information is contained in mcmod.info
-@Mod(modid = LadyLib.MOD_ID, version = LadyLib.VERSION)
+@Mod(modid = LadyLib.MOD_ID, version = LadyLib.VERSION, dependencies = LadyLib.DEPENDENCIES)
 public class LadyLib {
     public static final String MOD_ID = "ladylib";
     public static final String MOD_NAME = "LadyLib";
     public static final String VERSION = "@VERSION@";
+    /**
+     * <u>Note for modders using dependency extraction:</u> mods containing LadyLib need to declare the dependency on
+     * forge 14.23.3.2665+ themselves as older forge versions will not load LadyLib in the first place
+     */
+    public static final String DEPENDENCIES = "required-after:forge@[14.23.3.2665,);";
 
     public static final Logger LOGGER = LogManager.getLogger(MOD_NAME);
     private static final PrintStream DEBUG_STREAM = new TracingPrintStream(LogManager.getLogger("DEBUG"), System.out);
