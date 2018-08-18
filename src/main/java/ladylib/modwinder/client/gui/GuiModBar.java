@@ -328,7 +328,8 @@ public class GuiModBar extends GuiScreen {
                 } else {
                     this.mc.displayGuiScreen(this.mainMenu);
                 }
-            }, I18n.format("modwinder.restart.1"), I18n.format("modwinder.restart.2"), DONE_BUTTON_ID));
+            }, I18n.format("modwinder.restart.1"), I18n.format("modwinder.restart.2"),
+                    I18n.format("modwinder.restart.yes"), I18n.format("modwinder.restart.no"), DONE_BUTTON_ID));
         } else {
             this.mc.displayGuiScreen(this.mainMenu);
         }
