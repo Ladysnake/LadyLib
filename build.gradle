@@ -49,9 +49,8 @@ allprojects {
 
     jar {
         from sourceSets.api.output
-        from(sourceSets.main.output) {
-            exclude "*.pdn"
-        }
+        from sourceSets.main.output
+
         manifest {
             attributes([
                     'Maven-Artifact': "${project.group}:${archivesBaseName}:${project.version}",
@@ -78,6 +77,7 @@ allprojects {
             exclude "mcmod.info"
         }
 
+        exclude "**/*.pdn"
         rename '(.+_at.cfg)', 'META-INF/$1'
     }
 

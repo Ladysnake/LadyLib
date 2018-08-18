@@ -1,4 +1,5 @@
 #####Version 1.12.2-2.2.1
+- Made ResourceProxy slightly more versatile
 
 #####Version 1.12.2-2.2.0 - BUILT
 Main changes:
