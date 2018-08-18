@@ -171,7 +171,7 @@ public class ModEntry {
                                 .get("promos").getAsJsonObject()
                                 .get(MinecraftForge.MC_VERSION + "-latest").getAsString();
                         this.setLatestVersion(latest);
-                        outdated = (new ComparableVersion(this.installedVersion).compareTo(new ComparableVersion(latest)) < 0);
+                        outdated = installed && (new ComparableVersion(this.installedVersion).compareTo(new ComparableVersion(latest)) < 0);
                         Map<String, String> temp = GSON.fromJson(json.getAsJsonObject().get(MinecraftForge.MC_VERSION + ""), new TypeToken<Map<String, String>>() {
                         }.getType());
                         this.setChangelog(temp.keySet().stream().collect(Collectors.toMap(ComparableVersion::new, temp::get)));
@@ -185,7 +185,7 @@ public class ModEntry {
         return changelog;
     }
 
-    public synchronized void setChangelog(Map<ComparableVersion, String> changelog) {
+    private synchronized void setChangelog(Map<ComparableVersion, String> changelog) {
         this.changelog = changelog;
     }
 
