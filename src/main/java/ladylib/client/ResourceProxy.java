@@ -82,7 +82,7 @@ public class ResourceProxy extends AbstractResourcePack {
     @Override
     protected InputStream getInputStreamByName(@Nonnull String name) {
         // If the resource is null, it means we have fucked up big time, but it needs to be found immediately
-        return Objects.requireNonNull(LadyLib.class.getResourceAsStream(overrides.get(name)));
+        return Objects.requireNonNull(LadyLib.class.getResourceAsStream(overrides.get(name)), String.format("%s is not an existing resource (overriding %s)", overrides.get(name), name));
     }
 
     @Override
