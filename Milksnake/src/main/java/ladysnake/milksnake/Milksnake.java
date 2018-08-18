@@ -10,8 +10,8 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@Mod(modid = MilkSnake.MOD_ID, version = "@VERSION@", dependencies = "required-after:ladylib;", clientSideOnly = true, certificateFingerprint = "@FINGERPRINT@")
-public class MilkSnake {
+@Mod(modid = Milksnake.MOD_ID, version = "@VERSION@", dependencies = "required-after:ladylib;required-after:forge@[14.23.3.2665,)", clientSideOnly = true, certificateFingerprint = "@FINGERPRINT@")
+public class Milksnake {
     public static final String MOD_ID = "milksnake";
     public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
 
@@ -25,8 +25,8 @@ public class MilkSnake {
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
-        if (MilkSnakeConfig.enableResourcePack) {
-            resourceProxy.addResourceOverride(MOD_ID, "minecraft","textures/gui", "options_background.png", "widgets.png");
+        if (MilksnakeConfig.enableResourcePack) {
+            resourceProxy.addResourceOverride(MOD_ID, "minecraft","textures/gui", "options_background.png", "widgets.png", "title/edition.png", "title/minecraft.png");
             resourceProxy.addResourceOverride(MOD_ID, ModWinder.MOD_ID, "textures/gui", "modbar_widget.png");
         }
     }

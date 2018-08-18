@@ -1,5 +1,5 @@
 /**
- * Root package for MilkSnake classes
+ * Root package for Milksnake classes
  * @author Pyrofab
  */
 @MethodsReturnNonnullByDefault

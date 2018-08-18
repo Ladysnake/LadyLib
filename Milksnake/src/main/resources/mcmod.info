@@ -1,7 +1,7 @@
 [
   {
     "modid": "milksnake",
-    "name": "MilkSnake",
+    "name": "Milksnake",
     "description": "A wrapper for LadyLib and ModWinder, featuring a fancy menu retexture.",
     "version": "${version}",
     "mcversion": "${mcversion}",

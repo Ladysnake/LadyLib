@@ -11,6 +11,6 @@ public class MSResourceProxy extends ResourceProxy {
 
     @Override
     protected String getOverrideLocation(String owner, String namespace, String dir, String file) {
-        return String.format(OVERRIDE_FORMAT, owner, dir, MilkSnakeConfig.flavour, file);
+        return String.format(OVERRIDE_FORMAT, owner, dir, MilksnakeConfig.flavour, file);
     }
 }
