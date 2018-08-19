@@ -28,3 +28,8 @@ modwinder.waiting=Waiting for mods to finish installing
 modwinder.java_warning_1=Your Minecraft is using an outdated java version
 modwinder.java_warning.info=More Information
 modwinder.java_warning_2=Please configure your launcher to use a recent version of Java
+
+modwinder.update_all=Update All
+modwinder.list.all=All
+modwinder.list.ladysnake_approved=Barman's choice
+modwinder.list.others=Others

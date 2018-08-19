@@ -1,6 +1,7 @@
 package ladylib.modwinder.client.gui;
 
 import ladylib.modwinder.data.ModEntry;
+import ladylib.modwinder.data.ModWinderLists;
 import ladylib.modwinder.installer.InstallationState;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
@@ -43,7 +44,7 @@ public class GuiWaitingModInstall extends GuiScreen {
     @Override
     public void updateScreen() {
         // check if there is still a mod being installed
-        if (ModEntry.getLadysnakeMods().stream()
+        if (ModWinderLists.ALL.getModEntries().stream()
                         .map(ModEntry::getInstallationState)
                         .map(InstallationState::getStatus)
                         .noneMatch(InstallationState.Status.INSTALLING::equals)) {

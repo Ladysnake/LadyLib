@@ -25,7 +25,7 @@ public class HTTPRequestHelper {
     private static final Gson GSON = new Gson();
     private static final Executor THREAD_POOL = new ThreadPoolExecutor(
             0,
-            15,
+            Integer.MAX_VALUE,
             60, TimeUnit.SECONDS,
             new SynchronousQueue<>(),
             runnable -> new Thread(runnable, "LadyLib HTTP Helper")

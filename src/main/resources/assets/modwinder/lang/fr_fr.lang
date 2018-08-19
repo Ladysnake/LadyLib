@@ -29,3 +29,5 @@ modwinder.waiting=En attente de l'installation de certains mods
 modwinder.java_warning_1=Votre Minecraft utilise une version de Java dépassée
 modwinder.java_warning.info=Plus d'information
 modwinder.java_warning_2=Merci de configurer votre launcher pour utiliser une version récente de Java
+
+modwinder.update_all=Update All

@@ -1,6 +1,7 @@
 package ladylib.modwinder.installer;
 
 import com.google.common.annotations.VisibleForTesting;
+import ladylib.LadyLib;
 import ladylib.modwinder.ModWinder;
 import net.minecraftforge.fml.common.DummyModContainer;
 import net.minecraftforge.fml.common.Loader;
@@ -10,6 +11,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -31,7 +33,14 @@ public class ModDeleter extends Thread {
     public void run() {
         List<String> commandArgs = new ArrayList<>();
         File runDir = llSource;
-        commandArgs.add(System.getProperty("java.home"));
+        String java = System.getProperty("java.home") + "/bin/java";
+        if (!Files.exists(Paths.get(java))) {
+            java += ".exe";
+            if (!Files.exists(Paths.get(java))) {
+                java = "java";
+            }
+        }
+        commandArgs.add(java);
         if (!llSource.isDirectory()) {
             commandArgs.add("-jar");
             commandArgs.add(llSource.getAbsolutePath());
@@ -42,6 +51,7 @@ public class ModDeleter extends Thread {
         modsToDelete.stream().map(File::getAbsolutePath).forEach(commandArgs::add);
         ProcessBuilder processBuilder = new ProcessBuilder(commandArgs);
         processBuilder.directory(runDir);
+        LadyLib.LOGGER.info("Starting {} in {}", String.join(" ", commandArgs), runDir);
         try {
             processBuilder.start();
         } catch (IOException e) {

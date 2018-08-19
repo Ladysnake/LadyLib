@@ -214,7 +214,7 @@ public class GuiInstallerModList extends GuiScrollingList {
     public void reloadMods() {
         // regenerate the flattened list
         flattenEntries(
-                ModEntry.getLadysnakeMods().stream()
+                this.parent.getSelectedList().getModEntries().stream()
                 .filter(me -> me.getName().toLowerCase(Locale.ENGLISH).contains(parent.getSearchText()))    // select entries matching the search
                 .sorted(this.parent.getSortType())                              // sort according to current selection
                 .collect(Collectors.toList())

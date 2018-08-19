@@ -5,6 +5,8 @@ import ladylib.misc.ReflectionUtil;
 import ladylib.modwinder.ModWinder;
 import ladylib.modwinder.ModsFetchedEvent;
 import ladylib.modwinder.data.ModEntry;
+import ladylib.modwinder.data.ModWinderLists;
+import ladylib.modwinder.installer.AddonInstaller;
 import ladylib.modwinder.installer.InstallationState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
@@ -37,6 +39,8 @@ public class GuiModBar extends GuiScreen {
     private static final int DONE_BUTTON_ID = 6;
     private static final int CHANGELOG_BUTTON_ID = 7;
     private static final int DESCRIPTION_BUTTON_ID = 8;
+    private static final int SWITCH_LIST_BUTTON_ID = 9;
+    private static final int UPDATE_ALL_BUTTON_ID = 10;
 
     // let the other mods add their buttons first
     @SubscribeEvent(priority = EventPriority.LOW)
@@ -62,7 +66,7 @@ public class GuiModBar extends GuiScreen {
     }
 
     private static void addModBarButton(final List<GuiButton> buttons) {
-        if (ModEntry.getLadysnakeMods().isEmpty()) {
+        if (ModWinderLists.ALL.getModEntries().isEmpty()) {
             return;
         }
         final String targetDisplayString = I18n.format("fml.menu.mods");
@@ -146,6 +150,7 @@ public class GuiModBar extends GuiScreen {
 
     private GuiButton changelogButton;
     private GuiButton descriptionButton;
+    private GuiButton cycleListButton;
 
     private int numButtons = SortType.values().length;
 
@@ -156,6 +161,7 @@ public class GuiModBar extends GuiScreen {
     private GuiTextField search;
     private boolean sorted = false;
     private SortType sortType = SortType.NORMAL;
+    private ModWinderLists selectedList = ModWinderLists.LADYSNAKE_APPROVED;
 
     public GuiModBar(GuiScreen mainMenu) {
         this.mainMenu = mainMenu;
@@ -164,7 +170,7 @@ public class GuiModBar extends GuiScreen {
     @Override
     public void initGui() {
         // Mod list
-        this.modList = new GuiInstallerModList(this, ModEntry.getLadysnakeMods(), this.width - 30, 35);
+        this.modList = new GuiInstallerModList(this, selectedList.getModEntries(), this.width - 30, 35);
 
         // "Done" button
         this.buttonList.add(new GuiButton(DONE_BUTTON_ID, ((this.width) / 2) - 100, this.height - 38, I18n.format("gui.done")));
@@ -176,6 +182,11 @@ public class GuiModBar extends GuiScreen {
         this.descriptionButton = new GuiButton(DESCRIPTION_BUTTON_ID, (3 * (this.width) / 4), this.height - 57, this.width / 5, 20, I18n.format("modwinder.cf_description"));
         this.descriptionButton.enabled = false;
         this.buttonList.add(descriptionButton);
+        // Update all
+        this.buttonList.add(new GuiButton(UPDATE_ALL_BUTTON_ID, (this.width / 4) - (this.width / 5) , this.height - 57, this.width / 5, 20, I18n.format("modwinder.update_all")));
+        // Cycle displayed list
+        this.cycleListButton = new GuiButton(SWITCH_LIST_BUTTON_ID, (this.width / 4) - (this.width / 5) , this.height - 38, this.width / 5, 20, I18n.format(selectedList.getUnlocalizedName()));
+        this.buttonList.add(cycleListButton);
 
         // Search bar
         search = new GuiTextField(0, fontRenderer, 12 + 3 * this.modList.getListWidth() / 4, this.modList.getTop() - 17, this.modList.getListWidth() / 4 - 4, 14);
@@ -288,11 +299,21 @@ public class GuiModBar extends GuiScreen {
                     case DESCRIPTION_BUTTON_ID:
                         openCurseforgeDescription();
                         return;
+                    case SWITCH_LIST_BUTTON_ID:
+                        cycleSelectedList();
+                        return;
+                    case UPDATE_ALL_BUTTON_ID:
+                        updateAll();
+                        return;
                     default:
                         LadyLib.LOGGER.warn("Unrecognized button id {} ({})", button.id, button);
                 }
             }
         }
+    }
+
+    private void updateAll() {
+        ModWinderLists.ALL.getModEntries().stream().filter(ModEntry::isOutdated).forEach(AddonInstaller::installLatestFromCurseforge);
     }
 
     private void openCurseforgeDescription() {
@@ -318,7 +339,7 @@ public class GuiModBar extends GuiScreen {
     }
 
     private void exitModBar() {
-        if (ModEntry.getLadysnakeMods().stream()
+        if (ModWinderLists.ALL.getModEntries().stream()
                 .map(ModEntry::getInstallationState)
                 .map(InstallationState::getStatus)
                 .anyMatch(status -> status == InstallationState.Status.INSTALLING || status == InstallationState.Status.INSTALLED)) {
@@ -350,6 +371,16 @@ public class GuiModBar extends GuiScreen {
 
     public FontRenderer getFontRenderer() {
         return fontRenderer;
+    }
+
+    public ModWinderLists getSelectedList() {
+        return selectedList;
+    }
+
+    private void cycleSelectedList() {
+        this.selectedList = ModWinderLists.values()[(this.selectedList.ordinal() + 1) % ModWinderLists.values().length];
+        this.cycleListButton.displayString = I18n.format(selectedList.getUnlocalizedName());
+        this.sorted = false;
     }
 
     public void setTip(String tip) {
