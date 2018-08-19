@@ -33,15 +33,18 @@ import java.lang.reflect.Type;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ModEntry {
-    public static final String MOD_BAR_URL = "https://ladysnake.glitch.me/milksnake-bar";
+    public static final String MOD_BAR_APPROVED_URL = "https://ladysnake.glitch.me/milksnake-bar";
+    public static final String MOD_BAR_ALL_URL = "https://ladysnake.glitch.me/milksnake-bar";
 
     static final Gson GSON = new GsonBuilder().setFieldNamingStrategy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
     private static ImmutableList<ModEntry> ladysnakeMods = ImmutableList.of();
+    private static ImmutableList<ModEntry> allMods = ImmutableList.of();
 
     /**
      * Retrieves the list of mods featured on <a href=http://ladysnake.glitch.me/data/milksnake-bar.json>Ladysnake's website</a>
@@ -51,16 +54,28 @@ public class ModEntry {
      * take several seconds.
      */
     public static void refillModBar() {
-        HTTPRequestHelper.getJSON(MOD_BAR_URL, json -> {
-            try {
-                final Type type = new TypeToken<List<ModEntry>>() {}.getType();
-                final List<ModEntry> retrieved = GSON.fromJson(json, type);
-                retrieved.forEach(ModEntry::init);
-                MinecraftForge.EVENT_BUS.post(new ModsFetchedEvent(retrieved));
-                ladysnakeMods = ImmutableList.copyOf(retrieved);
-            } catch (Exception e) {
-                ModWinder.LOGGER.warn("Could not create the list of Ladysnake mods", e);
-            }
+        try {
+            retrieveList(MOD_BAR_APPROVED_URL).thenApply(ImmutableList::copyOf).thenAccept(l -> ladysnakeMods = l);
+            retrieveList(MOD_BAR_ALL_URL).thenApply(ImmutableList::copyOf).thenAccept(l -> ladysnakeMods = l);
+        } catch (MalformedURLException e) {
+            // Should never happen
+            throw new AssertionError(e);
+        }
+    }
+
+    /**
+     * Retrieves a list of mods available on a website under JSON format and processes it.
+     */
+    public static CompletableFuture<List<ModEntry>> retrieveList(String url) throws MalformedURLException {
+        return HTTPRequestHelper.getJSON(new URL(url)).thenApply(json -> {
+            final Type type = new TypeToken<List<ModEntry>>() {}.getType();
+            final List<ModEntry> retrieved = GSON.fromJson(json, type);
+            retrieved.forEach(ModEntry::init);
+            MinecraftForge.EVENT_BUS.post(new ModsFetchedEvent(retrieved));
+            return retrieved;
+        }).exceptionally(t -> {
+            ModWinder.LOGGER.warn("Could not create the list of Ladysnake mods", t);
+            return Collections.emptyList();
         });
     }
 
