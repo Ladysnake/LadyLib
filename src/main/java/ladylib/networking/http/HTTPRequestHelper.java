@@ -23,15 +23,20 @@ import java.util.function.Function;
 
 public class HTTPRequestHelper {
     private static final Gson GSON = new Gson();
-    private static final Executor THREAD_POOL = new ThreadPoolExecutor(
-            0,
-            Integer.MAX_VALUE,
-            60, TimeUnit.SECONDS,
-            new SynchronousQueue<>(),
-            runnable -> new Thread(runnable, "LadyLib HTTP Helper")
-    );
-
+    private static final Executor THREAD_POOL;
     public static final int MAX_HTTP_REDIRECTS = Integer.getInteger("http.maxRedirects", 20);
+
+    static {
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(
+                8,
+                8,
+                120, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(),
+                runnable -> new Thread(runnable, "LadyLib HTTP Helper")
+        );
+        executor.allowCoreThreadTimeOut(true);
+        THREAD_POOL = executor;
+    }
 
     /**
      * Load JSON-encoded data from the server using a GET HTTP request.
