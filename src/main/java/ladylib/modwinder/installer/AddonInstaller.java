@@ -10,7 +10,7 @@ import ladylib.modwinder.ModWinder;
 import ladylib.modwinder.data.DummyModEntry;
 import ladylib.modwinder.data.LocalModList;
 import ladylib.modwinder.data.ModEntry;
-import ladylib.modwinder.data.ModWinderLists;
+import ladylib.modwinder.data.ModWinderList;
 import ladylib.networking.http.HTTPRequestHelper;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.launchwrapper.Launch;
@@ -285,7 +285,7 @@ public class AddonInstaller {
             if (dep.get("type").getAsString().equals("REQUIRED")) {
                 int depCurseId = dep.get("addOnId").getAsInt();
                 // If there is an existing entry for that dependency, update it, otherwise use a dummy
-                ModEntry depEntry = ModWinderLists.ALL.getModEntries().stream()
+                ModEntry depEntry = ModWinderList.ALL.getModEntries().stream()
                         .filter(me -> me.getCurseId() == depCurseId)
                         .findAny()
                         .orElse(new DummyModEntry(depCurseId));

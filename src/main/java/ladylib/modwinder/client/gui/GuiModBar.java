@@ -5,7 +5,7 @@ import ladylib.misc.ReflectionUtil;
 import ladylib.modwinder.ModWinder;
 import ladylib.modwinder.ModsFetchedEvent;
 import ladylib.modwinder.data.ModEntry;
-import ladylib.modwinder.data.ModWinderLists;
+import ladylib.modwinder.data.ModWinderList;
 import ladylib.modwinder.installer.AddonInstaller;
 import ladylib.modwinder.installer.InstallationState;
 import net.minecraft.client.Minecraft;
@@ -66,7 +66,7 @@ public class GuiModBar extends GuiScreen {
     }
 
     private static void addModBarButton(final List<GuiButton> buttons) {
-        if (ModWinderLists.ALL.getModEntries().isEmpty()) {
+        if (ModWinderList.ALL.getModEntries().isEmpty()) {
             return;
         }
         final String targetDisplayString = I18n.format("fml.menu.mods");
@@ -161,7 +161,7 @@ public class GuiModBar extends GuiScreen {
     private GuiTextField search;
     private boolean sorted = false;
     private SortType sortType = SortType.NORMAL;
-    private ModWinderLists selectedList = ModWinderLists.LADYSNAKE_APPROVED;
+    private ModWinderList selectedList = ModWinderList.ALL;
 
     public GuiModBar(GuiScreen mainMenu) {
         this.mainMenu = mainMenu;
@@ -206,6 +206,9 @@ public class GuiModBar extends GuiScreen {
         buttonList.add(alphabeticalSort);
         x += width + buttonMargin;
         buttonList.add(new GuiButton(SortType.Z_TO_A.buttonID, x, y, width - buttonMargin, 20, "Z-A"));
+
+        // show Ladysnake's selection
+        cycleSelectedList();
     }
 
     /**
@@ -313,7 +316,7 @@ public class GuiModBar extends GuiScreen {
     }
 
     private void updateAll() {
-        ModWinderLists.ALL.getModEntries().stream().filter(ModEntry::isOutdated).forEach(AddonInstaller::installLatestFromCurseforge);
+        ModWinderList.ALL.getModEntries().stream().filter(ModEntry::isOutdated).forEach(AddonInstaller::installLatestFromCurseforge);
     }
 
     private void openCurseforgeDescription() {
@@ -339,7 +342,7 @@ public class GuiModBar extends GuiScreen {
     }
 
     private void exitModBar() {
-        if (ModWinderLists.ALL.getModEntries().stream()
+        if (ModWinderList.ALL.getModEntries().stream()
                 .map(ModEntry::getInstallationState)
                 .map(InstallationState::getStatus)
                 .anyMatch(status -> status == InstallationState.Status.INSTALLING || status == InstallationState.Status.INSTALLED)) {
@@ -373,13 +376,17 @@ public class GuiModBar extends GuiScreen {
         return fontRenderer;
     }
 
-    public ModWinderLists getSelectedList() {
+    public ModWinderList getSelectedList() {
         return selectedList;
     }
 
     private void cycleSelectedList() {
-        this.selectedList = ModWinderLists.values()[(this.selectedList.ordinal() + 1) % ModWinderLists.values().length];
-        this.cycleListButton.displayString = I18n.format(selectedList.getUnlocalizedName());
+        this.selectedList = ModWinderList.getNext(this.selectedList);
+        if (I18n.hasKey(selectedList.getUnlocalizedName())) {
+            this.cycleListButton.displayString = I18n.format(selectedList.getUnlocalizedName());
+        } else {
+            this.cycleListButton.displayString = selectedList.getName();
+        }
         this.sorted = false;
     }
 

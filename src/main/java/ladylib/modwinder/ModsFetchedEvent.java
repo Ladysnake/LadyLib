@@ -7,6 +7,7 @@ import net.minecraftforge.fml.common.eventhandler.Event;
 
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 /**
@@ -23,20 +24,24 @@ import java.util.stream.Stream;
  * This event is fired on the {@link MinecraftForge#EVENT_BUS}.
  */
 public class ModsFetchedEvent extends Event {
-    private final List<ModEntry> retrievedMods;
+    private final Map<String, List<ModEntry>> retrievedMods;
     private final URL listUrl;
 
-    public ModsFetchedEvent(URL listUrl, List<ModEntry> retrievedMods) {
+    public ModsFetchedEvent(URL listUrl, Map<String, List<ModEntry>> retrievedMods) {
         this.listUrl = listUrl;
         this.retrievedMods = retrievedMods;
     }
 
-    public Stream<ModEntry> readRetrievedMods() {
-        return retrievedMods.stream();
+    public Stream<ModEntry> readRetrievedMods(String listName) {
+        return retrievedMods.get(listName).stream();
     }
 
-    public void addModEntry(ModEntry entry) {
-        this.retrievedMods.add(entry);
+    public void addModEntry(String listName, ModEntry entry) {
+        this.retrievedMods.get(listName).add(entry);
+    }
+
+    public Stream<String> getListNames() {
+        return retrievedMods.keySet().stream();
     }
 
     /**

@@ -37,7 +37,10 @@ import java.util.stream.Stream;
 
 public class ModEntry {
 
-    static final Gson GSON = new GsonBuilder().setFieldNamingStrategy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+    public static final Gson GSON = new GsonBuilder()
+            .setFieldNamingStrategy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+            .registerTypeAdapterFactory(new ModEntryTypeAdapterFactory())
+            .create();
 
     @SerializedName("modid")
     private String modId;
@@ -83,7 +86,7 @@ public class ModEntry {
         init();
     }
 
-    protected synchronized void init(ModEntry parent) {
+    private synchronized void init(ModEntry parent) {
         this.parents.add(parent);
         init();
     }
@@ -149,6 +152,7 @@ public class ModEntry {
         this.dlcs.forEach(modEntry -> modEntry.init(this));
     }
 
+    @Nullable
     public synchronized Map<ComparableVersion, String> getChangelog() {
         return changelog;
     }

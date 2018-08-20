@@ -1,11 +1,14 @@
 package ladylib.modwinder;
 
 import ladylib.LadyLib;
-import ladylib.modwinder.data.ModWinderLists;
+import ladylib.modwinder.data.ModWinderList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.net.MalformedURLException;
+import java.net.URL;
 
 @Mod(modid = ModWinder.MOD_ID, version = "1.0", dependencies = LadyLib.DEPENDENCIES)
 public class ModWinder {
@@ -20,14 +23,18 @@ public class ModWinder {
     }
 
     /**
-     * Retrieves the list of mods featured on <a href=http://ladysnake.glitch.me/data/milksnake-bar.json>Ladysnake's website</a>
+     * Retrieves the list of mods featured on <a href=https://ladysnake.glitch.me/milksnake-bar>Ladysnake's website</a>
      * and processes it.
      * <p>
      * This process is asynchronous, as such the method should return instantly even though the whole process is likely to
      * take several seconds.
      */
     private static void refillModBar() {
-        ModWinderLists.ALL.load();
+        try {
+            ModWinderList.retrieveList(new URL("https://ladysnake.glitch.me/milksnake-bar-v2")).thenAccept(map -> map.forEach(ModWinderList::addList));
+        } catch (MalformedURLException e) {
+            throw new AssertionError(e); // Oi this is hardcoded
+        }
     }
 
 }
