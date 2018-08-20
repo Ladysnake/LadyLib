@@ -95,6 +95,14 @@ public class ModDeleter extends Thread {
         }
     }
 
+    public static void cancelModDeletion(String modId) {
+        ModContainer mc = Loader.instance().getIndexedModList().get(modId);
+        if (mc == null || instance == null) {
+            return;
+        }
+        instance.modsToDelete.remove(mc.getSource());
+    }
+
     /**
      * Schedules a file to be deleted when the program exits
      * @param mod the file to delete

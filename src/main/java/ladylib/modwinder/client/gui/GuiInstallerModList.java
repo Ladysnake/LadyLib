@@ -104,7 +104,7 @@ public class GuiInstallerModList extends GuiScrollingList {
         GlStateManager.color(1, 1, 1, 1);
 
         // draw trash can if the entry can be uninstalled
-        if (entry.isInstalled() && entry.getInstallationState() == InstallationState.NAUGHT || entry.getInstallationState().getStatus() == InstallationState.Status.INSTALLED) {
+        if (entry.isInstalled() && entry.getInstallationState() == InstallationState.NAUGHT || entry.getInstallationState().getStatus() == InstallationState.Status.INSTALLED && AddonInstaller.LOCAL_MODS.getArtifact(entry, AddonInstaller.MOD_LIST.getRepository()) != null) {
             drawTrashCan(slotIdx, entry, iconX, iconY, iconWidth, iconHeight);
         }
 

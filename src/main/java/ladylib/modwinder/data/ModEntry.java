@@ -48,7 +48,7 @@ public class ModEntry {
     private int curseId;
     private String name;
     private String author;
-    private URL updateUrl;
+    @Nullable private URL updateUrl;
     private List<ModEntry> dlcs;
 
     // the following variables are calculated from the serialized ones
@@ -134,7 +134,7 @@ public class ModEntry {
         } catch (MalformedURLException e) {
             ModWinder.LOGGER.error("Invalid curse project id " + curseId, e);
         }
-        if (this.latestVersion.isEmpty()) {
+        if (this.latestVersion.isEmpty() && this.getUpdateUrl() != null) {
             // Forge's version check does not have a callback so it is easier to just check ourselves even if the mod is installed
             HTTPRequestHelper.getJSON(this.getUpdateUrl())
                     .thenAccept(json -> {
@@ -198,6 +198,7 @@ public class ModEntry {
         return author;
     }
 
+    @Nullable
     public URL getUpdateUrl() {
         return updateUrl;
     }

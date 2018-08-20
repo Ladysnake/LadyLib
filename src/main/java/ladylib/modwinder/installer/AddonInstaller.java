@@ -22,6 +22,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.message.FormattedMessage;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -172,6 +173,9 @@ public class AddonInstaller {
     /**
      * Uninstalls the given mod by removing it from Forge's mod list. <br>
      * The mod file is not removed from the mods repository and can be reinstalled instantly using {@link #attemptReEnabling(ModEntry)}
+     * <p>
+     * If the target was not installed through the mod list system however, the deletion will be permanent (effective once the game exits)
+     * </p>
      *
      * @param modEntry the entry of the mod to uninstall
      * @see #attemptReEnabling(ModEntry)
@@ -180,6 +184,16 @@ public class AddonInstaller {
         try {
             for (ModEntry dlc : modEntry.getDlcs()) {
                 uninstall(dlc);
+            }
+            // Hard uninstall
+            if (LOCAL_MODS.getArtifact(modEntry, MOD_LIST.getRepository()) == null) {
+                ModDeleter.scheduleModDeletion(modEntry.getModId());
+                if (modEntry.isInstalled()) {
+                    modEntry.setInstallationState(UNINSTALLED);
+                } else {
+                    modEntry.setInstallationState(InstallationState.NAUGHT);
+                }
+                return;
             }
             List<Artifact> artifacts = ReflectionHelper.getPrivateValue(ModList.class, MOD_LIST, "artifacts");
             Map<String, Artifact> art_map = ReflectionHelper.getPrivateValue(ModList.class, MOD_LIST, "art_map");
@@ -218,6 +232,12 @@ public class AddonInstaller {
             }
             Artifact disabled = modEntry.getLocalArtifact();
             if (disabled == null) {
+                if (Loader.isModLoaded(modEntry.getModId()) && !modEntry.isOutdated()) {
+                    // mod is already loaded and up to date, just remove the current indication
+                    ModDeleter.cancelModDeletion(modEntry.getModId());
+                    modEntry.setInstallationState(InstallationState.NAUGHT);
+                    return true;
+                }
                 return false;
             }
             MOD_LIST.add(disabled);
@@ -267,7 +287,7 @@ public class AddonInstaller {
                         Path temp = HTTPRequestHelper.downloadFile(fileName, downloadURL);
                         mod.setInstallationState(new InstallationState(InstallationState.Status.INSTALLING, I18n.format("modwinder.status.installing", fileName)));
                         // read required information and move to mod repository
-                        File archived = moveToModRepository(temp, mod);
+                        File archived = moveToModRepository(temp, mod, fileName);
                         if (archived != null) {
                             downloadedFiles.add(CompletableFuture.completedFuture(Collections.singletonList(archived)));
                         }
@@ -303,40 +323,28 @@ public class AddonInstaller {
      *
      * @param artifactPath the path to the downloaded file
      * @param mod          the mod being installed
+     * @param originalName the initial file name of the downloaded file
      * @return the new location of the artifact
      */
     @Nullable
-    private static File moveToModRepository(Path artifactPath, ModEntry mod) {
-        Attributes meta;
-        byte[] data;
-        byte[] manifestData;
-        readManifest:
-        // Read the jar's manifest to get required artifact information
-        try {
-            data = Files.readAllBytes(artifactPath);
-            //We use zip input stream directly, as the current Oracle implementation of JarInputStream only works when the manifest is the First/Second entry in the jar...
-            try (ZipInputStream zi = new ZipInputStream(new ByteArrayInputStream(data))) {
-                ZipEntry ze;
-                while ((ze = zi.getNextEntry()) != null) {
-                    if (ze.getName().equalsIgnoreCase(JarFile.MANIFEST_NAME)) {
-                        manifestData = IOUtils.toByteArray(zi);
-                        meta = new Manifest(new ByteArrayInputStream(manifestData)).getMainAttributes();
-                        break readManifest;
-                    }
-                }
-            }
-            throw new InstallationException("Could not find manifest data in downloaded file " + artifactPath.toFile().getName());
-        } catch (IOException e) {
-            throw new InstallationException("Could not read manifest data from downloaded file " + artifactPath.toFile().getName(), e);
-        }
+    private static File moveToModRepository(Path artifactPath, ModEntry mod, String originalName) {
+        Pair<byte[], Attributes> ret = readManifestData(artifactPath);
+        byte[] manifestData = ret.getLeft();
+        Attributes meta = ret.getRight();
         File modsDir = new File(Launch.minecraftHome, "mods/" + MinecraftForge.MC_VERSION);
-        Artifact artifact = readArtifact(MOD_LIST.getRepository(), meta);
+        @Nullable Artifact artifact = readArtifact(MOD_LIST.getRepository(), meta);
 
-        if (!artifact.getFile().getParentFile().exists() && !artifact.getFile().getParentFile().mkdirs()) {
-            throw new InstallationException("Could not create parent directories for " + artifact.getFile());
-        }
-        MOD_LIST.getRepository().archive(artifact, artifactPath.toFile(), manifestData);
         try {
+            if (artifact == null) {
+                ModWinder.LOGGER.warn("{}'s Maven-Artifact attribute is absent, putting in mods", mod.getName());
+                ModDeleter.scheduleModDeletion(mod.getModId());
+                return Files.copy(artifactPath, modsDir.toPath().resolve(originalName)).toFile();
+            }
+
+            if (!artifact.getFile().getParentFile().exists() && !artifact.getFile().getParentFile().mkdirs()) {
+                throw new InstallationException("Could not create parent directories for " + artifact.getFile());
+            }
+            MOD_LIST.getRepository().archive(artifact, artifactPath.toFile(), manifestData);
             // remove the current version of the mod
             List<Artifact> artifacts = ReflectionHelper.getPrivateValue(ModList.class, MOD_LIST, "artifacts");
             Map<String, Artifact> art_map = ReflectionHelper.getPrivateValue(ModList.class, MOD_LIST, "art_map");
@@ -356,11 +364,41 @@ public class AddonInstaller {
             LOCAL_MODS.save();
             MOD_LIST.save();
         } catch (Throwable e) {
-            throw new InstallationException("Could not archive downloaded mod " + artifact.getFilename(), e);
+            throw new InstallationException("Could not archive downloaded mod " + (artifact != null ? artifact.getFilename() : originalName), e);
         }
         return artifact.getFile();
     }
 
+    /**
+     *
+     * @param artifactPath the path to an existing JAR file
+     * @return a pair of the manifest's binary data and its parsed attributes
+     */
+    @Nonnull
+    private static Pair<byte[], Attributes> readManifestData(Path artifactPath) {
+        // Read the jar's manifest to get required artifact information
+        try {
+            Attributes meta;
+            byte[] manifestData;
+            byte[] data = Files.readAllBytes(artifactPath);
+            //We use zip input stream directly, as the current Oracle implementation of JarInputStream only works when the manifest is the First/Second entry in the jar...
+            try (ZipInputStream zi = new ZipInputStream(new ByteArrayInputStream(data))) {
+                ZipEntry ze;
+                while ((ze = zi.getNextEntry()) != null) {
+                    if (ze.getName().equalsIgnoreCase(JarFile.MANIFEST_NAME)) {
+                        manifestData = IOUtils.toByteArray(zi);
+                        meta = new Manifest(new ByteArrayInputStream(manifestData)).getMainAttributes();
+                        return Pair.of(manifestData, meta);
+                    }
+                }
+            }
+            throw new InstallationException("Could not find manifest data in downloaded file " + artifactPath.toFile().getName());
+        } catch (IOException e) {
+            throw new InstallationException("Could not read manifest data from downloaded file " + artifactPath.toFile().getName(), e);
+        }
+    }
+
+    @Nullable
     private static Artifact readArtifact(Repository repo, Attributes meta) {
         String timestamp = meta.getValue(new Attributes.Name("Timestamp"));
         if (timestamp != null) {
@@ -369,7 +407,7 @@ public class AddonInstaller {
 
         String mavenArtifact = meta.getValue(new Attributes.Name("Maven-Artifact"));
         if (mavenArtifact == null) {
-            throw new InstallationException("The Maven-Artifact attribute is absent");
+            return null;
         }
         return new Artifact(repo, mavenArtifact, timestamp);
     }
