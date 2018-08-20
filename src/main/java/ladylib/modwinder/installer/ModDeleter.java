@@ -1,7 +1,6 @@
 package ladylib.modwinder.installer;
 
 import com.google.common.annotations.VisibleForTesting;
-import ladylib.LadyLib;
 import ladylib.modwinder.ModWinder;
 import net.minecraftforge.fml.common.DummyModContainer;
 import net.minecraftforge.fml.common.Loader;
@@ -42,17 +41,21 @@ public class ModDeleter extends Thread {
         }
         commandArgs.add(java);
         if (!llSource.isDirectory()) {
-            commandArgs.add("-jar");
+            commandArgs.add("-cp");
             commandArgs.add(llSource.getAbsolutePath());
             runDir = runDir.getParentFile();
         }
         commandArgs.add(ModDeleter.class.getName());
         commandArgs.add(modsDir.toString());
-        modsToDelete.stream().map(File::getAbsolutePath).forEach(commandArgs::add);
-        ProcessBuilder processBuilder = new ProcessBuilder(commandArgs);
-        processBuilder.directory(runDir);
-        LadyLib.LOGGER.info("Starting {} in {}", String.join(" ", commandArgs), runDir);
         try {
+            for (File file : modsToDelete) {
+                commandArgs.add(file.getCanonicalPath());
+            }
+            ProcessBuilder processBuilder = new ProcessBuilder(commandArgs);
+            processBuilder.directory(runDir);
+            processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+            processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
+            Logger.getGlobal().log(Level.INFO,  "Starting {} in {}", new Object[]{String.join(" ", commandArgs), runDir});
             processBuilder.start();
         } catch (IOException e) {
             ModWinder.LOGGER.error("Could not start mod remover process", e);
@@ -117,7 +120,7 @@ public class ModDeleter extends Thread {
         modsDir = Paths.get(args[0]);
         // Wait for the main application to shutdown completely
         try {
-            Thread.sleep(1_000);
+            Thread.sleep(5_000);
         } catch (InterruptedException e) {
             Logger.getGlobal().log(Level.WARNING, "Got interrupted, aborting operation", e);
             return;
