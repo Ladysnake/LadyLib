@@ -1,0 +1,35 @@
+modwinder.status.outdated=Diese Mod ist veraltet
+modwinder.status.outdated.latest_version=Neuste Version: %s
+
+modwinder.status.downloading.start=Lade neuste Version herunter
+modwinder.status.downloading.file=Lade %s herunter
+modwinder.status.installing=Installiere %s
+modwinder.status.installing.end=Installation abgeschlossen
+modwinder.status.installed=Die neuste Version wurde erfolgreiche installiert
+modwinder.status.uninstalled=Dieser Mod wurde deinstalliert
+modwinder.status.restart=Bitte starte das Spiel neu
+modwinder.status.failed=Installation fehlgeschlagen, überprüfe die Logs für mehr Informationen
+modwinder.status.uninstalled.failed=Deinstallation is fehlgeschlagen, überprüfe die Logs für mehr Informationen
+
+modwinder.dlc=%d DLC(s)
+modwinder.changelog=Changelog
+modwinder.cf_description=Beschreibung
+modwinder.menu.title=Mod Bar
+
+modwinder.restart.1=Eine oder mehrere Mods wurden installiert
+modwinder.restart.2=Möchtest du das Spiel jetzt neustarten?
+modwinder.restart.yes=Quit now
+modwinder.restart.no=Later
+
+modwinder.hint=Doppelklicke auf eine Mod um die neuste Version zu installieren
+modwinder.hint.uninstall=Deinstallierte Mods können direkt wieder installiert werden
+
+modwinder.waiting=Warte auf Abschluss anderer Installationen
+modwinder.java_warning_1=Deine Minecraft installation benutzt eine veraltete Minecraft version
+modwinder.java_warning.info=Mehr Informationen
+modwinder.java_warning_2=Bitte konfiguriere deinen Launcher um eine aktuelle Java version zu nutzen
+
+modwinder.update_all=Update All
+modwinder.list.all=All
+modwinder.list.ladysnake_approved=Barman's choice
+modwinder.list.others=Others
