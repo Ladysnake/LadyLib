@@ -11,12 +11,11 @@ modwinder.status.restart=Merci de redémarrer le jeu
 modwinder.status.failed=L'installation a échoué, lisez les logs pour plus d'information
 modwinder.status.uninstalled.failed=La désinstallation a échoué, lisez les logs pour plus d'information
 
-
-
 modwinder.dlc=%d DLC(s)
 modwinder.changelog=Changelog
 modwinder.cf_description=Description
 modwinder.menu.title=Bar à Mods
+
 modwinder.restart.1=Un ou plusieurs mods ont été installés
 modwinder.restart.2=Merci de redémarrer le jeu pour appliquer les changements
 modwinder.restart.yes=Quitter
@@ -30,4 +29,7 @@ modwinder.java_warning_1=Votre Minecraft utilise une version de Java dépassée
 modwinder.java_warning.info=Plus d'information
 modwinder.java_warning_2=Merci de configurer votre launcher pour utiliser une version récente de Java
 
-modwinder.update_all=Update All
+modwinder.update_all=Tout mettre à jour
+modwinder.list.all=Tous
+modwinder.list.ladysnake_approved=Choix du barman
+modwinder.list.others=Autres
