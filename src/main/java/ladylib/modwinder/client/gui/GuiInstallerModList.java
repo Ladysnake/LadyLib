@@ -49,9 +49,9 @@ public class GuiInstallerModList extends GuiScrollingList {
     @Override
     protected void elementClicked(int index, boolean doubleClick) {
         this.selectedSlot = index;
-        this.parent.onModEntrySelected();
+        ModEntry selected = flattenedEntries.get(index);
+        this.parent.onModEntrySelected(selected);
         if (doubleClick) {
-            ModEntry selected = flattenedEntries.get(index);
             if (selected.getInstallationState().getStatus().canInstall(selected) && !AddonInstaller.attemptReEnabling(selected)) {
                 AddonInstaller.installLatestFromCurseforge(selected);
                 // update DLCs while we are at it

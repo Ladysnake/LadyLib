@@ -10,7 +10,7 @@ import org.apache.logging.log4j.Logger;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-@Mod(modid = ModWinder.MOD_ID, version = "1.0", dependencies = LadyLib.DEPENDENCIES)
+@Mod(modid = ModWinder.MOD_ID, version = "1.1", dependencies = LadyLib.DEPENDENCIES)
 public class ModWinder {
 
     public static final String MOD_ID = "modwinder";

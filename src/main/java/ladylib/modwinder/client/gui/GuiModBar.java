@@ -398,8 +398,8 @@ public class GuiModBar extends GuiScreen {
         this.hoveringText = Arrays.asList(hoveringText);
     }
 
-    public void onModEntrySelected() {
-        this.changelogButton.enabled = true;
+    public void onModEntrySelected(ModEntry selected) {
+        this.changelogButton.enabled = selected.getChangelog() != null;
         this.descriptionButton.enabled = true;
     }
 }
