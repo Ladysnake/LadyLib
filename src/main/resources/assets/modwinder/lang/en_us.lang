@@ -31,5 +31,4 @@ modwinder.java_warning_2=Please configure your launcher to use a recent version 
 
 modwinder.update_all=Update All
 modwinder.list.all=All
-modwinder.list.ladysnake_approved=Barman's choice
-modwinder.list.others=Others
+modwinder.list.ladysnake=Ladysnake
