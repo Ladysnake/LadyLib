@@ -119,6 +119,25 @@ public final class ReflectionUtil {
     }
 
     /**
+     * Finds a field with the specified SRG name and type in the given class and returns its value for the given <code>instance</code>.<br>
+     * Note: for performance, avoid using this method when you need to obtain the value more than once.
+     * <p>
+     * Throws an exception if the field is not found.
+     *
+     * @param clazz        The class to find the method on.
+     * @param instance     An instance of <code>clazz</code>. Use <code>null</code> if the field is static.
+     * @param fieldObfName The obfuscated name of the method to find (used in obfuscated environments, i.e. "getWorldTime").
+     * @param type         The type of the field to find.
+     * @return The value of the field for the given instance.
+     * @throws UnableToFindFieldException if an issue prevents the field from being reflected
+     */
+    public static <C, T> void setPrivateValue(Class<C> clazz, @Nullable C instance, String fieldObfName, Class<? super T> type, T value) {
+        String deobfName = FMLDeobfuscatingRemapper.INSTANCE.mapFieldName(clazz.getName().replace('.', '/'), fieldObfName, Type.getType(type).getDescriptor());
+        // Since deobfName will be the obfuscated name when in an obfuscated environment, it's the only value we need to pass
+        ReflectionHelper.setPrivateValue(clazz, instance, value, deobfName);
+    }
+
+    /**
      * Finds a method with the specified SRG name and parameters in the given class and generates a {@link MethodHandle method handle} for it. <br>
      * Note: for performance, store the returned value and avoid calling this repeatedly.
      * <p>

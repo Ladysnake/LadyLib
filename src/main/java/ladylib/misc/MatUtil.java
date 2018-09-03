@@ -11,6 +11,9 @@ import java.util.Arrays;
 public final class MatUtil {
     private MatUtil() { }
 
+    private static float[] inArray = new float[16];
+    private static float[] outArray = new float[16];
+
     public static void invertMat4(float[] matOut, float[] m) {
         matOut[0] = (m[5] * m[10] * m[15] - m[5] * m[11] * m[14] - m[9] * m[6] * m[15] + m[9] * m[7] * m[14] + m[13] * m[6] * m[11] - m[13] * m[7] * m[10]);
         matOut[1] = (-m[1] * m[10] * m[15] + m[1] * m[11] * m[14] + m[9] * m[2] * m[15] - m[9] * m[3] * m[14] - m[13] * m[2] * m[11] + m[13] * m[3] * m[10]);
@@ -40,7 +43,7 @@ public final class MatUtil {
     }
 
     public static void invertMat4FBFA(FloatBuffer fbInvOut, FloatBuffer fbMatIn) {
-        invertMat4FBFA(fbInvOut, fbMatIn, new float[16], new float[16]);
+        invertMat4FBFA(fbInvOut, fbMatIn, outArray, inArray);
     }
 
     public static void invertMat4FBFA(FloatBuffer fbInvOut, FloatBuffer fbMatIn, float[] faInv, float[] faMat) {

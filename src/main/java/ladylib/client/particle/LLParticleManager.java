@@ -47,6 +47,10 @@ public class LLParticleManager {
     private final Map<IParticleDrawingStage, Queue<ISpecialParticle>> particles = new HashMap<>();
     private final Set<ResourceLocation> particleTextures = new HashSet<>();
 
+    public static LLParticleManager getInstance() {
+        return LadyLib.getParticleManager();
+    }
+
     /**
      * Convenience method that can be called at preinit to register particle textures to be added in the atlas. <br/>
      * Using this method to register particle textures is not mandatory, mods can use their own event subscriber.
