@@ -1,5 +1,6 @@
 package ladylib.client.particle;
 
+import ladylib.LadyLib;
 import ladylib.config.LLConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.Particle;
