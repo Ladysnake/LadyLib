@@ -1,21 +1,29 @@
 package ladylib.client.shader;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import ladylib.LadyLib;
+import ladylib.client.command.ShaderReloadCommand;
 import ladylib.misc.MatUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.EntityRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.renderer.texture.ITextureObject;
 import net.minecraft.client.resources.IReloadableResourceManager;
 import net.minecraft.client.resources.IResourceManager;
+import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.client.shader.Shader;
 import net.minecraft.client.shader.ShaderGroup;
+import net.minecraft.client.shader.ShaderUniform;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -32,9 +40,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.IntConsumer;
 
 import static net.minecraft.client.renderer.OpenGlHelper.glGetProgramInfoLog;
 import static net.minecraft.client.renderer.OpenGlHelper.glGetProgrami;
@@ -44,20 +54,34 @@ import static org.lwjgl.opengl.GL20.*;
  * A class offering several utility methods to create, use and configure shaders
  */
 @SideOnly(Side.CLIENT)
+@Mod.EventBusSubscriber(value = Side.CLIENT, modid = LadyLib.MOD_ID)
 public final class ShaderUtil {
     private ShaderUtil() { }
 
     public static final String SHADER_LOCATION_PREFIX = "shaders/";
 
+    private static boolean initialized = false;
+    /**Used for opengl interactions such as matrix retrieval*/
+    private static FloatBuffer buffer = BufferUtils.createFloatBuffer(16);
+    /**A secondary buffer for the same purpose as {@link #buffer}*/
+    private static FloatBuffer buffer1 = BufferUtils.createFloatBuffer(16);
+
+    /* Generic shaders variables */
+
     private static int prevProgram = 0;
     private static int currentProgram = 0;
+
+    /**Map of shader id's to opengl shader names*/
+    private static final Object2IntMap<ResourceLocation> linkedShaders = new Object2IntOpenHashMap<>();
+    /**A map of programs to maps of uniform names to location*/
+    private static final Int2ObjectMap<Object2IntMap<String>> uniformsCache = new Int2ObjectOpenHashMap<>();
+
+    /* Screen shader variables */
+
     private static final Map<ResourceLocation, ShaderGroup> screenShaders = new HashMap<>();
     private static boolean resetScreenShaders;
     private static int oldDisplayWidth = Minecraft.getMinecraft().displayWidth;
     private static int oldDisplayHeight = Minecraft.getMinecraft().displayHeight;
-
-    private static final Object2IntMap<ResourceLocation> linkedShaders = new Object2IntOpenHashMap<>();
-    private static boolean initialized = false;
 
     private static boolean shouldUseShaders() {
         return OpenGlHelper.shadersSupported;
@@ -70,6 +94,7 @@ public final class ShaderUtil {
         if (!initialized) {
             Minecraft mc = Minecraft.getMinecraft();
             ((IReloadableResourceManager) mc.getResourceManager()).registerReloadListener(ShaderUtil::loadShaders);
+            ClientCommandHandler.instance.registerCommand(new ShaderReloadCommand());
             initialized = true;
         }
     }
@@ -100,6 +125,46 @@ public final class ShaderUtil {
     }
 
     /**
+     * Sets the value of an attribute from the current shader program using the given operation.
+     * <p>
+     * <code>operation</code> will only be called if shaders are enabled and an attribute with the given name exists
+     * in the current program. It should call one of {@link GL20} attrib functions (eg. {@link GL20#glBindAttribLocation(int, int, ByteBuffer)}).
+     *
+     * @param attribName the name of the attribute field in the shader source file
+     * @param operation   a gl operation to apply to this uniform
+     */
+    public static void setAttribValue(String attribName, IntConsumer operation) {
+        if (!shouldUseShaders() || currentProgram == 0) {
+            return;
+        }
+
+        int attrib = GL20.glGetAttribLocation(currentProgram, attribName);
+        if (attrib != -1) {
+            operation.accept(attrib);
+        }
+    }
+
+    /**
+     * Sets the value of a uniform from the current shader program using the given operation.
+     * <p>
+     * <code>operation</code> will only be called if shaders are enabled and a uniform with the given name exists
+     * in the current program. It should call one of {@link GL20} uniform functions (eg. {@link GL20#glUniform1(int, IntBuffer)}).
+     *
+     * @param uniformName the name of the uniform field in the shader source file
+     * @param operation   a gl operation to apply to this uniform
+     */
+    public static void setUniformValue(String uniformName, IntConsumer operation) {
+        if (!shouldUseShaders() || currentProgram == 0) {
+            return;
+        }
+
+        int uniform = getUniform(uniformName);
+        if (uniform != -1) {
+            operation.accept(uniform);
+        }
+    }
+
+    /**
      * Sets the value of an int uniform from the current shader program
      *
      * @param uniformName the name of the uniform field in the shader source file
@@ -110,7 +175,7 @@ public final class ShaderUtil {
             return;
         }
 
-        int uniform = GL20.glGetUniformLocation(currentProgram, uniformName);
+        int uniform = getUniform(uniformName);
         if (uniform != -1) {
             GL20.glUniform1i(uniform, value);
         }
@@ -129,7 +194,7 @@ public final class ShaderUtil {
             return;
         }
 
-        int uniform = GL20.glGetUniformLocation(currentProgram, uniformName);
+        int uniform = getUniform(uniformName);
         if (uniform != -1) {
             switch (values.length) {
                 case 1:
@@ -161,10 +226,31 @@ public final class ShaderUtil {
             return;
         }
 
-        int uniform = GL20.glGetUniformLocation(currentProgram, uniformName);
+        int uniform = getUniform(uniformName);
         if (uniform != -1) {
-            GL20.glUniformMatrix4(uniform, true, mat4);
+            GL20.glUniformMatrix4(uniform, false, mat4);
         }
+    }
+
+    private static int getUniform(String uniformName) {
+        uniformsCache.computeIfAbsent(currentProgram, i -> new Object2IntOpenHashMap<>()).computeIfAbsent(uniformName, s -> GL20.glGetUniformLocation(currentProgram, s));
+        // Gets the uniform cache for the current program
+        Object2IntMap<String> shaderUniformsCache = uniformsCache.get(currentProgram);
+        // Computee if absent
+        if (shaderUniformsCache == null) {
+            shaderUniformsCache = new Object2IntOpenHashMap<>();
+            uniformsCache.put(currentProgram, shaderUniformsCache);
+        }
+        // Gets the uniform location from the cache
+        int uniform;
+        if (shaderUniformsCache.containsKey(uniformName)) {
+            uniform = shaderUniformsCache.get(uniformName);
+        } else {
+            // Compute if absent
+            uniform = GL20.glGetUniformLocation(currentProgram, uniformName);
+            shaderUniformsCache.put(uniformName, uniform);
+        }
+        return uniform;
     }
 
     /**
@@ -195,38 +281,51 @@ public final class ShaderUtil {
         GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
     }
 
+    /**
+     * A 16-sized float buffer that can be used to send data to shaders.
+     * Do not use this buffer for long term data storage, it can be cleared at any time.
+     */
+    public static FloatBuffer getTempBuffer() {
+        return buffer;
+    }
+
     public static FloatBuffer getProjectionMatrix() {
-        FloatBuffer projection = BufferUtils.createFloatBuffer(16);
-        GL11.glGetFloat(GL11.GL_PROJECTION_MATRIX, (FloatBuffer) projection.position(0));
-        projection.position(0);
+        FloatBuffer projection = buffer;
+        projection.clear();
+        GL11.glGetFloat(GL11.GL_PROJECTION_MATRIX, projection);
+        projection.rewind();
         return projection;
     }
 
     public static FloatBuffer getProjectionMatrixInverse() {
         FloatBuffer projection = ShaderUtil.getProjectionMatrix();
-        FloatBuffer projectionInverse = BufferUtils.createFloatBuffer(16);
-        MatUtil.invertMat4FBFA((FloatBuffer) projectionInverse.position(0), (FloatBuffer) projection.position(0));
-        projection.position(0);
-        projectionInverse.position(0);
+        FloatBuffer projectionInverse = buffer1;
+        projectionInverse.clear();
+        MatUtil.invertMat4FBFA(projectionInverse, projection);
+        projection.rewind();
+        projectionInverse.rewind();
         return projectionInverse;
     }
 
     /**
-     * This one is actually broken for some reason
+     * Call this once before doing any transform to get the <em>view</em> matrix, then load identity and call this again after
+     * doing any rendering transform to get the <em>model</em> matrix for the rendered object
      */
     public static FloatBuffer getModelViewMatrix() {
-        FloatBuffer modelView = BufferUtils.createFloatBuffer(16);
-        GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, (FloatBuffer) modelView.position(0));
-        modelView.position(0);
+        FloatBuffer modelView = buffer;
+        modelView.clear();
+        GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, modelView);
+        modelView.rewind();
         return modelView;
     }
 
     public static FloatBuffer getModelViewMatrixInverse() {
         FloatBuffer modelView = ShaderUtil.getModelViewMatrix();
-        FloatBuffer modelViewInverse = ByteBuffer.allocateDirect(16 * Float.BYTES).asFloatBuffer();
-        MatUtil.invertMat4FBFA((FloatBuffer) modelViewInverse.position(0), (FloatBuffer) modelView.position(0));
-        modelView.position(0);
-        modelViewInverse.position(0);
+        FloatBuffer modelViewInverse = buffer1;
+        modelViewInverse.clear();
+        MatUtil.invertMat4FBFA(modelViewInverse, modelView);
+        modelView.rewind();
+        modelViewInverse.rewind();
         return modelViewInverse;
     }
 
@@ -286,19 +385,66 @@ public final class ShaderUtil {
             resetScreenShaders();
             GlStateManager.matrixMode(GL11.GL_TEXTURE);
             GlStateManager.loadIdentity();
-            for (ShaderGroup shaderGroup : screenShaders.values()) {
+            final float partialTicks = event.getPartialTicks();
+            screenShaders.forEach((key, shaderGroup) -> {
                 GlStateManager.pushMatrix();
-                setScreenUniform(shaderGroup);
-                shaderGroup.render(event.getPartialTicks());
+                setScreenUniform(key, "SystemTime", System.currentTimeMillis());
+                shaderGroup.render(partialTicks);
                 GlStateManager.popMatrix();
-            }
+            });
             Minecraft.getMinecraft().getFramebuffer().bindFramebuffer(true);
         }
     }
 
-    public static void setScreenUniform(ShaderGroup shaderGroup) {
-        for (Shader shader : shaderGroup.listShaders) {
-            shader.getShaderManager().getShaderUniformOrDefault("SystemTime").set(System.currentTimeMillis());
+    public static void setScreenUniform(ResourceLocation shaderId, String uniformName, int value, int... more) {
+        if (more.length < 3) {
+            // pad the array with zeros
+            int[] temp = new int[3];
+            System.arraycopy(more, 0, temp, 0, more.length);
+            more = temp;
+        }
+        ShaderGroup shaderGroup = screenShaders.get(shaderId);
+        if (shaderGroup != null) {
+            for (Shader shader : shaderGroup.listShaders) {
+                shader.getShaderManager().getShaderUniformOrDefault(uniformName).set(value, more[0], more[1], more[2]);
+            }
+        }
+    }
+
+    public static void setScreenUniform(ResourceLocation shaderId, String uniformName, float value, float... more) {
+        ShaderGroup shaderGroup = screenShaders.get(shaderId);
+        if (shaderGroup != null) {
+            for (Shader shader : shaderGroup.listShaders) {
+                ShaderUniform uniform = shader.getShaderManager().getShaderUniformOrDefault(uniformName);
+                switch (more.length) {
+                    case 0: uniform.set(value); break;
+                    case 1: uniform.set(value, more[0]); break;
+                    case 2: uniform.set(value, more[0], more[1]); break;
+                    case 3: uniform.set(value, more[0], more[1], more[2]); break;
+                    default: throw new IllegalArgumentException("There should be between 1 and 4 values total, got " + more.length);
+                }
+            }
+        }
+    }
+
+    public static void setScreenSampler(ResourceLocation shaderId, String samplerName, ITextureObject texture) {
+        setScreenSampler(shaderId, samplerName, (Object) texture);
+    }
+
+    public static void setScreenSampler(ResourceLocation shaderId, String samplerName, Framebuffer textureFbo) {
+        setScreenSampler(shaderId, samplerName, (Object) textureFbo);
+    }
+
+    public static void setScreenSampler(ResourceLocation shaderId, String samplerName, int textureName) {
+        setScreenSampler(shaderId, samplerName, Integer.valueOf(textureName));
+    }
+
+    private static void setScreenSampler(ResourceLocation shaderId, String samplerName, Object texture) {
+        ShaderGroup shaderGroup = screenShaders.get(shaderId);
+        if (shaderGroup != null) {
+            for (Shader shader : shaderGroup.listShaders) {
+                shader.getShaderManager().addSamplerTexture(samplerName, texture);
+            }
         }
     }
 
@@ -320,7 +466,7 @@ public final class ShaderUtil {
      *
      * @param resourceManager Minecraft's resource manager
      */
-    private static void loadShaders(IResourceManager resourceManager) {
+    public static void loadShaders(IResourceManager resourceManager) {
         if (!shouldUseShaders()) {
             return;
         }
@@ -328,7 +474,10 @@ public final class ShaderUtil {
         MinecraftForge.EVENT_BUS.post(new ShaderRegistryEvent(registeredShaders));
         registeredShaders.forEach((rl, sh) -> {
             try {
-                linkedShaders.put(rl, loadShader(resourceManager, sh.getVertex(), sh.getFragment()));
+                int old = linkedShaders.put(rl, loadShader(resourceManager, sh.getVertex(), sh.getFragment()));
+                if (old > 0) {
+                    glDeleteProgram(old);
+                }
             } catch (Exception e) {
                 LadyLib.LOGGER.error(new FormattedMessage("Could not create shader {} from vertex {} and fragment {}", rl, sh.getVertex(), sh.getFragment(), e));
             }
@@ -383,9 +532,11 @@ public final class ShaderUtil {
         // free up the vertex and fragment shaders
         if (vertexShaderId != 0) {
             glDetachShader(programId, vertexShaderId);
+            glDeleteShader(vertexShaderId);
         }
         if (fragmentShaderId != 0) {
             glDetachShader(programId, fragmentShaderId);
+            glDeleteShader(fragmentShaderId);
         }
 
         // validate the program

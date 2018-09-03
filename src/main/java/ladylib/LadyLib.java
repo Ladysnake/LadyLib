@@ -108,19 +108,28 @@ public class LadyLib {
     @Mod.EventHandler
     public void preInit(@Nonnull FMLPreInitializationEvent event) {
         ASMDataTable dataTable = event.getAsmData();
+
+        // Init automatic registration
         registrar = new AutoRegistrar(dataTable);
         MinecraftForge.EVENT_BUS.register(registrar);
         MinecraftForge.EVENT_BUS.register(registrar.getItemRegistrar());
         MinecraftForge.EVENT_BUS.register(registrar.getBlockRegistrar());
+        registrar.autoRegisterTileEntities(dataTable);
+
+        // Init @EnhancedBusSubscriber
+        EnhancedAutomaticEventSubscriber.inject(dataTable);
+        EnhancedAutomaticEventSubscriber.redistributeEvent(event);
+
+        // Init shaders and particles
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
             clientHandler = new ClientHandlerImpl();
             clientHandler.clientInit();
         }
-        registrar.autoRegisterTileEntities(dataTable);
+
+        // Inject LLContainers
         injectContainers(dataTable);
+        // Init NBT default values
         DefaultValuesSearch.searchDefaultValues(dataTable);
-        EnhancedAutomaticEventSubscriber.inject(dataTable);
-        EnhancedAutomaticEventSubscriber.redistributeEvent(event);
     }
 
     /**

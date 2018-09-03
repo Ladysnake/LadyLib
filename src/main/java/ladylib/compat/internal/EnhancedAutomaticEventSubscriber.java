@@ -67,6 +67,9 @@ public class EnhancedAutomaticEventSubscriber {
             } catch (InstantiationException | InvocationTargetException | NoSuchMethodException e) {
                 LadyLib.LOGGER.error("The class {} cannot be instantiated. Please add a valid constructor or an instance field", targ.getClassName(), e);
                 throw new LoaderException(e);
+            } catch (ExceptionInInitializerError e) {
+                LadyLib.LOGGER.error("Class {} errored during static initialization", targ.getClassName(), e);
+                throw e;
             } catch (Throwable e) {
                 LadyLib.LOGGER.error("An error occurred trying to load an EventBusSubscriber {}", targ.getClassName(), e);
                 throw new LoaderException(e);
