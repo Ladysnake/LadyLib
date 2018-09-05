@@ -286,12 +286,12 @@ public final class ShaderUtil {
      * Do not use this buffer for long term data storage, it can be cleared at any time.
      */
     public static FloatBuffer getTempBuffer() {
+        buffer.clear();
         return buffer;
     }
 
     public static FloatBuffer getProjectionMatrix() {
-        FloatBuffer projection = buffer;
-        projection.clear();
+        FloatBuffer projection = getTempBuffer();
         GL11.glGetFloat(GL11.GL_PROJECTION_MATRIX, projection);
         projection.rewind();
         return projection;
@@ -312,8 +312,7 @@ public final class ShaderUtil {
      * doing any rendering transform to get the <em>model</em> matrix for the rendered object
      */
     public static FloatBuffer getModelViewMatrix() {
-        FloatBuffer modelView = buffer;
-        modelView.clear();
+        FloatBuffer modelView = getTempBuffer();
         GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, modelView);
         modelView.rewind();
         return modelView;

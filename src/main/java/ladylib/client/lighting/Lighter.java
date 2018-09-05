@@ -6,16 +6,17 @@ import ladylib.client.shader.ShaderRegistryEvent;
 import ladylib.client.shader.ShaderUtil;
 import ladylib.compat.EnhancedBusSubscriber;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
+import net.minecraft.init.Items;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
+import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
@@ -49,7 +50,6 @@ public class Lighter {
         event.registerShader(LIGHT_SHADER);
     }
 
-/*
     @SubscribeEvent
     public void onItemToss(ItemTossEvent event) {
         if (!LadyLib.isDevEnv()) return;
@@ -64,15 +64,12 @@ public class Lighter {
             event.setCanceled(true);
         }
     }
-*/
 
     @SubscribeEvent(priority = EventPriority.LOW)
     public void onRenderWorldLast(RenderWorldLastEvent event) {
         if (lights.isEmpty()) return;
 
         Minecraft mc = Minecraft.getMinecraft();
-        // we need access to those options for rendering
-        if (mc.getRenderManager().options == null) return;
 
         int depthTexture = FramebufferReplacement.getMainDepthTexture();
 
@@ -84,48 +81,21 @@ public class Lighter {
         depthMask(false);
         disableDepth();
 
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-        GlStateManager.scale(1F, 1F, 1F);
-        GlStateManager.enableBlend();
-        GlStateManager.disableAlpha();
-        GlStateManager.blendFunc(GL_SRC_ALPHA, GL_ONE); // Modulate blending
+        pushMatrix();
+        color(1.0F, 1.0F, 1.0F, 1.0F);
+        scale(1F, 1F, 1F);
+        enableBlend();
+        disableAlpha();
+        blendFunc(GL_SRC_ALPHA, GL_ONE); // Modulate blending
+
+
         ShaderUtil.useShader(LIGHT_SHADER);
-        ShaderUtil.setUniform("DepthSampler", 2);
-        Entity camera = mc.getRenderViewEntity();
-        if (camera != null) {
-            ShaderUtil.setUniform("PlayerPosition", (float) camera.posX, (float) camera.posY, (float) camera.posZ);
-        }
-        ShaderUtil.setUniform("ViewPort", 0, 0, mc.displayWidth, mc.displayHeight);
-        ShaderUtil.setUniformValue("ViewMatrix", loc -> GL20.glUniformMatrix4(loc, false, ShaderUtil.getModelViewMatrix()));
-        ShaderUtil.setUniformValue("ProjectionMatrix", loc -> GL20.glUniformMatrix4(loc, false, ShaderUtil.getProjectionMatrix()));
-
-        lights.forEach(this::renderLight);
-        ShaderUtil.revert();
-
-        GlStateManager.blendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // restore blending
-        enableDepth();
-        depthMask(true);
-    }
-
-    private void renderLight(Vec3d pos) {
-        double x = pos.x - TileEntityRendererDispatcher.staticPlayerX;
-        double y = pos.y - TileEntityRendererDispatcher.staticPlayerY;
-        double z = pos.z - TileEntityRendererDispatcher.staticPlayerZ;
-        RenderManager renderManager = Minecraft.getMinecraft().getRenderManager();
-
-        Matrix4f viewMatrix = new Matrix4f();
-        viewMatrix.load(ShaderUtil.getModelViewMatrix());
-
-        GlStateManager.pushMatrix();
-        GlStateManager.loadIdentity();
-        GlStateManager.translate((float) x, (float) y, (float) z);
-        GlStateManager.rotate(180.0F - renderManager.playerViewY, 0.0F, 1.0F, 0.0F);
-        GlStateManager.rotate((float) (renderManager.options.thirdPersonView == 2 ? -1 : 1) * -renderManager.playerViewX, 1.0F, 0.0F, 0.0F);
-        ShaderUtil.setUniform("LightPosition", (float)x, (float)y, (float) z);
-        ShaderUtil.setUniformValue("ModelMatrix", loc -> GL20.glUniformMatrix4(loc, false, ShaderUtil.getModelViewMatrix()));
         ShaderUtil.setUniformValue("InverseTransformMatrix", loc -> {
             Matrix4f projectionMatrix = new Matrix4f();
             projectionMatrix.load(ShaderUtil.getProjectionMatrix());
+
+            Matrix4f viewMatrix = new Matrix4f();
+            viewMatrix.load(ShaderUtil.getModelViewMatrix());
 
             Matrix4f projectionViewMatrix      = Matrix4f.mul(projectionMatrix, viewMatrix, null);
             // reuse the projection matrix instead of creating a new one
@@ -137,14 +107,56 @@ public class Lighter {
 
             GL20.glUniformMatrix4(loc, false, buf);
         });
+
+        // Setup overlay rendering
+        ScaledResolution scaledRes = new ScaledResolution(mc);
+        matrixMode(GL_PROJECTION);
+        loadIdentity();
+        ortho(0.0D, scaledRes.getScaledWidth_double(), scaledRes.getScaledHeight_double(), 0.0D, 1000.0D, 3000.0D);
+        matrixMode(GL_MODELVIEW);
+        loadIdentity();
+        translate(0.0F, 0.0F, -2000.0F);
+
+        ShaderUtil.setUniform("DepthSampler", 2);
+        Entity camera = mc.getRenderViewEntity();
+        if (camera != null) {
+            ShaderUtil.setUniform("PlayerPosition", (float) camera.posX, (float) camera.posY, (float) camera.posZ);
+        }
+        ShaderUtil.setUniform("ViewPort", 0, 0, mc.displayWidth, mc.displayHeight);
+        ShaderUtil.setUniformValue("ViewMatrix", loc -> GL20.glUniformMatrix4(loc, false, ShaderUtil.getModelViewMatrix()));
+        ShaderUtil.setUniformValue("ProjectionMatrix", loc -> GL20.glUniformMatrix4(loc, false, ShaderUtil.getProjectionMatrix()));
+        loadIdentity();
+        ShaderUtil.setUniformValue("ModelMatrix", loc -> GL20.glUniformMatrix4(loc, false, ShaderUtil.getModelViewMatrix()));
+
+        int size = lights.size();
+        ShaderUtil.setUniform("u_lightCount", size);
+
+        for (int i = 0; i < size; i++) {
+            Vec3d pos = lights.get(i);
+            double x = pos.x - TileEntityRendererDispatcher.staticPlayerX;
+            double y = pos.y - TileEntityRendererDispatcher.staticPlayerY;
+            double z = pos.z - TileEntityRendererDispatcher.staticPlayerZ;
+            ShaderUtil.setUniform("u_light[" + i + "].position", (float)x, (float)y, (float) z);
+            ShaderUtil.setUniform("u_light[" + i + "].color", 0.5f, 0.3f, 1.0f, 1.0f);
+            ShaderUtil.setUniform("u_light[" + i + "].radius", 0.8f);
+        }
+        // Draw quad over the screen
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferbuilder = tessellator.getBuffer();
-        bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX_NORMAL);
-        bufferbuilder.pos(-2.0D, -2D, 0.0D).tex(0D, 0D).normal(0.0F, 1.0F, 0.0F).endVertex();
-        bufferbuilder.pos(2.0D, -2D, 0.0D).tex(0D, 1D).normal(0.0F, 1.0F, 0.0F).endVertex();
-        bufferbuilder.pos(2.0D, 2D, 0.0D).tex(1D, 1D).normal(0.0F, 1.0F, 0.0F).endVertex();
-        bufferbuilder.pos(-2.0D, 2D, 0.0D).tex(1D, 0D).normal(0.0F, 1.0F, 0.0F).endVertex();
+        bufferbuilder.begin(GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+        bufferbuilder.pos(0.0D, (double)scaledRes.getScaledHeight(), -90.0D).tex(0.0D, 1.0D).endVertex();
+        bufferbuilder.pos((double)scaledRes.getScaledWidth(), (double)scaledRes.getScaledHeight(), -90.0D).tex(1.0D, 1.0D).endVertex();
+        bufferbuilder.pos((double)scaledRes.getScaledWidth(), 0.0D, -90.0D).tex(1.0D, 0.0D).endVertex();
+        bufferbuilder.pos(0.0D, 0.0D, -90.0D).tex(0.0D, 0.0D).endVertex();
         tessellator.draw();
-        GlStateManager.popMatrix();
+        ShaderUtil.revert();
+
+        // restore old values
+        popMatrix();
+        disableBlend();
+        enableAlpha();
+        blendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // restore blending
+        enableDepth();
+        depthMask(true);
     }
 }
