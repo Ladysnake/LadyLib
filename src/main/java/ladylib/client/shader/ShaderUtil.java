@@ -233,7 +233,6 @@ public final class ShaderUtil {
     }
 
     private static int getUniform(String uniformName) {
-        uniformsCache.computeIfAbsent(currentProgram, i -> new Object2IntOpenHashMap<>()).computeIfAbsent(uniformName, s -> GL20.glGetUniformLocation(currentProgram, s));
         // Gets the uniform cache for the current program
         Object2IntMap<String> shaderUniformsCache = uniformsCache.get(currentProgram);
         // Computee if absent

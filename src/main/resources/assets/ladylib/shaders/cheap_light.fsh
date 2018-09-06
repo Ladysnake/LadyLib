@@ -19,7 +19,7 @@ uniform sampler2D DepthSampler;
 uniform mat4 InverseTransformMatrix;
 // The size of the viewport (typically, [0,0,1080,720])
 uniform vec4 ViewPort;
-uniform LightStruct[] u_light;
+uniform LightStruct u_light[100];
 uniform int u_lightCount;
 
 varying vec4 vPosition;
@@ -50,16 +50,15 @@ void main()
     vec3 pixelPosition = CalcEyeFromWindow(sceneDepth).xyz;
 
     vec4 color = vec4(0.);
-    float alpha = 0.;
     for(int i = 0; i < u_lightCount; i++)
     {
       float relativeDepth = smoothstep(1 - u_light[i].radius, 1, 1 - distance(u_light[i].position, pixelPosition));
 
-      color = u_light[i].color;
-      alpha = max(alpha, relativeDepth);
+      vec4 src = u_light[i].color;
+      src.a *= relativeDepth;
+      color.rgb = color.rgb * (1 - src.a) + src.rgb * src.a;
+      color.a = color.a * (1 - src.a) + src.a;
     }
-    texture *= u_light[0].color;
-    texture.a *= alpha;
 
-    gl_FragColor = texture;
+    gl_FragColor = texture * color;
 }

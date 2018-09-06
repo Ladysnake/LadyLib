@@ -23,6 +23,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.util.vector.Matrix4f;
 
+import java.awt.Color;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +40,7 @@ public class Lighter {
     private static final ResourceLocation LIGHT_TEXTURE = new ResourceLocation(LadyLib.MOD_ID, "textures/light.png");
     private static final ResourceLocation LIGHT_SHADER = new ResourceLocation(LadyLib.MOD_ID,"cheap_light");
 
-    private final List<Vec3d> lights = new ArrayList<>();
+    private final List<CheapLight> cheapLights = new ArrayList<>();
 
     public Lighter() {
 
@@ -56,9 +57,9 @@ public class Lighter {
         if (event.getEntityItem().getItem().getItem() == Items.GLOWSTONE_DUST || event.getEntityItem().getItem().getItem() == Items.COAL) {
             Minecraft.getMinecraft().addScheduledTask(() -> {
                 if (event.getEntityItem().getItem().getItem() == Items.GLOWSTONE_DUST) {
-                    lights.add(event.getPlayer().getPositionVector());
+                    cheapLights.add(new CheapLight(event.getPlayer().getPositionVector(), 0.8f, new Color(0.5f, 0.3f, 1.0f, 1.0f)));
                 } else if (event.getEntityItem().getItem().getItem() == Items.COAL) {
-                    lights.clear();
+                    cheapLights.clear();
                 }
             });
             event.setCanceled(true);
@@ -67,7 +68,7 @@ public class Lighter {
 
     @SubscribeEvent(priority = EventPriority.LOW)
     public void onRenderWorldLast(RenderWorldLastEvent event) {
-        if (lights.isEmpty()) return;
+        if (cheapLights.isEmpty()) return;
 
         Minecraft mc = Minecraft.getMinecraft();
 
@@ -128,17 +129,18 @@ public class Lighter {
         loadIdentity();
         ShaderUtil.setUniformValue("ModelMatrix", loc -> GL20.glUniformMatrix4(loc, false, ShaderUtil.getModelViewMatrix()));
 
-        int size = lights.size();
+        int size = Math.min(100, cheapLights.size());
         ShaderUtil.setUniform("u_lightCount", size);
 
         for (int i = 0; i < size; i++) {
-            Vec3d pos = lights.get(i);
+            CheapLight light = cheapLights.get(i);
+            Vec3d pos = light.getPos();
             double x = pos.x - TileEntityRendererDispatcher.staticPlayerX;
             double y = pos.y - TileEntityRendererDispatcher.staticPlayerY;
             double z = pos.z - TileEntityRendererDispatcher.staticPlayerZ;
             ShaderUtil.setUniform("u_light[" + i + "].position", (float)x, (float)y, (float) z);
-            ShaderUtil.setUniform("u_light[" + i + "].color", 0.5f, 0.3f, 1.0f, 1.0f);
-            ShaderUtil.setUniform("u_light[" + i + "].radius", 0.8f);
+            ShaderUtil.setUniform("u_light[" + i + "].color", light.getColor().getRGBComponents(null));
+            ShaderUtil.setUniform("u_light[" + i + "].radius", light.getRadius());
         }
         // Draw quad over the screen
         Tessellator tessellator = Tessellator.getInstance();
