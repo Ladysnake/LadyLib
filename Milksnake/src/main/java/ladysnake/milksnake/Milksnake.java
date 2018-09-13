@@ -10,7 +10,7 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@Mod(modid = Milksnake.MOD_ID, version = "@VERSION@", dependencies = "required-after:ladylib;required-after:forge@[14.23.3.2665,)", clientSideOnly = true, certificateFingerprint = "@FINGERPRINT@")
+@Mod(modid = Milksnake.MOD_ID, version = "@VERSION@", dependencies = "required-after:forge@[14.23.3.2665,);required-after:ladylib;", clientSideOnly = true, certificateFingerprint = "@FINGERPRINT@")
 public class Milksnake {
     public static final String MOD_ID = "milksnake";
     public static final Logger LOGGER = LogManager.getLogger(MOD_ID);

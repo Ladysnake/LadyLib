@@ -29,7 +29,6 @@ modwinder.java_warning_1=Deine Minecraft installation benutzt eine veraltete Min
 modwinder.java_warning.info=Mehr Informationen
 modwinder.java_warning_2=Bitte konfiguriere deinen Launcher um eine aktuelle Java version zu nutzen
 
-modwinder.update_all=Update All
-modwinder.list.all=All
-modwinder.list.ladysnake_approved=Barman's choice
-modwinder.list.others=Others
+modwinder.update_all=Alle aktualisieren
+modwinder.list.all=Alle
+modwinder.list.ladysnake=Ladysnake

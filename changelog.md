@@ -1,4 +1,16 @@
-#####Version 1.12.2-2.2.1
+#####Version 1.12.2-2.2.2 - BUILT
+ModWinder changes:
+- Allowed multiple mod lists to coexist
+- Added an "update all" button
+- Added german translation by Lukas
+- Updated french translation
+- Fixed mod deletion
+- Now allows mods without Maven-Artifact to be installed
+- The changelog button is now disabled when no changelog is available
+
+Miscellaneous:
+- Removed the limit on queued json requests
+#####Version 1.12.2-2.2.1 - BUILT
 - Made ResourceProxy slightly more versatile
 - Various ModWinder fixes
 

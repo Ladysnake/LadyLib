@@ -1,11 +1,13 @@
 {
     "homepage": "https://github.com/Ladysnake/LadyLib/releases",
     "promos": {
-        "1.12.2-latest": "2.2.0",
-        "1.12.2-recommended": "2.2.0"
+        "1.12.2-latest": "2.2.2",
+        "1.12.2-recommended": "2.2.2"
     },
     "1.12.2": {
         "2.1.0": "Add screen shaders\nFix automatic registration for older mappings\nAdd reflection helper methods for obfuscation and method handles",
-        "2.2.0": "Main changes:\n- Introduced ModWinder, an in-game mod installer\n- Moved the NBT serialization facilities around\n- Deprecated `ICustomLocation` in favor of `ItemRenderRegistrationHandler`\n- Added an asset overriding API\nShaders:\n- Added the `saturation` base shader\n- Added some convenience methods for shader registration\n- Improved shader compilation error handling\nAnnotation Magic:\n- Added `@EnhancedBusSubscriber`, an alternative to `@EventBusSubscriber`\n- Allowed `@AutoRegister` to substitute `@ObjectHolder` for when the latter is too rigid\nMiscellaneous:\n- Added package-level documentation\n- Reworked the project's build script"
+        "2.2.0": "Main changes:\n- Introduced ModWinder, an in-game mod installer\n- Moved the NBT serialization facilities around\n- Deprecated `ICustomLocation` in favor of `ItemRenderRegistrationHandler`\n- Added an asset overriding API\nShaders:\n- Added the `saturation` base shader\n- Added some convenience methods for shader registration\n- Improved shader compilation error handling\nAnnotation Magic:\n- Added `@EnhancedBusSubscriber`, an alternative to `@EventBusSubscriber`\n- Allowed `@AutoRegister` to substitute `@ObjectHolder` for when the latter is too rigid\nMiscellaneous:\n- Added package-level documentation\n- Reworked the project's build script",
+        "2.2.1": "- Made ResourceProxy slightly more versatile\n- Various ModWinder fixes",
+        "2.2.2": "ModWinder changes:\n- Allowed multiple mod lists to coexist\n- Added an \"update all\" button\n- Added german translation by Lukas\n- Updated french translation\n- Fixed mod deletion\n- Now allows mods without Maven-Artifact to be installed\n- The changelog button is now disabled when no changelog is available\nMiscellaneous:\n- Removed the limit on queued json requests"
     }
 }
