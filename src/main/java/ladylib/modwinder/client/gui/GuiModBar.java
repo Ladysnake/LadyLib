@@ -161,7 +161,7 @@ public class GuiModBar extends GuiScreen {
     private GuiTextField search;
     private boolean sorted = false;
     private SortType sortType = SortType.NORMAL;
-    private ModWinderList selectedList = ModWinderList.ALL;
+    private ModWinderList selectedList = ModWinderList.getList(ModWinderList.LADYSNAKE);
 
     public GuiModBar(GuiScreen mainMenu) {
         this.mainMenu = mainMenu;
@@ -206,9 +206,6 @@ public class GuiModBar extends GuiScreen {
         buttonList.add(alphabeticalSort);
         x += width + buttonMargin;
         buttonList.add(new GuiButton(SortType.Z_TO_A.buttonID, x, y, width - buttonMargin, 20, "Z-A"));
-
-        // show Ladysnake's selection
-        cycleSelectedList();
     }
 
     /**
@@ -382,8 +379,12 @@ public class GuiModBar extends GuiScreen {
 
     private void cycleSelectedList() {
         this.selectedList = ModWinderList.getNext(this.selectedList);
-        if (I18n.hasKey(selectedList.getUnlocalizedName())) {
-            this.cycleListButton.displayString = I18n.format(selectedList.getUnlocalizedName());
+        if (this.selectedList.getName().equals("others")) {
+            // skip it
+            this.selectedList = ModWinderList.getNext(this.selectedList);
+        }
+        if (I18n.hasKey(this.selectedList.getUnlocalizedName())) {
+            this.cycleListButton.displayString = I18n.format(this.selectedList.getUnlocalizedName());
         } else {
             this.cycleListButton.displayString = selectedList.getName();
         }

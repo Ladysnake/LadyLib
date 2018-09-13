@@ -31,5 +31,4 @@ modwinder.java_warning_2=Merci de configurer votre launcher pour utiliser une ve
 
 modwinder.update_all=Tout mettre à jour
 modwinder.list.all=Tous
-modwinder.list.ladysnake_approved=Choix du barman
-modwinder.list.others=Autres
+modwinder.list.ladysnake=Ladysnake

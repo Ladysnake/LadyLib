@@ -13,6 +13,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public class ModWinderList {
+    public static final String LADYSNAKE = "ladysnake";
     public static final ModWinderList ALL = new ModWinderList("all", ImmutableList.of());
     private static final TreeMap<String, ModWinderList> ALL_LISTS = new TreeMap<>();
 
@@ -46,6 +47,10 @@ public class ModWinderList {
     public static void addList(String name, List<ModEntry> list) {
         ALL_LISTS.put(name, new ModWinderList(name, list));
         ALL.list = ALL_LISTS.values().stream().flatMap(mwl -> mwl.list.stream()).distinct().collect(ImmutableList.toImmutableList());
+    }
+
+    public static ModWinderList getList(String name) {
+        return ALL_LISTS.get(name);
     }
 
     public static ModWinderList getNext(ModWinderList list) {
