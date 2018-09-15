@@ -55,12 +55,12 @@ public class AddonInstaller {
     private AddonInstaller() {
     }
 
-    public static final InstallationState DOWNLOAD_START = new InstallationState(InstallationState.Status.INSTALLING, I18n.format("modwinder.status.downloading.start"));
-    public static final InstallationState DOWNLOAD_FAILED = new InstallationState(InstallationState.Status.FAILED, I18n.format("modwinder.status.failed"));
-    public static final InstallationState INSTALLATION_COMPLETE = new InstallationState(InstallationState.Status.INSTALLED, I18n.format("modwinder.status.installed"), I18n.format("modwinder.status.restart"));
-    public static final InstallationState INSTALLATION_END = new InstallationState(InstallationState.Status.INSTALLING, I18n.format("modwinder.status.installing.end"));
-    public static final InstallationState UNINSTALLED = new InstallationState(InstallationState.Status.UNINSTALLED, I18n.format("modwinder.status.uninstalled"), I18n.format("modwinder.status.restart"));
-    public static final InstallationState UNINSTALL_FAILED = new InstallationState(InstallationState.Status.FAILED, I18n.format("modwinder.status.uninstalled.failed"));
+    public static final InstallationState DOWNLOAD_START = new InstallationState(InstallationState.Status.INSTALLING, "modwinder.status.downloading.start");
+    public static final InstallationState DOWNLOAD_FAILED = new InstallationState(InstallationState.Status.FAILED, "modwinder.status.failed");
+    public static final InstallationState INSTALLATION_COMPLETE = new InstallationState(InstallationState.Status.INSTALLED, "modwinder.status.installed", "modwinder.status.restart");
+    public static final InstallationState INSTALLATION_END = new InstallationState(InstallationState.Status.INSTALLING, "modwinder.status.installing.end");
+    public static final InstallationState UNINSTALLED = new InstallationState(InstallationState.Status.UNINSTALLED, "modwinder.status.uninstalled", "modwinder.status.restart");
+    public static final InstallationState UNINSTALL_FAILED = new InstallationState(InstallationState.Status.FAILED, "modwinder.status.uninstalled.failed");
 
     /**
      * The list of every artifact available in the mods repository

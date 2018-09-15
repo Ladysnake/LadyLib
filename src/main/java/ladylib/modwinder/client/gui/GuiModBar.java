@@ -396,7 +396,7 @@ public class GuiModBar extends GuiScreen {
     }
 
     public void setHoveringText(String... hoveringText) {
-        this.hoveringText = Arrays.asList(hoveringText);
+        this.hoveringText = Arrays.stream(hoveringText).map(I18n::format).collect(Collectors.toList());
     }
 
     public void onModEntrySelected(ModEntry selected) {
