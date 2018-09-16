@@ -1,29 +1,27 @@
 package ladylib.client.lighting;
 
-import net.minecraft.util.math.Vec3d;
-
 import java.awt.*;
 
-public class CheapLight {
-    private Vec3d pos;
-    private float radius;
-    private Color color;
+public interface CheapLight {
 
-    public CheapLight(Vec3d pos, float radius, Color color) {
-        this.pos = pos;
-        this.radius = radius;
-        this.color = color;
-    }
+    double getPosX();
 
-    public Vec3d getPos() {
-        return pos;
-    }
+    double getPosY();
 
-    public float getRadius() {
-        return radius;
-    }
+    double getPosZ();
 
-    public Color getColor() {
-        return color;
-    }
+    double getLastPosX();
+
+    double getLastPosY();
+
+    double getLastPosZ();
+
+    float getRadius();
+
+    Color getColor();
+
+    boolean isExpired();
+
+    void tick();
+
 }

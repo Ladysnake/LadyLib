@@ -1,7 +1,7 @@
 #version 120
 
 uniform mat4 ViewMatrix;
-uniform mat4 ModelMatrix;
+uniform mat4 ModelMatrix = mat4(1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.);
 uniform mat4 ProjectionMatrix;
 
 uniform vec4 ViewPort;

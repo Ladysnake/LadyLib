@@ -6,6 +6,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import ladylib.LadyLib;
 import ladylib.client.command.ShaderReloadCommand;
+import ladylib.client.lighting.FramebufferReplacement;
 import ladylib.misc.MatUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.EntityRenderer;
@@ -278,6 +279,14 @@ public final class ShaderUtil {
             setUniform("texture" + (i + 1), i + 2);
         }
         GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
+    }
+
+    /**
+     *
+     * @return the gl name of the main framebuffer's depth texture
+     */
+    public static int getDepthTexture() {
+        return FramebufferReplacement.getMainDepthTexture();
     }
 
     /**
