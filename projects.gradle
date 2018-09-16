@@ -36,3 +36,11 @@ project(':Milksnake') {
 
     updateJson.versionScheme = '%1$s-%2$s'
 }
+
+project(':TestMod') {
+
+    dependencies {
+        compile rootProject
+    }
+
+}

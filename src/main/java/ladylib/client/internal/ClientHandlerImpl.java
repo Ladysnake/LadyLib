@@ -2,6 +2,7 @@ package ladylib.client.internal;
 
 import ladylib.client.ClientHandler;
 import ladylib.client.ResourceProxy;
+import ladylib.client.lighting.FramebufferReplacement;
 import ladylib.client.particle.LLParticleManager;
 import ladylib.client.shader.ShaderUtil;
 import net.minecraftforge.common.MinecraftForge;
@@ -26,6 +27,7 @@ public class ClientHandlerImpl implements ClientHandler {
      */
     public void clientInit() {
         ShaderUtil.init();
+        FramebufferReplacement.replaceMinecraftFramebuffer();
         MinecraftForge.EVENT_BUS.register(particleManager);
     }
 

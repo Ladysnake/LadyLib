@@ -1,0 +1,12 @@
+[
+  {
+    "modid": "testmod",
+    "name": "TestMod",
+    "description": "Just random stuff to test ladylib features.",
+    "version": "1.0-SNAPSHOT",
+    "mcversion": "1.12.2",
+    "authorList": [
+      "Pyrofab"
+    ]
+  }
+]

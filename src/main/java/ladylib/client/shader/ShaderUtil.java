@@ -6,6 +6,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import ladylib.LadyLib;
 import ladylib.client.command.ShaderReloadCommand;
+import ladylib.client.lighting.FramebufferReplacement;
 import ladylib.misc.MatUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.EntityRenderer;
@@ -233,7 +234,6 @@ public final class ShaderUtil {
     }
 
     private static int getUniform(String uniformName) {
-        uniformsCache.computeIfAbsent(currentProgram, i -> new Object2IntOpenHashMap<>()).computeIfAbsent(uniformName, s -> GL20.glGetUniformLocation(currentProgram, s));
         // Gets the uniform cache for the current program
         Object2IntMap<String> shaderUniformsCache = uniformsCache.get(currentProgram);
         // Computee if absent
@@ -282,16 +282,24 @@ public final class ShaderUtil {
     }
 
     /**
+     *
+     * @return the gl name of the main framebuffer's depth texture
+     */
+    public static int getDepthTexture() {
+        return FramebufferReplacement.getMainDepthTexture();
+    }
+
+    /**
      * A 16-sized float buffer that can be used to send data to shaders.
      * Do not use this buffer for long term data storage, it can be cleared at any time.
      */
     public static FloatBuffer getTempBuffer() {
+        buffer.clear();
         return buffer;
     }
 
     public static FloatBuffer getProjectionMatrix() {
-        FloatBuffer projection = buffer;
-        projection.clear();
+        FloatBuffer projection = getTempBuffer();
         GL11.glGetFloat(GL11.GL_PROJECTION_MATRIX, projection);
         projection.rewind();
         return projection;
@@ -312,8 +320,7 @@ public final class ShaderUtil {
      * doing any rendering transform to get the <em>model</em> matrix for the rendered object
      */
     public static FloatBuffer getModelViewMatrix() {
-        FloatBuffer modelView = buffer;
-        modelView.clear();
+        FloatBuffer modelView = getTempBuffer();
         GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, modelView);
         modelView.rewind();
         return modelView;
