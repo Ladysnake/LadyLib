@@ -43,4 +43,9 @@ project(':TestMod') {
         compile rootProject
     }
 
+    signJar {
+        inputFile = jar.archivePath
+        outputFile = jar.archivePath
+    }
+
 }

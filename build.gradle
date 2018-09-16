@@ -32,6 +32,11 @@ project(':Milksnake') {
     archivesBaseName = "Milksnake"
 }
 
+project(':TestMod') {
+    version = TestVersion
+    archivesBaseName = "TestMod"
+}
+
 allprojects {
 
     minecraft {

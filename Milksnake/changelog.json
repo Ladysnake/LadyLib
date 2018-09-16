@@ -1,11 +1,12 @@
 {
     "homepage": "https://minecraft.curseforge.com/projects/milksnake",
     "promos": {
-        "1.12.2-latest": "1.12.2-1.1",
-        "1.12.2-recommended": "1.12.2-1.1"
+        "1.12.2-latest": "1.12.2-1.1.1",
+        "1.12.2-recommended": "1.12.2-1.1.1"
     },
     "1.12.2": {
         "1.12.2-1.0": "Initial release",
-        "1.12.2-1.1": "- Added an \"Update All\" button\n- Separated mod entries into two lists - \"Ladysnake\" and \"Others\"\n- Mods can now be deleted after an update (Including manually installed ones !)\n- The changelog button is now disabled when no changelog is available\n- Added german translation by Lukas\n- Updated french translation"
+        "1.12.2-1.1": "- Added an \"Update All\" button\n- Separated mod entries into two lists - \"Ladysnake\" and \"Others\"\n- Mods can now be deleted after an update (Including manually installed ones !)\n- The changelog button is now disabled when no changelog is available\n- Added german translation by Lukas\n- Updated french translation",
+        "1.12.2-1.1.1": "- Update contained LadyLib\n- Fixed installation state localization not being updated with lang setting"
     }
 }
