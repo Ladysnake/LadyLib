@@ -5,10 +5,40 @@ Ladysnake's library mod for minecraft modding
 This library aims to alleviate some pains of modding as well as to provide utilities for various things.
 
 ## Installation
-This project can be used in two ways.
-The first is through the use of git submodules, though this is intended mainly for contributors. 
-You can see an example build.gradle for this in the [LadyLibProject](https://github.com/Ladysnake/LadyLibProject).
-The other is as a proper gradle dependency through [jitpack](https://jitpack.io/#Pyrofab/Ladylib/).
+To use this library in your workspace, the main way is to declare it as a gradle dependency with [jitpack](https://jitpack.io/#Pyrofab/Ladylib/). You are encouraged to use Forge's [contained dependencies feature](https://mcforge.readthedocs.io/en/latest/gettingstarted/dependencymanagement/#dependency-extraction) to ship the library in your mod's jar.
+
+Sample code to add to your buildscript:
+```gradle
+repositories {
+    maven {
+        url 'https://jitpack.io'
+    }
+}
+
+configurations {
+    contained
+    contained.transitive = false
+}
+
+dependencies {
+    deobfCompile 'com.github.Ladysnake:Ladylib:2.3.0' // replace with latest ladylib version (even better, put it in gradle.properties)
+    contained 'com.github.Ladysnake:Ladylib:2.3.0'
+}
+
+jar {
+    from(configurations.contained.files) {
+        include '*'
+        into 'META-INF/libraries'
+    }
+    manifest {
+        attributes([
+                'ContainedDeps': configurations.contained.files.collect { it.name }.join(" "),
+                'Maven-Artifact': "${project.group}:${project.archivesBaseName}:${project.version}",
+                'Timestamp'     : System.currentTimeMillis()
+        ])
+    }
+}
+```
 
 ## Main features
 * Annotation-based registration
