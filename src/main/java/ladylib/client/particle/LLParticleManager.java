@@ -2,6 +2,7 @@ package ladylib.client.particle;
 
 import ladylib.LadyLib;
 import ladylib.config.LLConfig;
+import ladylib.misc.PublicApi;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.renderer.ActiveRenderInfo;
@@ -48,8 +49,9 @@ public class LLParticleManager {
     private final Map<IParticleDrawingStage, Queue<ISpecialParticle>> particles = new HashMap<>();
     private final Set<ResourceLocation> particleTextures = new HashSet<>();
 
+    @PublicApi
     public static LLParticleManager getInstance() {
-        return LadyLib.getParticleManager();
+        return LadyLib.INSTANCE.getClientHandler().getParticleManager();
     }
 
     /**
@@ -58,8 +60,21 @@ public class LLParticleManager {
      *
      * @param location a resource location indicating where to find the texture in assets
      */
+    @PublicApi
     public void registerParticleTexture(ResourceLocation location) {
         particleTextures.add(location);
+    }
+
+    /**
+     * Adds a particle to this manager. It will then be ticked and rendered until it's marked dead.
+     * @param p the particle to be added
+     */
+    @PublicApi
+    public void addParticle(ISpecialParticle p) {
+        // If we can't even tick them, don't add them
+        if (particles.values().stream().mapToInt(Collection::size).sum() < LLConfig.maxParticles * 3) {
+            particles.computeIfAbsent(p.getDrawStage(), i -> new ArrayDeque<>()).add(p);
+        }
     }
 
     @SubscribeEvent
@@ -156,13 +171,6 @@ public class LLParticleManager {
         Particle.interpPosY = player.lastTickPosY + (player.posY - player.lastTickPosY) * partialTicks;
         Particle.interpPosZ = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * partialTicks;
         Particle.cameraViewDir = player.getLook(partialTicks);
-    }
-
-    public void addParticle(ISpecialParticle p) {
-        // If we can't even tick them, don't add them
-        if (particles.values().stream().mapToInt(Collection::size).sum() < LLConfig.maxParticles * 3) {
-            particles.computeIfAbsent(p.getDrawStage(), i -> new ArrayDeque<>()).add(p);
-        }
     }
 
 }

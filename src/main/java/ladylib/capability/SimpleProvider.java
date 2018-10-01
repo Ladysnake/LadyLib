@@ -1,5 +1,6 @@
 package ladylib.capability;
 
+import ladylib.misc.PublicApi;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.capabilities.Capability;
@@ -12,6 +13,7 @@ import javax.annotation.Nonnull;
  * as long as it is handled by the capability's default storage
  * @param <C> the capability type
  */
+@PublicApi
 public class SimpleProvider<C> implements ICapabilitySerializable<NBTBase> {
 
     private Capability<C> capability;

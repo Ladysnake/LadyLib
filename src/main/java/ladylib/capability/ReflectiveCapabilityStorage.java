@@ -1,5 +1,6 @@
 package ladylib.capability;
 
+import com.google.common.annotations.Beta;
 import ladylib.LadyLib;
 import ladylib.nbt.serialization.NBTDeserializationException;
 import ladylib.nbt.serialization.NBTTypeAdapter;
@@ -17,6 +18,7 @@ import java.lang.reflect.Modifier;
  * using the generic NBT serialization system.
  * @param <C> the capability type
  */
+@Beta
 public class ReflectiveCapabilityStorage<C> implements Capability.IStorage<C> {
     private final Class<C> capClass;
     private final NBTTypeAdapter<C, NBTTagCompound> adapter;

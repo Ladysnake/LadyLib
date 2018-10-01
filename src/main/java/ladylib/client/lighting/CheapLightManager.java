@@ -2,23 +2,20 @@ package ladylib.client.lighting;
 
 import com.google.common.annotations.Beta;
 import ladylib.LadyLib;
+import ladylib.client.particle.ISpecialParticle;
 import ladylib.client.shader.ShaderRegistryEvent;
 import ladylib.client.shader.ShaderUtil;
 import ladylib.compat.EnhancedBusSubscriber;
+import ladylib.misc.PublicApi;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.entity.Entity;
-import net.minecraft.init.Items;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
-import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -26,7 +23,6 @@ import net.minecraftforge.fml.relauncher.Side;
 import org.lwjgl.util.vector.Matrix4f;
 
 import javax.annotation.Nonnull;
-import java.awt.Color;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -39,6 +35,18 @@ import static net.minecraft.client.renderer.OpenGlHelper.GL_TEXTURE2;
 import static net.minecraft.client.renderer.OpenGlHelper.defaultTexUnit;
 import static org.lwjgl.opengl.GL11.*;
 
+/**
+ * A light manager that handles custom dynamic lights updates and rendering.
+ * <p>
+ * The lighting implementation consists of a simple depth test, allowing a minimal impact on the framerate.
+ * As a drawback, the quality of larger lights can be lower than expected. <br>
+ * The number of lights is also hard capped at a 100, due to limitations of shader array uniforms.
+ * <p>
+ * Light sources behave mostly like {@link ISpecialParticle particles} in that they are updated each tick and
+ * will only be removed once they are marked as dead.
+ *
+ * @see CheapLight
+ */
 @Beta
 @EnhancedBusSubscriber(side = Side.CLIENT)
 public class CheapLightManager {
@@ -51,10 +59,19 @@ public class CheapLightManager {
 
     private final List<CheapLight> cheapLights = new ArrayList<>();
 
+    /**
+     * Adds a light source to this manager. It will then be ticked and rendered until it's marked {@link CheapLight#isExpired() expired}.
+     * @param light the light source to be added
+     */
+    @PublicApi
     public void addLight(CheapLight light) {
         cheapLights.add(light);
     }
 
+    /**
+     * Gets a stream of every light currently being managed
+     */
+    @PublicApi
     public Stream<CheapLight> getLights() {
         return cheapLights.stream();
     }
@@ -163,8 +180,8 @@ public class CheapLightManager {
         enableDepth();
     }
 
-    Matrix4f projectionMatrix = new Matrix4f();
-    Matrix4f viewMatrix = new Matrix4f();
+    private Matrix4f projectionMatrix = new Matrix4f();
+    private Matrix4f viewMatrix = new Matrix4f();
 
     /**
      * @return the matrix allowing computation of eye space coordinates from window space

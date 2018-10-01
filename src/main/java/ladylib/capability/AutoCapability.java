@@ -1,5 +1,6 @@
 package ladylib.capability;
 
+import ladylib.misc.CalledThroughReflection;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
@@ -18,6 +19,7 @@ public @interface AutoCapability {
      * The capability interface implemented by the annotated class, or <code>void</code>
      * if the class itself should be used for capability registration.
      */
+    @CalledThroughReflection
     Class<?> value() default void.class;
 
     /**
@@ -25,6 +27,7 @@ public @interface AutoCapability {
      * If left to <code>Capability.IStorage</code>, a default storage will be created
      * using LadyLib's NBT serialization system.
      */
+    @CalledThroughReflection
     Class<? extends Capability.IStorage> storage() default Capability.IStorage.class;
 
     /**

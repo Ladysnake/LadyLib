@@ -8,6 +8,7 @@ import org.objectweb.asm.Type;
 
 import javax.annotation.Nullable;
 import java.lang.invoke.*;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -15,16 +16,16 @@ import java.util.Arrays;
 public final class ReflectionUtil {
     private ReflectionUtil() { }
 
-    private static final MethodHandles.Lookup TRUSTED_LOOKUP;
+    private static final Lookup TRUSTED_LOOKUP;
 
     static {
         try {
             // Define black magic.
             // Source: https://gist.github.com/Andrei-Pozolotin/dc8b448dc590183f5459
-            final MethodHandles.Lookup original = MethodHandles.lookup();
-            final Field internal = MethodHandles.Lookup.class.getDeclaredField("IMPL_LOOKUP");
+            final Lookup original = MethodHandles.lookup();
+            final Field internal = Lookup.class.getDeclaredField("IMPL_LOOKUP");
             internal.setAccessible(true);
-            TRUSTED_LOOKUP = (MethodHandles.Lookup) internal.get(original);
+            TRUSTED_LOOKUP = (Lookup) internal.get(original);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new ReflectionFailedException("Could not access trusted lookup", e);
         }
@@ -75,6 +76,7 @@ public final class ReflectionUtil {
      * @return The method with the specified name and parameters in the given class.
      * @throws UnableToFindMethodException if an issue prevents the method from being reflected
      */
+    @PublicApi
     public static Method findMethodFromObfName(Class<?> clazz, String methodObfName, Class<?> returnType, Class<?>... parameterTypes) {
         String methodDesc = Type.getMethodDescriptor(Type.getType(returnType), Arrays.stream(parameterTypes).map(Type::getType).toArray(Type[]::new));
         String deobfName = FMLDeobfuscatingRemapper.INSTANCE.mapMethodName(clazz.getName().replace('.', '/'), methodObfName, methodDesc);
@@ -93,6 +95,7 @@ public final class ReflectionUtil {
      * @return The field with the specified name and type in the given class.
      * @throws UnableToFindFieldException if an issue prevents the field from being reflected
      */
+    @PublicApi
     public static Field findFieldFromObfName(Class<?> clazz, String fieldObfName, Class<?> type) {
         String deobfName = FMLDeobfuscatingRemapper.INSTANCE.mapFieldName(clazz.getName().replace('.', '/'), fieldObfName, Type.getType(type).getDescriptor());
         // Since deobfName will be the obfuscated name when in an obfuscated environment, it's the only value we need to pass
@@ -112,6 +115,7 @@ public final class ReflectionUtil {
      * @return The value of the field for the given instance.
      * @throws UnableToFindFieldException if an issue prevents the field from being reflected
      */
+    @PublicApi
     public static <C, T> T getPrivateValue(Class<C> clazz, @Nullable C instance, String fieldObfName, Class<? super T> type) {
         String deobfName = FMLDeobfuscatingRemapper.INSTANCE.mapFieldName(clazz.getName().replace('.', '/'), fieldObfName, Type.getType(type).getDescriptor());
         // Since deobfName will be the obfuscated name when in an obfuscated environment, it's the only value we need to pass
@@ -128,9 +132,10 @@ public final class ReflectionUtil {
      * @param instance     An instance of <code>clazz</code>. Use <code>null</code> if the field is static.
      * @param fieldObfName The obfuscated name of the method to find (used in obfuscated environments, i.e. "getWorldTime").
      * @param type         The type of the field to find.
-     * @return The value of the field for the given instance.
+     *
      * @throws UnableToFindFieldException if an issue prevents the field from being reflected
      */
+    @PublicApi
     public static <C, T> void setPrivateValue(Class<C> clazz, @Nullable C instance, String fieldObfName, Class<? super T> type, T value) {
         String deobfName = FMLDeobfuscatingRemapper.INSTANCE.mapFieldName(clazz.getName().replace('.', '/'), fieldObfName, Type.getType(type).getDescriptor());
         // Since deobfName will be the obfuscated name when in an obfuscated environment, it's the only value we need to pass
@@ -151,6 +156,7 @@ public final class ReflectionUtil {
      * @return A handle for the method with the specified name and parameters in the given class.
      * @throws UnableToFindMethodException if an issue prevents the method from being reflected
      */
+    @PublicApi
     public static MethodHandle findMethodHandleFromObfName(Class<?> clazz, String methodObfName, Class<?> returnType, Class<?>... parameterTypes) {
         try {
             return MethodHandles.lookup().unreflect(findMethodFromObfName(clazz, methodObfName, returnType, parameterTypes));
@@ -171,6 +177,7 @@ public final class ReflectionUtil {
      * @return A handle for the getter of the field with the specified name and type in the given class.
      * @throws UnableToFindFieldException if an issue prevents the field from being reflected
      */
+    @PublicApi
     public static MethodHandle findGetterFromObfName(Class<?> clazz, String fieldObfName, Class<?> type) {
         try {
             return MethodHandles.lookup().unreflectGetter(findFieldFromObfName(clazz, fieldObfName, type));
@@ -191,6 +198,7 @@ public final class ReflectionUtil {
      * @return A handle for the setter of the field with the specified name and type in the given class.
      * @throws UnableToFindFieldException if an issue prevents the field from being reflected
      */
+    @PublicApi
     public static MethodHandle findSetterFromObfName(Class<?> clazz, String fieldObfName, Class<?> type) {
         try {
             return MethodHandles.lookup().unreflectSetter(findFieldFromObfName(clazz, fieldObfName, type));
@@ -202,14 +210,15 @@ public final class ReflectionUtil {
 
     /**
      * Creates a factory for the given class implementing the given <tt>lambdaType</tt>.
-     * The constructor of the class will be looked up using the default public {@link java.lang.invoke.MethodHandles.Lookup} object.
+     * The constructor of the class will be looked up using the default public {@link Lookup} object.
      *
      * @param clazz       the class for which to create a factory
      * @param invokedName the name of the method to implement in the functional interface
      * @param lambdaType  the class of a functional interface that the factory will implement
      * @return a factory implementing <tt>lambdaType</tt>
-     * @see #createFactory(Class, String, Class, MethodHandles.Lookup)
+     * @see #createFactory(Class, String, Class, Lookup)
      */
+    @PublicApi
     public static <T> T createFactory(Class<?> clazz, String invokedName, Class<?> lambdaType) {
         return createFactory(clazz, invokedName, lambdaType, MethodHandles.lookup());
     }
@@ -224,8 +233,9 @@ public final class ReflectionUtil {
      * @param lookup      the lookup to use to find the constructor
      * @return a factory implementing <tt>lambdaType</tt>
      */
+    @PublicApi
     @SuppressWarnings("unchecked")
-    public static <T> T createFactory(Class<?> clazz, String invokedName, Class<?> lambdaType, MethodHandles.Lookup lookup) {
+    public static <T> T createFactory(Class<?> clazz, String invokedName, Class<?> lambdaType, Lookup lookup) {
         try {
             MethodHandle handle = lookup.findConstructor(clazz, MethodType.methodType(void.class));
             CallSite metafactory = LambdaMetafactory.metafactory(
@@ -246,7 +256,7 @@ public final class ReflectionUtil {
      * @param clazz the class that the returned lookup should report as its own
      * @return a trusted lookup that has all permissions in the given class
      */
-    public static MethodHandles.Lookup getTrustedLookup(Class clazz) {
+    public static Lookup getTrustedLookup(Class clazz) {
         // Invoke black magic.
         return TRUSTED_LOOKUP.in(clazz);
     }

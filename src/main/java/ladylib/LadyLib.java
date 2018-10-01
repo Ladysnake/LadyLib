@@ -6,6 +6,7 @@ import ladylib.client.LLibClientContainer;
 import ladylib.client.internal.ClientHandlerImpl;
 import ladylib.client.particle.LLParticleManager;
 import ladylib.compat.internal.EnhancedAutomaticEventSubscriber;
+import ladylib.misc.PublicApi;
 import ladylib.misc.ReflectionFailedException;
 import ladylib.nbt.serialization.internal.DefaultValuesSearch;
 import ladylib.networking.minecraft.PacketHandler;
@@ -63,14 +64,17 @@ public class LadyLib {
      * Specifically, checks whether the environment is obfuscated or not.
      * @return true if the current environment is deobfuscated
      */
+    @PublicApi
     public static boolean isDevEnv() {
         return (Boolean) Launch.blackboard.get("fml.deobfuscatedEnvironment");
     }
 
     /**
-     * Prints a message if and only if the game is currently running in a development environment
+     * Prints a message if and only if the game is currently running in a development environment. <br>
+     * This is mostly intended as a replacement for temporary debug statements using {@link PrintStream#println(Object)  System.out.println}
      * @param message the message to print
      */
+    @PublicApi
     public static void debug(Object message) {
         if (isDevEnv()) {
             // use a dedicated print stream to accurately display the call origin
@@ -80,10 +84,12 @@ public class LadyLib {
 
     /**
      * @return LadyLib's custom particle manager
+     * @deprecated use directly {@link LLParticleManager#getInstance()}
      */
+    @Deprecated
     @SideOnly(Side.CLIENT)
     public static LLParticleManager getParticleManager() {
-        return INSTANCE.clientHandler.getParticleManager();
+        return LLParticleManager.getInstance();
     }
 
 
@@ -176,6 +182,7 @@ public class LadyLib {
     /**
      * @return the list of every mod wrapper created by LadyLib
      */
+    @PublicApi
     public Collection<LLibContainer> getAllInstances() {
         return allInstances.values();
     }
@@ -189,6 +196,7 @@ public class LadyLib {
      * @param modId the mod id owning the container
      * @return the mod's container
      */
+    @PublicApi
     public LLibContainer getContainer(String modId) {
         return allInstances.computeIfAbsent(modId, this::createContainer);
     }
@@ -205,6 +213,7 @@ public class LadyLib {
      * Gets LadyLib's {@link ItemRegistrar item registrar}.
      * The item registrar offers various methods to make item registration easier.
      */
+    @PublicApi
     public ItemRegistrar getItemRegistrar() {
         return registrar.getItemRegistrar();
     }
@@ -213,6 +222,7 @@ public class LadyLib {
      * Gets LadyLib's {@link BlockRegistrar block registrar}.
      * The block registrar offers various methods to make block registration easier.
      */
+    @PublicApi
     public BlockRegistrar getBlockRegistrar() {
         return registrar.getBlockRegistrar();
     }
