@@ -16,15 +16,15 @@ import java.lang.annotation.Target;
 public @interface AutoCapability {
 
     /**
-     * The capability interface implemented by the annotated class, or <code>void</code>
-     * if the class itself should be used for capability registration.
+     * The capability interface implemented by the annotated class.
+     * Leave unspecified if the class itself should be used for capability registration.
      */
     @CalledThroughReflection
     Class<?> value() default void.class;
 
     /**
      * The storage class for this capability implementation.
-     * If left to <code>Capability.IStorage</code>, a default storage will be created
+     * If left unspecified, a default storage will be created
      * using LadyLib's NBT serialization system.
      */
     @CalledThroughReflection

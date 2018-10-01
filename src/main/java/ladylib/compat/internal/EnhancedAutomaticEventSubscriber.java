@@ -7,6 +7,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.LoaderException;
+import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.discovery.ASMDataTable;
 import net.minecraftforge.fml.common.discovery.asm.ModAnnotation;
 import net.minecraftforge.fml.common.event.*;
@@ -16,12 +17,13 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 import java.util.Set;
 
 public class EnhancedAutomaticEventSubscriber {
-    private static final List<StateEventReceiver> STATE_EVENT_RECEIVERS = new ArrayList<>();
+    private static final Deque<StateEventReceiver> STATE_EVENT_RECEIVERS = new ArrayDeque<>();
 
     public static void inject(ASMDataTable data) {
         Set<ASMDataTable.ASMData> targets = data.getAll(EnhancedBusSubscriber.class.getName());
@@ -42,7 +44,9 @@ public class EnhancedAutomaticEventSubscriber {
                     // Missing some prerequisites
                     return;
                 }
-                LadyLib.LOGGER.debug("Registering @EventBusSubscriber for {}", targ.getClassName());
+                ModContainer current = Loader.instance().activeModContainer();
+                ModContainer owner = Loader.instance().getIndexedModList().getOrDefault(targ.getAnnotationInfo().get("owner"), current);
+                LadyLib.LOGGER.debug("Registering @EnhancedBusSubscriber for {}", targ.getClassName());
                 Class<?> subscriptionTarget = Class.forName(targ.getClassName(), true, mcl);
                 Object instance = null;
                 // Search for an existing instance field
@@ -59,7 +63,9 @@ public class EnhancedAutomaticEventSubscriber {
                     constructor.setAccessible(true);
                     instance = constructor.newInstance();
                 }
+                Loader.instance().setActiveModContainer(owner);
                 MinecraftForge.EVENT_BUS.register(instance);
+                Loader.instance().setActiveModContainer(current);
                 if (instance instanceof StateEventReceiver) {
                     STATE_EVENT_RECEIVERS.add((StateEventReceiver) instance);
                 }

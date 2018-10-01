@@ -1,7 +1,10 @@
 package ladylib.compat;
 
+import ladylib.LadyLib;
+import ladylib.misc.CalledThroughReflection;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLStateEvent;
+import net.minecraftforge.fml.common.eventhandler.IContextSetter;
 import net.minecraftforge.fml.relauncher.Side;
 
 /**
@@ -25,11 +28,19 @@ public @interface EnhancedBusSubscriber {
      * A list of mod IDs that this class requires to be loaded.
      * If any of the mods is missing, the class will not be loaded nor subscribed.
      */
+    @CalledThroughReflection
     String[] value() default "";
+
+    /**
+     * The mod id of the owner of this event handler. Required by any {@link IContextSetter} event.
+     */
+    @CalledThroughReflection
+    String owner() default LadyLib.MOD_ID;
 
     /**
      * The physical sides on which this class can be subscribed to the event bus.
      */
+    @CalledThroughReflection
     Side[] side() default {Side.CLIENT, Side.SERVER};
 
 }
