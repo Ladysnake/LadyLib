@@ -14,6 +14,7 @@ import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.fml.common.discovery.ASMDataTable;
 import org.apache.logging.log4j.message.FormattedMessage;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.*;
 import java.util.List;
 import java.util.Map;
@@ -43,15 +44,15 @@ public class CapabilityRegistrar {
     private <T> void findCapabilityImplementation(CapabilityEventHandler handler, Map<String, Capability<?>> providers, ASMDataTable.ASMData data) throws IllegalAccessException {
         String className = data.getClassName();
         Map<String, Object> annotationInfo = data.getAnnotationInfo();
-        org.objectweb.asm.Type implName = (org.objectweb.asm.Type) annotationInfo.get("value");
+        @Nullable org.objectweb.asm.Type implName = (org.objectweb.asm.Type) annotationInfo.get("value");
         try {
             ClassLoader classLoader = getClass().getClassLoader();
             @SuppressWarnings("unchecked")
             Class<T> clazz = (Class<T>) Class.forName(className, false, classLoader);
             @SuppressWarnings("unchecked")
-            Class<? extends T> impl = implName.getSort() == org.objectweb.asm.Type.OBJECT
-                    ? (Class<? extends T>) Class.forName(implName.getClassName(), false, classLoader)
-                    : clazz;
+            Class<? extends T> impl = implName == null
+                    ? clazz
+                    : (Class<? extends T>) Class.forName(implName.getClassName(), false, classLoader);
             if (!clazz.isAssignableFrom(impl)) {
                 throw new IllegalArgumentException("The given implementation " + impl + " does not implement the capability " + clazz);
             }
@@ -70,15 +71,14 @@ public class CapabilityRegistrar {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> Capability.IStorage<T> createStorage(Class<? extends T> impl, org.objectweb.asm.Type storage) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-        Class<?> clazz = Class.forName(storage.getClassName());
-        if (!Capability.IStorage.class.isAssignableFrom(clazz)) {
-            throw new IllegalStateException("Invalid annotation info, " + storage + " is not a valid storage type");
-        }
-        if (clazz == Capability.IStorage.class) {
+    private <T> Capability.IStorage<T> createStorage(Class<? extends T> impl, @Nullable org.objectweb.asm.Type storage) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+        Class<?> clazz = storage == null ? null : Class.forName(storage.getClassName());
+        if (clazz == null) {
             return new ReflectiveCapabilityStorage(impl);
-        } else {
+        } else if (Capability.IStorage.class.isAssignableFrom(clazz)){
             return (Capability.IStorage<T>) clazz.newInstance();
+        } else {
+            throw new IllegalStateException("Invalid annotation info, " + storage + " is not a valid storage type");
         }
     }
 
