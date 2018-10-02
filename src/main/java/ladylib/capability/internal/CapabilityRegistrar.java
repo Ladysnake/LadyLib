@@ -44,20 +44,21 @@ public class CapabilityRegistrar {
     private <T> void findCapabilityImplementation(CapabilityEventHandler handler, Map<String, Capability<?>> providers, ASMDataTable.ASMData data) throws IllegalAccessException {
         String className = data.getClassName();
         Map<String, Object> annotationInfo = data.getAnnotationInfo();
-        @Nullable org.objectweb.asm.Type implName = (org.objectweb.asm.Type) annotationInfo.get("value");
+        @Nullable org.objectweb.asm.Type intfName = (org.objectweb.asm.Type) annotationInfo.get("value");
         try {
             ClassLoader classLoader = getClass().getClassLoader();
             @SuppressWarnings("unchecked")
-            Class<T> clazz = (Class<T>) Class.forName(className, false, classLoader);
+            Class<? extends T> impl = (Class<T>) Class.forName(className, false, classLoader);
             @SuppressWarnings("unchecked")
-            Class<? extends T> impl = implName == null
-                    ? clazz
-                    : (Class<? extends T>) Class.forName(implName.getClassName(), false, classLoader);
-            if (!clazz.isAssignableFrom(impl)) {
-                throw new IllegalArgumentException("The given implementation " + impl + " does not implement the capability " + clazz);
+            Class<T> cap = (Class<T>) (intfName == null
+                    ? impl
+                    : Class.forName(intfName.getClassName(), false, classLoader)
+            );
+            if (!cap.isAssignableFrom(impl)) {
+                throw new IllegalArgumentException("The given interface " + cap + " is not implemented by the capability " + impl);
             }
             Capability.IStorage<T> storage = createStorage(impl, (org.objectweb.asm.Type) annotationInfo.get("storage"));
-            createRegisterCapability(clazz, impl, storage, handler, providers);
+            createRegisterCapability(cap, impl, storage, handler, providers);
         } catch (IllegalArgumentException | ReflectionUtil.UnableToGetFactoryException | ClassNotFoundException | InstantiationException e) {
             LadyLib.LOGGER.error(new FormattedMessage("Could not register a capability for the class {}", className), e);
         }

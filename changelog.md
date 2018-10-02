@@ -1,5 +1,17 @@
-##### Version 1.12.2-2.3 - BUILT
+##### Version 1.12.2-2.3.2 - BUILT
+Fixed automatic capability registration behaving opposite to what the javadoc says
 
+##### Version 1.12.2-2.3.1 - BUILT
+Miscellaneous:
+- Added `@CalledThroughReflection` and `@PublicApi` annotations for documenting indirectly called methods
+- Added the ability to specify the owning mod on EnhancedBusSubscriber
+- Updated installation instructions
+- Removed the ability to download any mod not made by Ladysnake to better comply with Twitch TOS (sorry lads)
+
+Bugfixes:
+- Fixed automatic capability registrations when defaults are used
+
+##### Version 1.12.2-2.3 - BUILT
 Main changes:
 - Implemented cheap dynamic lights as an alternative to Albedo
 
@@ -27,12 +39,10 @@ Miscellaneous:
 - Removed the limit on queued json requests
 
 ##### Version 1.12.2-2.2.1 - BUILT
-
 - Made ResourceProxy slightly more versatile
 - Various ModWinder fixes
 
 ##### Version 1.12.2-2.2.0 - BUILT
-
 Main changes:
 - Introduced ModWinder, an in-game mod installer
 - Moved the NBT serialization facilities around
@@ -53,7 +63,6 @@ Miscellaneous:
 - Reworked the project's build script
 
 ##### Version 1.12.2-2.1.0 - BUILT
-
 Add screen shaders
 Fix automatic registration for older mappings
 Add reflection helper methods for obfuscation and method handles
