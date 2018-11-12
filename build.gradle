@@ -108,7 +108,10 @@ allprojects {
 apply plugin: 'maven'
 
 sourceSets {
-    ktIntegration
+    ktIntegration {
+        compileClasspath = main.compileClasspath
+        runtimeClasspath = main.runtimeClasspath
+    }
 }
 
 
