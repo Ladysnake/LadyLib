@@ -5,6 +5,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.server.MinecraftServer;
+import net.minecraftforge.client.resource.VanillaResourceType;
+import net.minecraftforge.fml.client.FMLClientHandler;
 
 public class ShaderReloadCommand extends CommandBase {
     @Override
@@ -20,5 +22,6 @@ public class ShaderReloadCommand extends CommandBase {
     @Override
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) {
         ShaderUtil.loadShaders(Minecraft.getMinecraft().getResourceManager());
+        FMLClientHandler.instance().refreshResources(VanillaResourceType.SHADERS);
     }
 }
