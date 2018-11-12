@@ -45,7 +45,7 @@ public class DefaultValuesSearch {
                         }
                         MethodHandles.Lookup lookup = MethodHandles.lookup();
                         MethodHandle mh = lookup.unreflect(method);
-                        CallSite metafactory = LambdaMetafactory.metafactory(
+                        CallSite metaFactory = LambdaMetafactory.metafactory(
                                 lookup,
                                 "get",
                                 MethodType.methodType(Supplier.class),
@@ -53,7 +53,7 @@ public class DefaultValuesSearch {
                                 mh,
                                 MethodType.methodType(typeClass)
                         );
-                        TagAdapters.setDefaultValue(TypeToken.get(typeClass), (Supplier) metafactory.getTarget().invoke());
+                        TagAdapters.setDefaultValue(TypeToken.get(typeClass), (Supplier) metaFactory.getTarget().invoke());
                     } else {
                         Field f = clazz.getDeclaredField(targetName);
                         if (!Modifier.isStatic(f.getModifiers()) || !Modifier.isFinal(f.getModifiers())) {
