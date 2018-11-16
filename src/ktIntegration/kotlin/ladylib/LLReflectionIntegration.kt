@@ -54,12 +54,12 @@ inline fun <reified T, reified R, reified P1, reified P2, reified P3, reified P4
     return LLReflectionHelper.findMethod(T::class.java, methodObfName, R::class.java, P1::class.java, P2::class.java, P3::class.java, P4::class.java)::invoke
 }
 
-class ReflectionDelegate<THIS, VAL>(private val getter: Getter<THIS, VAL>, private val setter: Setter<THIS, VAL>) : ReadWriteProperty<THIS, VAL> {
-    override operator fun getValue(thisRef: THIS, property: KProperty<*>): VAL {
+class ReflectionDelegate<in T, V>(private val getter: Getter<T, V>, private val setter: Setter<T, V>) : ReadWriteProperty<T, V> {
+    override operator fun getValue(thisRef: T, property: KProperty<*>): V {
         return getter(thisRef)
     }
 
-    override operator fun setValue(thisRef: THIS, property: KProperty<*>, value: VAL) {
+    override operator fun setValue(thisRef: T, property: KProperty<*>, value: V) {
         setter(thisRef, value)
     }
 }
