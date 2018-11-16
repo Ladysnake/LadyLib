@@ -1,14 +1,21 @@
 package ladylib.client.shader;
 
 import ladylib.LadyLib;
+import ladylib.compat.EnhancedBusSubscriber;
 import ladylib.misc.PublicApi;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.texture.ITextureObject;
+import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.client.shader.*;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.client.resource.IResourceType;
+import net.minecraftforge.client.resource.ISelectiveResourceReloadListener;
+import net.minecraftforge.client.resource.VanillaResourceType;
+import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import net.minecraftforge.fml.relauncher.Side;
 import org.apache.logging.log4j.message.FormattedMessage;
 import org.lwjgl.opengl.GL11;
 
@@ -16,45 +23,21 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * A post processing shader that is applied to the main framebuffer
  * <p>
- * See <tt>assets/minecraft/shaders</tt> for examples
- * </p>
+ *     Post shaders loaded through {@link #loadScreenShader(ResourceLocation, Runnable)} are self-managed and will be
+ *     reloaded when shader assets are reloaded (through <tt>F3-T</tt> or <tt>/ladylib_shader_reload</tt>) or the
+ *     screen resolution changes.
+ * <p>
+ * @see "<tt>assets/minecraft/shaders</tt> for examples"
  */
-public final class ScreenShader {
+@Mod.EventBusSubscriber(modid = LadyLib.MOD_ID)
+public final class PostProcessShader {
 
-    private static List<ScreenShader> screenShaders = new ArrayList<>();
-    private static int oldDisplayWidth = Minecraft.getMinecraft().displayWidth;
-    private static int oldDisplayHeight = Minecraft.getMinecraft().displayHeight;
-
-    @SubscribeEvent
-    static void onTickRenderTick(TickEvent.RenderTickEvent event) {
-        if (event.phase == TickEvent.Phase.START && ShaderUtil.shouldUseShaders() && !screenShaders.isEmpty()) {
-            updateScreenShaders();
-        }
-    }
-
-    static void resetShaders() {
-        for (ScreenShader ss : screenShaders) {
-            ss.shaderGroup = null;
-        }
-    }
-
-    private static void updateScreenShaders() {
-        Minecraft mc = Minecraft.getMinecraft();
-        if (mc.displayWidth != oldDisplayWidth || oldDisplayHeight != mc.displayHeight) {
-            for (ScreenShader ss : screenShaders) {
-                if (ss.shaderGroup != null) {
-                    ss.shaderGroup.createBindFramebuffers(mc.displayWidth, mc.displayHeight);
-                }
-            }
-
-            oldDisplayWidth = mc.displayWidth;
-            oldDisplayHeight = mc.displayHeight;
-        }
-    }
+    private static List<PostProcessShader> postProcessShaders = new ArrayList<>();
 
     /**
      * Loads a post processing shader from a json definition file
@@ -62,7 +45,7 @@ public final class ScreenShader {
      * @return a lazily initialized screen shader
      */
     @PublicApi
-    public static ScreenShader loadScreenShader(ResourceLocation location) {
+    public static PostProcessShader loadScreenShader(ResourceLocation location) {
         return loadScreenShader(location, () -> {});
     }
 
@@ -73,9 +56,9 @@ public final class ScreenShader {
      * @return a lazily initialized screen shader
      */
     @PublicApi
-    public static ScreenShader loadScreenShader(ResourceLocation location, Runnable uniformInitBlock) {
-        ScreenShader ret = new ScreenShader(location, uniformInitBlock);
-        screenShaders.add(ret);
+    public static PostProcessShader loadScreenShader(ResourceLocation location, Runnable uniformInitBlock) {
+        PostProcessShader ret = new PostProcessShader(location, uniformInitBlock);
+        postProcessShaders.add(ret);
         return ret;
     }
 
@@ -83,14 +66,17 @@ public final class ScreenShader {
     private final Runnable uniformInitBlock;
     @Nullable private ShaderGroup shaderGroup;
 
-    private ScreenShader(ResourceLocation location, Runnable uniformInitBlock) {
+    private PostProcessShader(ResourceLocation location, Runnable uniformInitBlock) {
         this.location = location;
         this.uniformInitBlock = uniformInitBlock;
     }
 
     /**
-     * Creates and initializes this shader's {@link ShaderGroup} if it doesn't exist
+     * Returns this shader's {@link ShaderGroup}, creating and initializing it if it doesn't exist.
+     * <p>
+     *     <em>Note: calling this before the graphic context is ready will cause issues.</em>
      */
+    @PublicApi
     public ShaderGroup getShaderGroup() {
         if (shaderGroup == null) {
             try {
@@ -106,12 +92,19 @@ public final class ScreenShader {
     }
 
     /**
-     * Renders this shader
+     * Renders this shader.
      *
+     * <p>
+     *     Calling this method first setups the graphic state for rendering,
+     *     then uploads uniforms to the GPU if they have been changed since last
+     *     draw, draws the {@link Minecraft#getFramebuffer() main framebuffer}'s texture
+     *     to intermediate {@link Framebuffer framebuffers} as defined by the JSON files
+     *     and resets part of the graphic state.
      * <p>
      *     This method should be called every frame when the shader is active.
      *     Uniforms should be set before rendering.
      */
+    @PublicApi
     public void render(float partialTicks) {
         GlStateManager.matrixMode(GL11.GL_TEXTURE);
         GlStateManager.loadIdentity();
@@ -286,6 +279,44 @@ public final class ScreenShader {
     private void setScreenSampler(String samplerName, Object texture) {
         for (Shader shader : getShaderGroup().listShaders) {
             shader.getShaderManager().addSamplerTexture(samplerName, texture);
+        }
+    }
+
+    @EnhancedBusSubscriber(side = Side.CLIENT)
+    public static class ReloadHandler implements ISelectiveResourceReloadListener {
+        static final ReloadHandler INSTANCE = new ReloadHandler();
+
+        private static int oldDisplayWidth = Minecraft.getMinecraft().displayWidth;
+        private static int oldDisplayHeight = Minecraft.getMinecraft().displayHeight;
+
+        @Override
+        public void onResourceManagerReload(IResourceManager resourceManager, Predicate<IResourceType> resourcePredicate) {
+            if (resourcePredicate.test(VanillaResourceType.SHADERS)) {
+                for (PostProcessShader ss : postProcessShaders) {
+                    ss.shaderGroup = null;
+                }
+            }
+        }
+
+        @SubscribeEvent
+        public void onTickRenderTick(TickEvent.RenderTickEvent event) {
+            if (event.phase == TickEvent.Phase.START && ShaderUtil.shouldUseShaders() && !postProcessShaders.isEmpty()) {
+                updateScreenShaders();
+            }
+        }
+
+        private void updateScreenShaders() {
+            Minecraft mc = Minecraft.getMinecraft();
+            if (mc.displayWidth != oldDisplayWidth || oldDisplayHeight != mc.displayHeight) {
+                for (PostProcessShader ss : postProcessShaders) {
+                    if (ss.shaderGroup != null) {
+                        ss.shaderGroup.createBindFramebuffers(mc.displayWidth, mc.displayHeight);
+                    }
+                }
+
+                oldDisplayWidth = mc.displayWidth;
+                oldDisplayHeight = mc.displayHeight;
+            }
         }
     }
 

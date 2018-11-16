@@ -23,6 +23,9 @@ import net.minecraft.entity.Entity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.client.resource.IResourceType;
+import net.minecraftforge.client.resource.ISelectiveResourceReloadListener;
+import net.minecraftforge.client.resource.VanillaResourceType;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -46,6 +49,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.IntConsumer;
+import java.util.function.Predicate;
 
 import static net.minecraft.client.renderer.OpenGlHelper.glGetProgramInfoLog;
 import static net.minecraft.client.renderer.OpenGlHelper.glGetProgrami;
@@ -94,8 +98,8 @@ public final class ShaderUtil {
     public static void init() {
         if (!initialized) {
             Minecraft mc = Minecraft.getMinecraft();
-            ((IReloadableResourceManager) mc.getResourceManager()).registerReloadListener(ShaderUtil::loadShaders);
-            ((IReloadableResourceManager) mc.getResourceManager()).registerReloadListener(m -> ScreenShader.resetShaders());
+            ((IReloadableResourceManager) mc.getResourceManager()).registerReloadListener((ISelectiveResourceReloadListener) ShaderUtil::loadShaders);
+            ((IReloadableResourceManager) mc.getResourceManager()).registerReloadListener(PostProcessShader.ReloadHandler.INSTANCE);
             ClientCommandHandler.instance.registerCommand(new ShaderReloadCommand());
             initialized = true;
         }
@@ -360,7 +364,7 @@ public final class ShaderUtil {
      *     Unlike shaders enabled through {@link EntityRenderer#loadEntityShader(Entity)}, multiple shaders can
      *     be enabled at once.
      * @param location the location of the shader to load.
-     * @deprecated use {@link ScreenShader}
+     * @deprecated use {@link PostProcessShader}
      */
     @Deprecated
     public static void enableScreenShader(ResourceLocation location) {
@@ -381,7 +385,7 @@ public final class ShaderUtil {
      *     Calling this method when the shader has not been enabled has no effect.
      * @param location the location used to load the shader
      * @see #enableScreenShader(ResourceLocation)
-     * @deprecated use {@link ScreenShader}
+     * @deprecated use {@link PostProcessShader}
      */
     @Deprecated
     public static void disableScreenShader(ResourceLocation location) {
@@ -407,7 +411,7 @@ public final class ShaderUtil {
     }
 
     /**
-     * @deprecated use {@link ScreenShader}
+     * @deprecated use {@link PostProcessShader}
      */
     @Deprecated
     public static void setScreenUniform(ResourceLocation shaderId, String uniformName, int value, int... more) {
@@ -426,7 +430,7 @@ public final class ShaderUtil {
     }
 
     /**
-     * @deprecated use {@link ScreenShader}
+     * @deprecated use {@link PostProcessShader}
      */
     @Deprecated
     public static void setScreenUniform(ResourceLocation shaderId, String uniformName, float value, float... more) {
@@ -446,7 +450,7 @@ public final class ShaderUtil {
     }
 
     /**
-     * @deprecated use {@link ScreenShader}
+     * @deprecated use {@link PostProcessShader}
      */
     @Deprecated
     public static void setScreenSampler(ResourceLocation shaderId, String samplerName, ITextureObject texture) {
@@ -454,7 +458,7 @@ public final class ShaderUtil {
     }
 
     /**
-     * @deprecated use {@link ScreenShader}
+     * @deprecated use {@link PostProcessShader}
      */
     @Deprecated
     public static void setScreenSampler(ResourceLocation shaderId, String samplerName, Framebuffer textureFbo) {
@@ -462,7 +466,7 @@ public final class ShaderUtil {
     }
 
     /**
-     * @deprecated use {@link ScreenShader}
+     * @deprecated use {@link PostProcessShader}
      */
     @Deprecated
     public static void setScreenSampler(ResourceLocation shaderId, String samplerName, int textureName) {
@@ -470,7 +474,7 @@ public final class ShaderUtil {
     }
 
     /**
-     * @deprecated use {@link ScreenShader}
+     * @deprecated use {@link PostProcessShader}
      */
     @Deprecated
     private static void setScreenSampler(ResourceLocation shaderId, String samplerName, Object texture) {
@@ -500,8 +504,8 @@ public final class ShaderUtil {
      *
      * @param resourceManager Minecraft's resource manager
      */
-    public static void loadShaders(IResourceManager resourceManager) {
-        if (!shouldUseShaders()) {
+    private static void loadShaders(IResourceManager resourceManager, Predicate<IResourceType> resourcePredicate) {
+        if (!(shouldUseShaders() && resourcePredicate.test(VanillaResourceType.SHADERS))) {
             return;
         }
         Map<ResourceLocation, ShaderPair> registeredShaders = new HashMap<>();
