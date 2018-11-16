@@ -1,3 +1,18 @@
+##### Version 1.12.2-2.4.0
+Shaders:
+- Overhauled the screen/post-process shader system
+- Made the /ladylib_shader_reload command reload shader resources using Forge's new selective resource reloading
+
+Reflection:
+- Added generic typed method handles
+- Added a new reflection helper that uses said typed method handles
+
+Kotlin:
+- Added a Kotlin module containing a few methods smoothing the experience for Forgelin fans
+
+Bugfixes:
+- Fixed the """Enhanced""" Event Subscriber not registering any class after an invalid one
+
 ##### Version 1.12.2-2.3.2 - BUILT
 Fixed automatic capability registration behaving opposite to what the javadoc says
 
@@ -11,7 +26,7 @@ Miscellaneous:
 Bugfixes:
 - Fixed automatic capability registrations when defaults are used
 
-##### Version 1.12.2-2.3 - BUILT
+##### Version 1.12.2-2.3.0 - BUILT
 Main changes:
 - Implemented cheap dynamic lights as an alternative to Albedo
 

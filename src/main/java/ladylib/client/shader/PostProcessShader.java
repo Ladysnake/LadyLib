@@ -32,6 +32,8 @@ import java.util.function.Predicate;
  *     reloaded when shader assets are reloaded (through <tt>F3-T</tt> or <tt>/ladylib_shader_reload</tt>) or the
  *     screen resolution changes.
  * <p>
+ * @since 2.4.0
+ * @see ShaderUtil
  * @see "<tt>assets/minecraft/shaders</tt> for examples"
  */
 @Mod.EventBusSubscriber(modid = LadyLib.MOD_ID)
