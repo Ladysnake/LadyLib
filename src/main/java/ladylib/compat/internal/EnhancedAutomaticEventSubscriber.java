@@ -36,15 +36,17 @@ public class EnhancedAutomaticEventSubscriber {
                 List<ModAnnotation.EnumHolder> sidesEnum = (List<ModAnnotation.EnumHolder>) targ.getAnnotationInfo().get("side");
                 if (sidesEnum != null && sidesEnum.stream().map(ModAnnotation.EnumHolder::getValue).map(Side::valueOf).noneMatch(FMLCommonHandler.instance().getSide()::equals)) {
                     // wrong physical side
-                    return;
+                    break;
                 }
                 @SuppressWarnings("unchecked")
                 List<String> requiredModIds = (List<String>) targ.getAnnotationInfo().get("value");
                 if (requiredModIds != null && !requiredModIds.stream().allMatch(Loader::isModLoaded)) {
                     // Missing some prerequisites
-                    return;
+                    break;
                 }
                 ModContainer current = Loader.instance().activeModContainer();
+                // Should technically be cast to a String, but this is a map so it will work fine
+                //noinspection SuspiciousMethodCalls
                 ModContainer owner = Loader.instance().getIndexedModList().getOrDefault(targ.getAnnotationInfo().get("owner"), current);
                 LadyLib.LOGGER.debug("Registering @EnhancedBusSubscriber for {}", targ.getClassName());
                 Class<?> subscriptionTarget = Class.forName(targ.getClassName(), true, mcl);
