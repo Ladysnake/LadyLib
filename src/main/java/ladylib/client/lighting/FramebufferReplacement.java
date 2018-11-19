@@ -99,6 +99,7 @@ public class FramebufferReplacement extends Framebuffer {
     public static int getMainDepthTexture() {
         // -2 means it hasn't been initialized yet
         if (mainDepthTexture < -1) {
+            Minecraft.getMinecraft().getFramebuffer().bindFramebuffer(true);
             int attachmentObjectType = ARBFramebufferObject.glGetFramebufferAttachmentParameteri(
                     GL_FRAMEBUFFER,
                     GL_DEPTH_ATTACHMENT,

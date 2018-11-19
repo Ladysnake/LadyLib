@@ -23,6 +23,9 @@ import net.minecraft.entity.Entity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.client.resource.IResourceType;
+import net.minecraftforge.client.resource.ISelectiveResourceReloadListener;
+import net.minecraftforge.client.resource.VanillaResourceType;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -46,6 +49,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.IntConsumer;
+import java.util.function.Predicate;
 
 import static net.minecraft.client.renderer.OpenGlHelper.glGetProgramInfoLog;
 import static net.minecraft.client.renderer.OpenGlHelper.glGetProgrami;
@@ -84,7 +88,7 @@ public final class ShaderUtil {
     private static int oldDisplayWidth = Minecraft.getMinecraft().displayWidth;
     private static int oldDisplayHeight = Minecraft.getMinecraft().displayHeight;
 
-    private static boolean shouldUseShaders() {
+    public static boolean shouldUseShaders() {
         return OpenGlHelper.shadersSupported;
     }
 
@@ -94,7 +98,8 @@ public final class ShaderUtil {
     public static void init() {
         if (!initialized) {
             Minecraft mc = Minecraft.getMinecraft();
-            ((IReloadableResourceManager) mc.getResourceManager()).registerReloadListener(ShaderUtil::loadShaders);
+            ((IReloadableResourceManager) mc.getResourceManager()).registerReloadListener((ISelectiveResourceReloadListener) ShaderUtil::loadShaders);
+            ((IReloadableResourceManager) mc.getResourceManager()).registerReloadListener(PostProcessShader.ReloadHandler.INSTANCE);
             ClientCommandHandler.instance.registerCommand(new ShaderReloadCommand());
             initialized = true;
         }
@@ -359,8 +364,9 @@ public final class ShaderUtil {
      *     Unlike shaders enabled through {@link EntityRenderer#loadEntityShader(Entity)}, multiple shaders can
      *     be enabled at once.
      * @param location the location of the shader to load.
-     * @see #disableScreenShader(ResourceLocation) 
+     * @deprecated use {@link PostProcessShader}
      */
+    @Deprecated
     public static void enableScreenShader(ResourceLocation location) {
         if (shouldUseShaders() && !screenShaders.containsKey(location)) {
             try {
@@ -379,7 +385,9 @@ public final class ShaderUtil {
      *     Calling this method when the shader has not been enabled has no effect.
      * @param location the location used to load the shader
      * @see #enableScreenShader(ResourceLocation)
+     * @deprecated use {@link PostProcessShader}
      */
+    @Deprecated
     public static void disableScreenShader(ResourceLocation location) {
         if (screenShaders.containsKey(location)) {
             screenShaders.remove(location).deleteShaderGroup();
@@ -395,7 +403,6 @@ public final class ShaderUtil {
             final float partialTicks = event.getPartialTicks();
             screenShaders.forEach((key, shaderGroup) -> {
                 GlStateManager.pushMatrix();
-                setScreenUniform(key, "SystemTime", System.currentTimeMillis());
                 shaderGroup.render(partialTicks);
                 GlStateManager.popMatrix();
             });
@@ -403,6 +410,10 @@ public final class ShaderUtil {
         }
     }
 
+    /**
+     * @deprecated use {@link PostProcessShader}
+     */
+    @Deprecated
     public static void setScreenUniform(ResourceLocation shaderId, String uniformName, int value, int... more) {
         if (more.length < 3) {
             // pad the array with zeros
@@ -418,6 +429,10 @@ public final class ShaderUtil {
         }
     }
 
+    /**
+     * @deprecated use {@link PostProcessShader}
+     */
+    @Deprecated
     public static void setScreenUniform(ResourceLocation shaderId, String uniformName, float value, float... more) {
         ShaderGroup shaderGroup = screenShaders.get(shaderId);
         if (shaderGroup != null) {
@@ -434,18 +449,34 @@ public final class ShaderUtil {
         }
     }
 
+    /**
+     * @deprecated use {@link PostProcessShader}
+     */
+    @Deprecated
     public static void setScreenSampler(ResourceLocation shaderId, String samplerName, ITextureObject texture) {
         setScreenSampler(shaderId, samplerName, (Object) texture);
     }
 
+    /**
+     * @deprecated use {@link PostProcessShader}
+     */
+    @Deprecated
     public static void setScreenSampler(ResourceLocation shaderId, String samplerName, Framebuffer textureFbo) {
         setScreenSampler(shaderId, samplerName, (Object) textureFbo);
     }
 
+    /**
+     * @deprecated use {@link PostProcessShader}
+     */
+    @Deprecated
     public static void setScreenSampler(ResourceLocation shaderId, String samplerName, int textureName) {
         setScreenSampler(shaderId, samplerName, Integer.valueOf(textureName));
     }
 
+    /**
+     * @deprecated use {@link PostProcessShader}
+     */
+    @Deprecated
     private static void setScreenSampler(ResourceLocation shaderId, String samplerName, Object texture) {
         ShaderGroup shaderGroup = screenShaders.get(shaderId);
         if (shaderGroup != null) {
@@ -473,8 +504,8 @@ public final class ShaderUtil {
      *
      * @param resourceManager Minecraft's resource manager
      */
-    public static void loadShaders(IResourceManager resourceManager) {
-        if (!shouldUseShaders()) {
+    private static void loadShaders(IResourceManager resourceManager, Predicate<IResourceType> resourcePredicate) {
+        if (!(shouldUseShaders() && resourcePredicate.test(VanillaResourceType.SHADERS))) {
             return;
         }
         Map<ResourceLocation, ShaderPair> registeredShaders = new HashMap<>();
