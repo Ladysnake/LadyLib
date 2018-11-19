@@ -1,7 +1,9 @@
-##### Version 1.12.2-2.4.0
+##### Version 1.12.2-2.4.0 - BUILT
 Shaders:
 - Overhauled the screen/post-process shader system
+- Deprecated old screen shaders methods
 - Made the /ladylib_shader_reload command reload shader resources using Forge's new selective resource reloading
+- Dynamic lights now use a post process shader
 
 Reflection:
 - Added generic typed method handles
