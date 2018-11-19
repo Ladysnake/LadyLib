@@ -116,7 +116,7 @@ sourceSets {
 
 
 jar {
-    from sourceSets.ktIntegration.output
+//    from sourceSets.ktIntegration.output
     archiveName = "${archivesBaseName}-${mcVersion}-${project.version}.jar"
     manifest {
         attributes([
