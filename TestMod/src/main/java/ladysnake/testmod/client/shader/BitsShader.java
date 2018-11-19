@@ -13,7 +13,7 @@ import net.minecraftforge.fml.relauncher.Side;
 @EnhancedBusSubscriber(side = Side.CLIENT, owner = TestMod.MODID)
 public class BitsShader {
     private ResourceLocation BITS_SHADER = new ResourceLocation("minecraft:shaders/post/bits.json");
-    private PostProcessShader shader = PostProcessShader.loadScreenShader(BITS_SHADER);
+    private PostProcessShader shader = PostProcessShader.loadShader(BITS_SHADER);
 
     @SubscribeEvent
     public void onRenderWorldLast(RenderWorldLastEvent event) {
