@@ -46,7 +46,8 @@ public class LadyLib {
      * <u>Note for modders using dependency extraction:</u> mods containing LadyLib need to declare the dependency on
      * forge 14.23.3.2665+ themselves as older forge versions will not load LadyLib in the first place
      */
-    public static final String DEPENDENCIES = "required-after:forge@[14.23.3.2665,);";
+    // LadyLib uses selective resource reloading, introduced in 14.23.4.2742
+    public static final String DEPENDENCIES = "required-after:forge@[14.23.4.2742,);";
 
     public static final Logger LOGGER = LogManager.getLogger(MOD_NAME);
     private static final PrintStream DEBUG_STREAM = new TracingPrintStream(LogManager.getLogger("DEBUG"), System.out);
