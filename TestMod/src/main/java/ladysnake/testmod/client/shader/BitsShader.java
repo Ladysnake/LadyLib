@@ -10,7 +10,7 @@ import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 
-@EnhancedBusSubscriber(side = Side.CLIENT, owner = TestMod.MODID)
+@EnhancedBusSubscriber(side = Side.CLIENT, value = TestMod.MODID)
 public class BitsShader {
     private ResourceLocation BITS_SHADER = new ResourceLocation("minecraft:shaders/post/bits.json");
     private PostProcessShader shader = PostProcessShader.loadShader(BITS_SHADER);

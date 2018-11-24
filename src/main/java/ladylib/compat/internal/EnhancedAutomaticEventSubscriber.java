@@ -17,10 +17,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class EnhancedAutomaticEventSubscriber {
     private static final Deque<StateEventReceiver> STATE_EVENT_RECEIVERS = new ArrayDeque<>();
@@ -31,39 +28,63 @@ public class EnhancedAutomaticEventSubscriber {
 
         for (ASMDataTable.ASMData targ : targets) {
             try {
+                List<ModAnnotation.EnumHolder> sidesEnum;
+                List<String> requiredModIds;
+                String ownerModId;
+                Map<String, Object> annotationInfo = targ.getAnnotationInfo();
+                if (annotationInfo.get("value") instanceof String) {
+                    // Version 2.5+ of Ladylib, value now represents the owning mod id
+                    //noinspection unchecked
+                    requiredModIds = (List<String>) annotationInfo.get("dependencies");
+                    ownerModId = (String) annotationInfo.get("value");
+                } else {
+                    // Older versions of Ladylib, value represents the required mods
+                    //noinspection unchecked
+                    requiredModIds = (List<String>) annotationInfo.get("value");
+                    ownerModId = (String) annotationInfo.get("owner");
+                }
                 //noinspection unchecked
-                @SuppressWarnings("unchecked")
-                List<ModAnnotation.EnumHolder> sidesEnum = (List<ModAnnotation.EnumHolder>) targ.getAnnotationInfo().get("side");
+                sidesEnum = (List<ModAnnotation.EnumHolder>) annotationInfo.get("side");
                 if (sidesEnum != null && sidesEnum.stream().map(ModAnnotation.EnumHolder::getValue).map(Side::valueOf).noneMatch(FMLCommonHandler.instance().getSide()::equals)) {
                     // wrong physical side
-                    break;
+                    continue;
                 }
-                @SuppressWarnings("unchecked")
-                List<String> requiredModIds = (List<String>) targ.getAnnotationInfo().get("value");
                 if (requiredModIds != null && !requiredModIds.stream().allMatch(Loader::isModLoaded)) {
                     // Missing some prerequisites
-                    break;
+                    continue;
                 }
                 ModContainer current = Loader.instance().activeModContainer();
-                // Should technically be cast to a String, but this is a map so it will work fine
-                //noinspection SuspiciousMethodCalls
-                ModContainer owner = Loader.instance().getIndexedModList().getOrDefault(targ.getAnnotationInfo().get("owner"), current);
+                ModContainer owner = Loader.instance().getIndexedModList().getOrDefault(ownerModId, current);
                 LadyLib.LOGGER.debug("Registering @EnhancedBusSubscriber for {}", targ.getClassName());
                 Class<?> subscriptionTarget = Class.forName(targ.getClassName(), true, mcl);
                 Object instance = null;
-                // Search for an existing instance field
-                for (Field f : subscriptionTarget.getDeclaredFields()) {
-                    if (isInstanceField(f, subscriptionTarget)) {
-                        f.setAccessible(true);
-                        instance = f.get(null);
-                        break;
+                if (targ.getObjectName().equals(targ.getClassName())) {
+                    // The class itself is annotated
+                    // Search for an existing instance field
+                    for (Field f : subscriptionTarget.getDeclaredFields()) {
+                        if (isInstanceField(f, subscriptionTarget)) {
+                            f.setAccessible(true);
+                            instance = f.get(null);
+                            break;
+                        }
                     }
+                    // Create the instance as none already exists
+                    if (instance == null) {
+                        Constructor<?> constructor = subscriptionTarget.getDeclaredConstructor();
+                        constructor.setAccessible(true);
+                        instance = constructor.newInstance();
+                    }
+                } else {
+                    // It's a field inside the class
+                    Field f = subscriptionTarget.getDeclaredField(targ.getObjectName());
+                    if ((f.getModifiers() & (Modifier.STATIC | Modifier.FINAL)) == 0) {
+                        LadyLib.LOGGER.error("@EnhancedBusSubscriber can only be put on static final fields! (present on {})", f);
+                        continue;
+                    }
+                    instance = f.get(null);
                 }
-                // Create the instance as none already exists
                 if (instance == null) {
-                    Constructor<?> constructor = subscriptionTarget.getDeclaredConstructor();
-                    constructor.setAccessible(true);
-                    instance = constructor.newInstance();
+                    LadyLib.LOGGER.error("The obtained instance is null, skipping event bus registration for {}", targ.getObjectName());
                 }
                 Loader.instance().setActiveModContainer(owner);
                 MinecraftForge.EVENT_BUS.register(instance);

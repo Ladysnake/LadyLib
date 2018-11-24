@@ -39,13 +39,13 @@ import java.util.stream.Stream;
  * @see CheapLight
  */
 @Beta
-@EnhancedBusSubscriber(side = Side.CLIENT)
 public class CheapLightManager {
 
     private static final ResourceLocation LIGHT_SHADER = new ResourceLocation(LadyLib.MOD_ID,"shaders/post/cheap_light.json");
 
-    public static final int MAX_LIGHTS = 100;
+    @EnhancedBusSubscriber(value = LadyLib.MOD_ID, side = Side.CLIENT)
     public static final CheapLightManager INSTANCE = new CheapLightManager();
+    public static final int MAX_LIGHTS = 100;
 
     private final List<CheapLight> cheapLights = new ArrayList<>();
 

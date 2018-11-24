@@ -6,6 +6,7 @@ import ladylib.client.lighting.CheapLightManager;
 import ladylib.client.lighting.MutableCheapLight;
 import ladylib.client.lighting.SimpleCheapLight;
 import ladylib.compat.EnhancedBusSubscriber;
+import ladysnake.testmod.TestMod;
 import net.minecraft.client.Minecraft;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
@@ -14,9 +15,11 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 
 import java.awt.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.Set;
+import java.util.WeakHashMap;
 
-@EnhancedBusSubscriber(side = Side.CLIENT)
+@EnhancedBusSubscriber(value = TestMod.MODID, side = Side.CLIENT)
 public class LightCreator {
     private final Set<MutableCheapLight> summonedLights = Collections.newSetFromMap(new WeakHashMap<>());
 

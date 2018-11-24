@@ -414,7 +414,7 @@ public final class PostProcessShader {
         this.dispose(true);
     }
 
-    @EnhancedBusSubscriber(side = Side.CLIENT)
+    @EnhancedBusSubscriber(value = LadyLib.MOD_ID, side = Side.CLIENT)
     static class ReloadHandler implements ISelectiveResourceReloadListener {
         static final ReloadHandler INSTANCE = new ReloadHandler();
 

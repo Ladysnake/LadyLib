@@ -43,15 +43,6 @@ float distSq(vec3 a, vec3 b) {
   return pow((a.x-b.x),2)+pow((a.y-b.y),2)+pow((a.z-b.z),2);
 }
 
-float round(float f) {
-	if (fract(f) < 0.5f){
-		return f - fract(f);
-	}
-  else {
-		return f + (1.0f-fract(f));
-  }
-}
-
 void compute_color(vec3 position, out vec4 lcolor, out float intens) {
   lcolor = vec4(0,0,0,1.0f);
 	float sumR = 0;
@@ -90,5 +81,6 @@ void main()
     float intens;
     compute_color(pixelPosition, lcolor, intens);
     vec4 color = vec4(1 - (1 - baseColor.rgb) * (1 - lcolor.rgb * intens), baseColor.a);
+    // color.rgb = vec3(distance(pixelPosition.xyz, vec3(0,0,0)));
     gl_FragColor = color;
 }

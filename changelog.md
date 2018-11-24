@@ -1,3 +1,10 @@
+##### Version 1.12.2-2.5.0 - BUILT
+`@EnhancedBusSubscriber` refactor:
+- Swapped owner and dependencies in `@EnhancedBusSubscriber`
+- Specifying the owning mod id is now compulsory
+- `@EnhancedBusSubscriber` can now be applied to constant fields
+- Actually fixed the retarded event subscriber not registering any class after an invalid one
+
 ##### Version 1.12.2-2.4.0 - BUILT
 Shaders:
 - Overhauled the screen/post-process shader system
