@@ -19,6 +19,13 @@ public final class TypedReflection {
     }
 
     @PublicApi
+    public static <T, R> RWTypedField<T, R> createFieldRef(Class<T> clazz, String fieldObfName, Class<R> type) {
+        TypedGetter<T, R> getter = findGetter(clazz, fieldObfName, type);
+        TypedSetter<T, R> setter = findSetter(clazz, fieldObfName, type);
+        return new RWTypedField<>(getter, setter);
+    }
+
+    @PublicApi
     public static <T, R> TypedMethodHandle0<T, R> findMethod(Class<T> clazz, String methodObfName, Class<R> returnType) {
         return new TypedMethodHandle0<>(findMethodHandleFromObfName(clazz, methodObfName, returnType), methodObfName);
     }

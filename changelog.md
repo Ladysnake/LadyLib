@@ -1,3 +1,8 @@
+##### Version 1.12.2-2.5.1 - BUILT
+Reflection:
+- Renamed `LLMethodHandler*` to `TypedMethodHandle`
+- Add typed read-write fields
+
 ##### Version 1.12.2-2.5.0 - BUILT
 `@EnhancedBusSubscriber` refactor:
 - Swapped owner and dependencies in `@EnhancedBusSubscriber`
