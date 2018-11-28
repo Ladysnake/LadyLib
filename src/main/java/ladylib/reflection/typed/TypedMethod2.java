@@ -6,8 +6,8 @@ import ladylib.misc.ReflectionFailedException;
 import java.lang.invoke.MethodHandle;
 
 @PublicApi
-public class TypedMethodHandle2<T, P1, P2, R> extends TypedMethodHandle {
-    TypedMethodHandle2(MethodHandle methodHandle, String name) {
+public class TypedMethod2<T, P1, P2, R> extends TypedMethod {
+    TypedMethod2(MethodHandle methodHandle, String name) {
         super(methodHandle, name);
     }
 

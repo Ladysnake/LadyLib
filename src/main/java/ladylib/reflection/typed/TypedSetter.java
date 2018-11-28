@@ -2,7 +2,7 @@ package ladylib.reflection.typed;
 
 import java.lang.invoke.MethodHandle;
 
-public class TypedSetter<T, P1> extends TypedMethodHandle1<T, P1, Void> {
+public class TypedSetter<T, P1> extends TypedMethod1<T, P1, Void> {
     TypedSetter(MethodHandle methodHandle, String name) {
         super(methodHandle, name);
     }

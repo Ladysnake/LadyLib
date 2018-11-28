@@ -2,7 +2,7 @@ package ladylib.reflection.typed;
 
 import java.lang.invoke.MethodHandle;
 
-public class TypedGetter<T, R> extends TypedMethodHandle0<T, R> {
+public class TypedGetter<T, R> extends TypedMethod0<T, R> {
     TypedGetter(MethodHandle methodHandle, String name) {
         super(methodHandle, name);
     }

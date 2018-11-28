@@ -26,28 +26,28 @@ public final class TypedReflection {
     }
 
     @PublicApi
-    public static <T, R> TypedMethodHandle0<T, R> findMethod(Class<T> clazz, String methodObfName, Class<R> returnType) {
-        return new TypedMethodHandle0<>(findMethodHandleFromObfName(clazz, methodObfName, returnType), methodObfName);
+    public static <T, R> TypedMethod0<T, R> findMethod(Class<T> clazz, String methodObfName, Class<R> returnType) {
+        return new TypedMethod0<>(findMethodHandleFromObfName(clazz, methodObfName, returnType), methodObfName);
     }
 
     @PublicApi
-    public static <T, P1, R> TypedMethodHandle1<T, P1, R> findMethod(Class<T> clazz, String methodObfName, Class<R> returnType, Class<P1> p1) {
-        return new TypedMethodHandle1<>(findMethodHandleFromObfName(clazz, methodObfName, returnType, p1), methodObfName);
+    public static <T, P1, R> TypedMethod1<T, P1, R> findMethod(Class<T> clazz, String methodObfName, Class<R> returnType, Class<P1> p1) {
+        return new TypedMethod1<>(findMethodHandleFromObfName(clazz, methodObfName, returnType, p1), methodObfName);
     }
 
     @PublicApi
-    public static <T, P1, P2, R> TypedMethodHandle2<T, P1, P2, R> findMethod(Class<T> clazz, String methodObfName, Class<R> returnType, Class<P1> p1, Class<P2> p2) {
-        return new TypedMethodHandle2<>(findMethodHandleFromObfName(clazz, methodObfName, returnType, p1, p2), methodObfName);
+    public static <T, P1, P2, R> TypedMethod2<T, P1, P2, R> findMethod(Class<T> clazz, String methodObfName, Class<R> returnType, Class<P1> p1, Class<P2> p2) {
+        return new TypedMethod2<>(findMethodHandleFromObfName(clazz, methodObfName, returnType, p1, p2), methodObfName);
     }
 
     @PublicApi
-    public static <T, P1, P2, P3, R> TypedMethodHandle3<T, P1, P2, P3, R> findMethod(Class<T> clazz, String methodObfName, Class<R> returnType, Class<P1> p1, Class<P2> p2, Class<P3> p3) {
-        return new TypedMethodHandle3<>(findMethodHandleFromObfName(clazz, methodObfName, returnType, p1, p2, p3), methodObfName);
+    public static <T, P1, P2, P3, R> TypedMethod3<T, P1, P2, P3, R> findMethod(Class<T> clazz, String methodObfName, Class<R> returnType, Class<P1> p1, Class<P2> p2, Class<P3> p3) {
+        return new TypedMethod3<>(findMethodHandleFromObfName(clazz, methodObfName, returnType, p1, p2, p3), methodObfName);
     }
 
     @PublicApi
-    public static <T, P1, P2, P3, P4, R> TypedMethodHandle4<T, P1, P2, P3, P4, R> findMethod(Class<T> clazz, String methodObfName, Class<R> returnType, Class<P1> p1, Class<P2> p2, Class<P3> p3, Class<P4> p4) {
-        return new TypedMethodHandle4<>(findMethodHandleFromObfName(clazz, methodObfName, returnType, p1, p2, p3, p4), methodObfName);
+    public static <T, P1, P2, P3, P4, R> TypedMethod4<T, P1, P2, P3, P4, R> findMethod(Class<T> clazz, String methodObfName, Class<R> returnType, Class<P1> p1, Class<P2> p2, Class<P3> p3, Class<P4> p4) {
+        return new TypedMethod4<>(findMethodHandleFromObfName(clazz, methodObfName, returnType, p1, p2, p3, p4), methodObfName);
     }
 
 }
