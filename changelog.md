@@ -1,7 +1,8 @@
 ##### Version 1.12.2-2.5.1 - BUILT
 Reflection:
-- Renamed `LLMethodHandler*` to `TypedMethodHandle`
+- Renamed `LLMethodHandler*` to `TypedMethod`
 - Add typed read-write fields
+- Deprecated some methods made redundant by `ObfuscationReflectionHelper`
 
 ##### Version 1.12.2-2.5.0 - BUILT
 `@EnhancedBusSubscriber` refactor:

@@ -1,12 +1,12 @@
 package ladylib.client.lighting;
 
 import ladylib.LadyLib;
-import ladylib.misc.ReflectionUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.texture.TextureUtil;
 import net.minecraft.client.shader.Framebuffer;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.fml.relauncher.Side;
 import org.lwjgl.opengl.ARBFramebufferObject;
 import org.lwjgl.opengl.GL11;
@@ -89,7 +89,7 @@ public class FramebufferReplacement extends Framebuffer {
         Minecraft mc = Minecraft.getMinecraft();
         Framebuffer main = mc.getFramebuffer();
         Framebuffer replacement = new FramebufferReplacement(main.framebufferTextureWidth, main.framebufferTextureHeight, main.useDepth);
-        ReflectionUtil.setPrivateValue(Minecraft.class, mc, "field_147124_at", Framebuffer.class, replacement);
+        ObfuscationReflectionHelper.setPrivateValue(Minecraft.class, mc, replacement, "field_147124_at");
     }
 
     /**

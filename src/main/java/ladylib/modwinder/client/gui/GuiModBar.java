@@ -1,7 +1,6 @@
 package ladylib.modwinder.client.gui;
 
 import ladylib.LadyLib;
-import ladylib.misc.ReflectionUtil;
 import ladylib.modwinder.ModWinder;
 import ladylib.modwinder.ModsFetchedEvent;
 import ladylib.modwinder.data.ModEntry;
@@ -15,6 +14,7 @@ import net.minecraft.util.StringUtils;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.fml.client.config.GuiUtils;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
@@ -56,7 +56,7 @@ public class GuiModBar extends GuiScreen {
         final Minecraft mc = Minecraft.getMinecraft();
         mc.addScheduledTask(() -> {
             if (mc.currentScreen instanceof GuiMainMenu) {
-                List<GuiButton> buttonList = ReflectionUtil.getPrivateValue(GuiScreen.class, mc.currentScreen, "field_146292_n", List.class);
+                List<GuiButton> buttonList = ObfuscationReflectionHelper.getPrivateValue(GuiScreen.class, mc.currentScreen, "field_146292_n");
                 // check that the button isn't already here
                 if (buttonList.stream().mapToInt(b -> b.id).noneMatch(id -> id == MODWINDER_BUTTON_ID)) {
                     addModBarButton(buttonList);

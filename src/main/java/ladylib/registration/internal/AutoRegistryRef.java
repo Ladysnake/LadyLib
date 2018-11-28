@@ -4,11 +4,11 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import ladylib.LadyLib;
-import ladylib.misc.ReflectionUtil;
 import ladylib.registration.AutoRegister;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
-import net.minecraftforge.fml.relauncher.ReflectionHelper;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
+import net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToFindMethodException;
 import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 
@@ -52,8 +52,8 @@ abstract class AutoRegistryRef<T extends AnnotatedElement> {
 
                 private Method findSetTranslationKey(Class<?> clazz, String obfName) {
                     try {
-                        return ReflectionUtil.findMethodFromObfName(clazz, obfName, clazz, String.class);
-                    } catch (ReflectionHelper.UnableToFindMethodException e) {
+                        return ObfuscationReflectionHelper.findMethod(clazz, obfName, clazz, String.class);
+                    } catch (UnableToFindMethodException e) {
                         return null;
                     }
                 }

@@ -2,12 +2,12 @@ package ladylib.client;
 
 import com.google.common.collect.ImmutableSet;
 import ladylib.LadyLib;
-import ladylib.misc.ReflectionUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.AbstractResourcePack;
 import net.minecraft.client.resources.IResourcePack;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.LoaderState;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 
 import javax.annotation.Nonnull;
 import java.io.InputStream;
@@ -41,7 +41,7 @@ public class ResourceProxy extends AbstractResourcePack {
         if (Loader.instance().hasReachedState(LoaderState.PREINITIALIZATION)) {
             throw new IllegalStateException("Resource proxies should be registered before pre-initialization");
         }
-        List<IResourcePack> defaultPacks = ReflectionUtil.getPrivateValue(Minecraft.class, Minecraft.getMinecraft(), "field_110449_ao", List.class);
+        List<IResourcePack> defaultPacks = ObfuscationReflectionHelper.getPrivateValue(Minecraft.class, Minecraft.getMinecraft(), "field_110449_ao");
         if (!defaultPacks.contains(this)) {
             defaultPacks.add(this);
         }

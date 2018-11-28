@@ -1,7 +1,7 @@
 package ladylib.misc;
 
-import net.minecraftforge.fml.common.asm.transformers.deobf.FMLDeobfuscatingRemapper;
-import net.minecraftforge.fml.relauncher.ReflectionHelper;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
+import net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToFindClassException;
 import net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToFindFieldException;
 import net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToFindMethodException;
 import org.objectweb.asm.Type;
@@ -11,7 +11,6 @@ import java.lang.invoke.*;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 
 public final class ReflectionUtil {
     private ReflectionUtil() { }
@@ -55,91 +54,11 @@ public final class ReflectionUtil {
                 try {
                     return Class.forName(type.getClassName(), false, ReflectionUtil.class.getClassLoader());
                 } catch (ClassNotFoundException e) {
-                    throw new ReflectionHelper.UnableToFindClassException(new String[]{type.getClassName()}, e);
+                    throw new UnableToFindClassException(new String[]{type.getClassName()}, e);
                 }
             default:
                 throw new IllegalArgumentException();
         }
-    }
-
-    /**
-     * Finds a method with the specified SRG name and parameters in the given class and makes it accessible.
-     * Note: for performance, store the returned value and avoid calling this repeatedly.
-     * <p>
-     * Throws an exception if the method is not found.
-     *
-     * @param clazz          The class to find the method on.
-     * @param methodObfName  The obfuscated name of the method to find (used in obfuscated environments, i.e. "getWorldTime").
-     *                       If the name you are looking for is on a class that is never obfuscated, this should be null.
-     * @param returnType     The return type of the method to find.
-     * @param parameterTypes The parameter types of the method to find.
-     * @return The method with the specified name and parameters in the given class.
-     * @throws UnableToFindMethodException if an issue prevents the method from being reflected
-     */
-    @PublicApi
-    public static Method findMethodFromObfName(Class<?> clazz, String methodObfName, Class<?> returnType, Class<?>... parameterTypes) {
-        String methodDesc = Type.getMethodDescriptor(Type.getType(returnType), Arrays.stream(parameterTypes).map(Type::getType).toArray(Type[]::new));
-        String deobfName = FMLDeobfuscatingRemapper.INSTANCE.mapMethodName(clazz.getName().replace('.', '/'), methodObfName, methodDesc);
-        return ReflectionHelper.findMethod(clazz, deobfName, methodObfName, parameterTypes);
-    }
-
-    /**
-     * Finds a field with the specified SRG name and type in the given class and makes it accessible. <br>
-     * Note: for performance, store the returned value and avoid calling this repeatedly.
-     * <p>
-     * Throws an exception if the field is not found.
-     *
-     * @param clazz        The class to find the method on.
-     * @param fieldObfName The obfuscated name of the method to find (used in obfuscated environments, i.e. "getWorldTime").
-     * @param type         The type of the field to find.
-     * @return The field with the specified name and type in the given class.
-     * @throws UnableToFindFieldException if an issue prevents the field from being reflected
-     */
-    @PublicApi
-    public static Field findFieldFromObfName(Class<?> clazz, String fieldObfName, Class<?> type) {
-        String deobfName = FMLDeobfuscatingRemapper.INSTANCE.mapFieldName(clazz.getName().replace('.', '/'), fieldObfName, Type.getType(type).getDescriptor());
-        // Since deobfName will be the obfuscated name when in an obfuscated environment, it's the only value we need to pass
-        return ReflectionHelper.findField(clazz, deobfName);
-    }
-
-    /**
-     * Finds a field with the specified SRG name and type in the given class and returns its value for the given <code>instance</code>.<br>
-     * Note: for performance, avoid using this method when you need to obtain the value more than once.
-     * <p>
-     * Throws an exception if the field is not found.
-     *
-     * @param clazz        The class to find the method on.
-     * @param instance     An instance of <code>clazz</code>. Use <code>null</code> if the field is static.
-     * @param fieldObfName The obfuscated name of the method to find (used in obfuscated environments, i.e. "getWorldTime").
-     * @param type         The type of the field to find.
-     * @return The value of the field for the given instance.
-     * @throws UnableToFindFieldException if an issue prevents the field from being reflected
-     */
-    @PublicApi
-    public static <C, T> T getPrivateValue(Class<C> clazz, @Nullable C instance, String fieldObfName, Class<? super T> type) {
-        String deobfName = FMLDeobfuscatingRemapper.INSTANCE.mapFieldName(clazz.getName().replace('.', '/'), fieldObfName, Type.getType(type).getDescriptor());
-        // Since deobfName will be the obfuscated name when in an obfuscated environment, it's the only value we need to pass
-        return ReflectionHelper.getPrivateValue(clazz, instance, deobfName);
-    }
-
-    /**
-     * Finds a field with the specified SRG name and type in the given class and returns its value for the given <code>instance</code>.<br>
-     * Note: for performance, avoid using this method when you need to obtain the value more than once.
-     * <p>
-     * Throws an exception if the field is not found.
-     *
-     * @param clazz        The class to find the method on.
-     * @param instance     An instance of <code>clazz</code>. Use <code>null</code> if the field is static.
-     * @param fieldObfName The obfuscated name of the method to find (used in obfuscated environments, i.e. "getWorldTime").
-     * @param type         The type of the field to find.
-     *
-     * @throws UnableToFindFieldException if an issue prevents the field from being reflected
-     */
-    @PublicApi
-    public static <C, T> void setPrivateValue(Class<C> clazz, @Nullable C instance, String fieldObfName, Class<? super T> type, T value) {
-        String deobfName = FMLDeobfuscatingRemapper.INSTANCE.mapFieldName(clazz.getName().replace('.', '/'), fieldObfName, Type.getType(type).getDescriptor());
-        // Since deobfName will be the obfuscated name when in an obfuscated environment, it's the only value we need to pass
-        ReflectionHelper.setPrivateValue(clazz, instance, value, deobfName);
     }
 
     /**
@@ -159,7 +78,7 @@ public final class ReflectionUtil {
     @PublicApi
     public static MethodHandle findMethodHandleFromObfName(Class<?> clazz, String methodObfName, Class<?> returnType, Class<?>... parameterTypes) {
         try {
-            return MethodHandles.lookup().unreflect(findMethodFromObfName(clazz, methodObfName, returnType, parameterTypes));
+            return MethodHandles.lookup().unreflect(ObfuscationReflectionHelper.findMethod(clazz, methodObfName, returnType, parameterTypes));
         } catch (IllegalAccessException e) {
             throw new UnableToFindMethodException(e);
         }
@@ -180,9 +99,9 @@ public final class ReflectionUtil {
     @PublicApi
     public static MethodHandle findGetterFromObfName(Class<?> clazz, String fieldObfName, Class<?> type) {
         try {
-            return MethodHandles.lookup().unreflectGetter(findFieldFromObfName(clazz, fieldObfName, type));
+            return MethodHandles.lookup().unreflectGetter(ObfuscationReflectionHelper.findField(clazz, fieldObfName));
         } catch (IllegalAccessException e) {
-            throw new ReflectionHelper.UnableToFindFieldException(new String[]{fieldObfName}, e);
+            throw new UnableToFindFieldException(e);
         }
     }
 
@@ -201,9 +120,9 @@ public final class ReflectionUtil {
     @PublicApi
     public static MethodHandle findSetterFromObfName(Class<?> clazz, String fieldObfName, Class<?> type) {
         try {
-            return MethodHandles.lookup().unreflectSetter(findFieldFromObfName(clazz, fieldObfName, type));
+            return MethodHandles.lookup().unreflectSetter(ObfuscationReflectionHelper.findField(clazz, fieldObfName));
         } catch (IllegalAccessException e) {
-            throw new ReflectionHelper.UnableToFindFieldException(new String[]{fieldObfName}, e);
+            throw new UnableToFindFieldException(e);
         }
     }
 
@@ -259,6 +178,82 @@ public final class ReflectionUtil {
     public static Lookup getTrustedLookup(Class clazz) {
         // Invoke black magic.
         return TRUSTED_LOOKUP.in(clazz);
+    }
+
+    /**
+     * Finds a method with the specified SRG name and parameters in the given class and makes it accessible.
+     * Note: for performance, store the returned value and avoid calling this repeatedly.
+     * <p>
+     * Throws an exception if the method is not found.
+     *
+     * @param clazz          The class to find the method on.
+     * @param methodObfName  The obfuscated name of the method to find (used in obfuscated environments, i.e. "getWorldTime").
+     *                       If the name you are looking for is on a class that is never obfuscated, this should be null.
+     * @param returnType     The return type of the method to find.
+     * @param parameterTypes The parameter types of the method to find.
+     * @return The method with the specified name and parameters in the given class.
+     * @throws UnableToFindMethodException if an issue prevents the method from being reflected
+     * @deprecated use {@link ObfuscationReflectionHelper#findMethod(Class, String, Class, Class[])}
+     */
+    @Deprecated
+    public static Method findMethodFromObfName(Class<?> clazz, String methodObfName, Class<?> returnType, Class<?>... parameterTypes) {
+        return ObfuscationReflectionHelper.findMethod(clazz, methodObfName, returnType, parameterTypes);
+    }
+
+    /**
+     * Finds a field with the specified SRG name and type in the given class and makes it accessible. <br>
+     * Note: for performance, store the returned value and avoid calling this repeatedly.
+     * <p>
+     * Throws an exception if the field is not found.
+     *
+     * @param clazz        The class to find the method on.
+     * @param fieldObfName The obfuscated name of the method to find (used in obfuscated environments, i.e. "getWorldTime").
+     * @param type         The type of the field to find.
+     * @return The field with the specified name and type in the given class.
+     * @throws UnableToFindFieldException if an issue prevents the field from being reflected
+     * @deprecated use {@link ObfuscationReflectionHelper#findField(Class, String)}
+     */
+    @Deprecated
+    public static Field findFieldFromObfName(Class<?> clazz, String fieldObfName, Class<?> type) {
+        return ObfuscationReflectionHelper.findField(clazz, fieldObfName);
+    }
+
+    /**
+     * Finds a field with the specified SRG name and type in the given class and returns its value for the given <code>instance</code>.<br>
+     * Note: for performance, avoid using this method when you need to obtain the value more than once.
+     * <p>
+     * Throws an exception if the field is not found.
+     *
+     * @param clazz        The class to find the method on.
+     * @param instance     An instance of <code>clazz</code>. Use <code>null</code> if the field is static.
+     * @param fieldObfName The obfuscated name of the method to find (used in obfuscated environments, i.e. "getWorldTime").
+     * @param type         The type of the field to find.
+     * @return The value of the field for the given instance.
+     * @throws UnableToFindFieldException if an issue prevents the field from being reflected
+     * @deprecated use {@link ObfuscationReflectionHelper#getPrivateValue(Class, Object, String)}
+     */
+    @Deprecated
+    public static <C, T> T getPrivateValue(Class<C> clazz, @Nullable C instance, String fieldObfName, @SuppressWarnings("unused") Class<? super T> type) {
+        return ObfuscationReflectionHelper.getPrivateValue(clazz, instance, fieldObfName);
+    }
+
+    /**
+     * Finds a field with the specified SRG name and type in the given class and returns its value for the given <code>instance</code>.<br>
+     * Note: for performance, avoid using this method when you need to obtain the value more than once.
+     * <p>
+     * Throws an exception if the field is not found.
+     *
+     * @param clazz        The class to find the method on.
+     * @param instance     An instance of <code>clazz</code>. Use <code>null</code> if the field is static.
+     * @param fieldObfName The obfuscated name of the method to find (used in obfuscated environments, i.e. "getWorldTime").
+     * @param type         The type of the field to find.
+     *
+     * @throws UnableToFindFieldException if an issue prevents the field from being reflected
+     * @deprecated use {@link ObfuscationReflectionHelper#setPrivateValue(Class, Object, Object, String)}
+     */
+    @Deprecated
+    public static <C, T> void setPrivateValue(Class<C> clazz, @Nullable C instance, String fieldObfName, @SuppressWarnings("unused") Class<? super T> type, T value) {
+        ObfuscationReflectionHelper.setPrivateValue(clazz, instance, value, fieldObfName);
     }
 
     public static class UnableToGetFactoryException extends RuntimeException {

@@ -2,10 +2,8 @@ package ladylib
 
 import ladylib.misc.PublicApi
 import ladylib.reflection.TypedReflection
-import ladylib.reflection.TypedReflection.findGetter
-import ladylib.reflection.TypedReflection.findSetter
-import ladylib.reflection.typed.TypedGetter
-import ladylib.reflection.typed.TypedSetter
+import ladylib.reflection.TypedReflection.createFieldRef
+import ladylib.reflection.typed.RWTypedField
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
@@ -19,7 +17,7 @@ import kotlin.reflect.KProperty
  */
 @PublicApi
 inline fun <reified R, reified T> reflected(obfName: String): ReflectionDelegate<R, T> {
-    return ReflectionDelegate(findGetter(R::class.java, obfName, T::class.java), findSetter(R::class.java, obfName, T::class.java))
+    return ReflectionDelegate(createFieldRef(R::class.java, obfName, T::class.java))
 }
 
 /**
@@ -54,12 +52,12 @@ inline fun <reified T, reified R, reified P1, reified P2, reified P3, reified P4
     return TypedReflection.findMethod(T::class.java, methodObfName, R::class.java, P1::class.java, P2::class.java, P3::class.java, P4::class.java)::invoke
 }
 
-class ReflectionDelegate<in T, V>(private val getter: TypedGetter<T, V>, private val setter: TypedSetter<T, V>) : ReadWriteProperty<T, V> {
+class ReflectionDelegate<in T, V>(private val field: RWTypedField<T, V>) : ReadWriteProperty<T, V> {
     override operator fun getValue(thisRef: T, property: KProperty<*>): V {
-        return getter(thisRef)
+        return field[thisRef]
     }
 
     override operator fun setValue(thisRef: T, property: KProperty<*>, value: V) {
-        setter(thisRef, value)
+        field[thisRef] = value
     }
 }
