@@ -1,6 +1,6 @@
-##### Version 1.12.2-2.5.1 - BUILT
+##### Version 1.12.2-2.6.0 - BUILT
 Reflection:
-- Renamed `LLMethodHandler*` to `TypedMethod`
+- Renamed `LLMethodHandle*` to `TypedMethod`
 - Add typed read-write fields
 - Deprecated some methods made redundant by `ObfuscationReflectionHelper`
 

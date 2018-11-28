@@ -2,11 +2,17 @@ package ladylib.reflection.typed;
 
 import java.lang.invoke.MethodHandle;
 
-public class TypedMethod {
+/**
+ * A typed method handle, typically with an <code>invoke</code> method
+ * that has a variable number of typed parameters
+ *
+ * @since 2.6
+ */
+public abstract class TypedMethod {
     protected MethodHandle methodHandle;
     protected String name;
 
-    TypedMethod(MethodHandle methodHandle, String name) {
+    protected TypedMethod(MethodHandle methodHandle, String name) {
         this.methodHandle = methodHandle;
         this.name = name;
     }

@@ -7,7 +7,7 @@ import java.lang.invoke.MethodHandle;
 
 @PublicApi
 public class TypedMethod1<T, P1, R> extends TypedMethod {
-    TypedMethod1(MethodHandle methodHandle, String name) {
+    public TypedMethod1(MethodHandle methodHandle, String name) {
         super(methodHandle, name);
     }
 
