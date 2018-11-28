@@ -1,9 +1,9 @@
-package ladylib.reflection;
+package ladylib.reflection.typed;
 
 import java.lang.invoke.MethodHandle;
 
-public class Setter<T, P1> extends LLMethodHandle.LLMethodHandle1<T, P1, Void> {
-    Setter(MethodHandle methodHandle, String name) {
+public class TypedSetter<T, P1> extends TypedMethodHandle1<T, P1, Void> {
+    TypedSetter(MethodHandle methodHandle, String name) {
         super(methodHandle, name);
     }
 
