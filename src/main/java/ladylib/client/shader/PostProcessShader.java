@@ -12,7 +12,6 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.resource.IResourceType;
 import net.minecraftforge.client.resource.ISelectiveResourceReloadListener;
 import net.minecraftforge.client.resource.VanillaResourceType;
-import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
@@ -38,7 +37,6 @@ import java.util.function.Predicate;
  * @see ShaderUtil
  * @see "<tt>assets/minecraft/shaders</tt> for examples"
  */
-@Mod.EventBusSubscriber(modid = LadyLib.MOD_ID)
 public final class PostProcessShader {
 
     // Let shaders be garbage collected when no one uses them

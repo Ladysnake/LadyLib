@@ -1,8 +1,8 @@
 {
     "homepage": "https://github.com/Ladysnake/LadyLib/releases",
     "promos": {
-        "1.12.2-latest": "2.5.0",
-        "1.12.2-recommended": "2.5.0"
+        "1.12.2-latest": "2.6.1",
+        "1.12.2-recommended": "2.6.1"
     },
     "1.12.2": {
         "2.1.0": "Add screen shaders\nFix automatic registration for older mappings\nAdd reflection helper methods for obfuscation and method handles",
@@ -13,6 +13,8 @@
         "2.3.1": "Miscellaneous:\n- Added `@CalledThroughReflection` and `@PublicApi` annotations for documenting indirectly called methods\n- Added the ability to specify the owning mod on EnhancedBusSubscriber\n- Updated installation instructions\n- Removed the ability to download any mod not made by Ladysnake to better comply with Twitch TOS (sorry lads)\nBugfixes:\n- Fixed automatic capability registrations when defaults are used",
         "2.3.2": "Fixed automatic capability registration behaving opposite to what the javadoc says",
         "2.4.0": "Shaders:\n- Overhauled the screen/post-process shader system\n- Deprecated old screen shaders methods\n- Made the /ladylib_shader_reload command reload shader resources using Forge's new selective resource reloading\n- Dynamic lights now use a post process shader\nReflection:\n- Added generic typed method handles\n- Added a new reflection helper that uses said typed method handles\nKotlin:\n- Added a Kotlin module containing a few methods smoothing the experience for Forgelin fans\nBugfixes:\n- Fixed the \"\"\"Enhanced\"\"\" Event Subscriber not registering any class after an invalid one",
-        "2.5.0": "`@EnhancedBusSubscriber` refactor:\n- Swapped owner and dependencies in `@EnhancedBusSubscriber`\n- Specifying the owning mod id is now compulsory\n- `@EnhancedBusSubscriber` can now be applied to constant fields\n- Actually fixed the retarded event subscriber not registering any class after an invalid one"
+        "2.5.0": "`@EnhancedBusSubscriber` refactor:\n- Swapped owner and dependencies in `@EnhancedBusSubscriber`\n- Specifying the owning mod id is now compulsory\n- `@EnhancedBusSubscriber` can now be applied to constant fields\n- Actually fixed the retarded event subscriber not registering any class after an invalid one",
+        "2.6.0": "Reflection:\n- Renamed `LLMethodHandle*` to `TypedMethod`\n- Add typed read-write fields\n- Deprecated some methods made redundant by `ObfuscationReflectionHelper`",
+        "2.6.1": "- Fixed dedicated server crash"
     }
 }

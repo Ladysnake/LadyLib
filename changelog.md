@@ -1,3 +1,6 @@
+##### Version 1.12.2-2.6.1 - BUILT
+- Fixed dedicated server crash
+
 ##### Version 1.12.2-2.6.0 - BUILT
 Reflection:
 - Renamed `LLMethodHandle*` to `TypedMethod`
