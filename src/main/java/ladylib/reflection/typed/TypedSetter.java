@@ -1,6 +1,10 @@
 package ladylib.reflection.typed;
 
+import org.apiguardian.api.API;
+
 import java.lang.invoke.MethodHandle;
+
+import static org.apiguardian.api.API.Status.EXPERIMENTAL;
 
 /**
  * A typed setter using a method handle to access a field
@@ -9,6 +13,7 @@ import java.lang.invoke.MethodHandle;
  *
  * @since 2.6
  */
+@API(status = EXPERIMENTAL, since = "2.6.2")
 public class TypedSetter<T, P1> extends TypedMethod1<T, P1, Void> {
     public TypedSetter(MethodHandle methodHandle, String name) {
         super(methodHandle, name);

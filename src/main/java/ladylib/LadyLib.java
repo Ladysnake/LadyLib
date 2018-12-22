@@ -6,7 +6,6 @@ import ladylib.client.LLibClientContainer;
 import ladylib.client.internal.ClientHandlerImpl;
 import ladylib.client.particle.LLParticleManager;
 import ladylib.compat.internal.EnhancedAutomaticEventSubscriber;
-import ladylib.misc.PublicApi;
 import ladylib.misc.ReflectionFailedException;
 import ladylib.nbt.serialization.internal.DefaultValuesSearch;
 import ladylib.networking.minecraft.PacketHandler;
@@ -22,6 +21,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apiguardian.api.API;
 
 import javax.annotation.Nonnull;
 import java.io.PrintStream;
@@ -35,6 +35,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+
+import static org.apiguardian.api.API.Status.MAINTAINED;
+import static org.apiguardian.api.API.Status.STABLE;
 
 // note: mod information is contained in mcmod.info
 @Mod(modid = LadyLib.MOD_ID, version = LadyLib.VERSION, dependencies = LadyLib.DEPENDENCIES)
@@ -65,7 +68,7 @@ public class LadyLib {
      * Specifically, checks whether the environment is obfuscated or not.
      * @return true if the current environment is deobfuscated
      */
-    @PublicApi
+    @API(status = MAINTAINED, since = "2.6.2")
     public static boolean isDevEnv() {
         return (Boolean) Launch.blackboard.get("fml.deobfuscatedEnvironment");
     }
@@ -75,7 +78,7 @@ public class LadyLib {
      * This is mostly intended as a replacement for temporary debug statements using {@link PrintStream#println(Object)  System.out.println}
      * @param message the message to print
      */
-    @PublicApi
+    @API(status = MAINTAINED, since = "2.6.2")
     public static void debug(Object message) {
         if (isDevEnv()) {
             // use a dedicated print stream to accurately display the call origin
@@ -183,7 +186,7 @@ public class LadyLib {
     /**
      * @return the list of every mod wrapper created by LadyLib
      */
-    @PublicApi
+    @API(status = MAINTAINED, since = "2.6.2")
     public Collection<LLibContainer> getAllInstances() {
         return allInstances.values();
     }
@@ -197,7 +200,7 @@ public class LadyLib {
      * @param modId the mod id owning the container
      * @return the mod's container
      */
-    @PublicApi
+    @API(status = MAINTAINED, since = "2.6.2")
     public LLibContainer getContainer(String modId) {
         return allInstances.computeIfAbsent(modId, this::createContainer);
     }
@@ -214,7 +217,7 @@ public class LadyLib {
      * Gets LadyLib's {@link ItemRegistrar item registrar}.
      * The item registrar offers various methods to make item registration easier.
      */
-    @PublicApi
+    @API(status = STABLE, since = "2.6.2")
     public ItemRegistrar getItemRegistrar() {
         return registrar.getItemRegistrar();
     }
@@ -223,7 +226,7 @@ public class LadyLib {
      * Gets LadyLib's {@link BlockRegistrar block registrar}.
      * The block registrar offers various methods to make block registration easier.
      */
-    @PublicApi
+    @API(status = STABLE, since = "2.6.2")
     public BlockRegistrar getBlockRegistrar() {
         return registrar.getBlockRegistrar();
     }

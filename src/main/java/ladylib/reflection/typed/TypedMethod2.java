@@ -1,11 +1,13 @@
 package ladylib.reflection.typed;
 
-import ladylib.misc.PublicApi;
 import ladylib.misc.ReflectionFailedException;
+import org.apiguardian.api.API;
 
 import java.lang.invoke.MethodHandle;
 
-@PublicApi
+import static org.apiguardian.api.API.Status.EXPERIMENTAL;
+
+@API(status = EXPERIMENTAL, since = "2.6.2")
 public class TypedMethod2<T, P1, P2, R> extends TypedMethod {
     public TypedMethod2(MethodHandle methodHandle, String name) {
         super(methodHandle, name);

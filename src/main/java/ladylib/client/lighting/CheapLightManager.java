@@ -7,7 +7,6 @@ import ladylib.client.shader.PostProcessShader;
 import ladylib.client.shader.ShaderException;
 import ladylib.client.shader.ShaderUtil;
 import ladylib.compat.EnhancedBusSubscriber;
-import ladylib.misc.PublicApi;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.renderer.culling.Frustum;
@@ -19,12 +18,15 @@ import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
+import org.apiguardian.api.API;
 import org.lwjgl.util.vector.Matrix4f;
 
 import javax.annotation.Nonnull;
 import java.nio.FloatBuffer;
 import java.util.*;
 import java.util.stream.Stream;
+
+import static org.apiguardian.api.API.Status.EXPERIMENTAL;
 
 /**
  * A light manager that handles custom dynamic lights updates and rendering.
@@ -60,7 +62,7 @@ public class CheapLightManager {
      * Adds a light source to this manager. It will then be ticked and rendered until it's marked {@link CheapLight#isExpired() expired}.
      * @param light the light source to be added
      */
-    @PublicApi
+    @API(status = EXPERIMENTAL)
     public void addLight(CheapLight light) {
         cheapLights.add(light);
     }
@@ -68,7 +70,7 @@ public class CheapLightManager {
     /**
      * Gets a stream of every light currently being managed
      */
-    @PublicApi
+    @API(status = EXPERIMENTAL)
     public Stream<CheapLight> getLights() {
         return cheapLights.stream();
     }

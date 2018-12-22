@@ -2,7 +2,6 @@ package ladylib.client.shader;
 
 import ladylib.LadyLib;
 import ladylib.compat.EnhancedBusSubscriber;
-import ladylib.misc.PublicApi;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.texture.ITextureObject;
@@ -15,6 +14,7 @@ import net.minecraftforge.client.resource.VanillaResourceType;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
+import org.apiguardian.api.API;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Matrix4f;
 
@@ -25,6 +25,8 @@ import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+
+import static org.apiguardian.api.API.Status.*;
 
 /**
  * A post processing shader that is applied to the main framebuffer
@@ -47,7 +49,7 @@ public final class PostProcessShader {
      * @param location the location of the json within your mod's assets
      * @return a lazily initialized screen shader
      */
-    @PublicApi
+    @API(status = MAINTAINED, since = "2.6.2")
     public static PostProcessShader loadShader(ResourceLocation location) {
         return loadShader(location, s -> {});
     }
@@ -58,7 +60,7 @@ public final class PostProcessShader {
      * @param uniformInitBlock a block ran once to initialize uniforms
      * @return a lazily initialized screen shader
      */
-    @PublicApi
+    @API(status = MAINTAINED, since = "2.6.2")
     public static PostProcessShader loadShader(ResourceLocation location, Consumer<PostProcessShader> uniformInitBlock) {
         PostProcessShader ret = new PostProcessShader(location, uniformInitBlock);
         postProcessShaders.add(ret);
@@ -85,7 +87,7 @@ public final class PostProcessShader {
      * @see #isInitialized()
      */
     @Nullable
-    @PublicApi
+    @API(status = MAINTAINED, since = "2.6.2")
     public ShaderGroup getShaderGroup() {
         if (!this.isInitialized() && !this.errored) {
             try {
@@ -110,7 +112,7 @@ public final class PostProcessShader {
      * @see #isInitialized()
      * @see #dispose(boolean)
      */
-    @PublicApi
+    @API(status = MAINTAINED, since = "2.6.2")
     public void initialize() throws IOException {
         this.dispose(false);
         Minecraft mc = Minecraft.getMinecraft();
@@ -125,7 +127,7 @@ public final class PostProcessShader {
      * @return true if this does not require initialization
      * @see #initialize()
      */
-    @PublicApi
+    @API(status = MAINTAINED, since = "2.6.2")
     public boolean isInitialized() {
         return this.shaderGroup != null;
     }
@@ -133,7 +135,7 @@ public final class PostProcessShader {
     /**
      * @return <code>true</code> if this shader erred during initialization
      */
-    @PublicApi
+    @API(status = MAINTAINED, since = "2.6.2")
     public boolean isErrored() {
         return this.errored;
     }
@@ -160,7 +162,7 @@ public final class PostProcessShader {
      * @see #getShaderGroup()
      * @see #finalize()
      */
-    @PublicApi
+    @API(status = STABLE, since = "2.6.2")
     public void dispose(boolean removeFromManaged) {
         if (this.isInitialized()) {
             this.shaderGroup.deleteShaderGroup();
@@ -186,7 +188,7 @@ public final class PostProcessShader {
      *     This method should be called every frame when the shader is active.
      *     Uniforms should be set before rendering.
      */
-    @PublicApi
+    @API(status = STABLE, since = "2.6.2")
     public void render(float partialTicks) {
         ShaderGroup sg = this.getShaderGroup();
         if (sg != null) {
@@ -205,7 +207,7 @@ public final class PostProcessShader {
      * Forwards to {@link #setupDynamicUniforms(int, Runnable)} with an index of 0
      * @param dynamicSetBlock a block in which dynamic uniforms are set
      */
-    @PublicApi
+    @API(status = EXPERIMENTAL, since = "2.6.2")
     public void setupDynamicUniforms(Runnable dynamicSetBlock) {
         this.setupDynamicUniforms(0, dynamicSetBlock);
     }
@@ -216,7 +218,7 @@ public final class PostProcessShader {
      * @param index the shader index within the group
      * @param dynamicSetBlock a block in which dynamic name uniforms are set
      */
-    @PublicApi
+    @API(status = EXPERIMENTAL, since = "2.6.2")
     public void setupDynamicUniforms(int index, Runnable dynamicSetBlock) {
         ShaderGroup sg = this.getShaderGroup();
         if (sg != null) {
@@ -232,7 +234,7 @@ public final class PostProcessShader {
      * @param uniformName the name of the uniform field in the shader source file
      * @param value int value
      */
-    @PublicApi
+    @API(status = STABLE, since = "2.6.2")
     public void setUniformValue(String uniformName, int value) {
         setUniformValue(uniformName, value, 0, 0, 0);
     }
@@ -243,7 +245,7 @@ public final class PostProcessShader {
      * @param value0 int value
      * @param value1 int value
      */
-    @PublicApi
+    @API(status = STABLE, since = "2.6.2")
     public void setUniformValue(String uniformName, int value0, int value1) {
         setUniformValue(uniformName, value0, value1, 0, 0);
     }
@@ -255,7 +257,7 @@ public final class PostProcessShader {
      * @param value1 int value
      * @param value2 int value
      */
-    @PublicApi
+    @API(status = STABLE, since = "2.6.2")
     public void setUniformValue(String uniformName, int value0, int value1, int value2) {
         setUniformValue(uniformName, value0, value1, value2, 0);
     }
@@ -268,7 +270,7 @@ public final class PostProcessShader {
      * @param value2 int value
      * @param value3 int value
      */
-    @PublicApi
+    @API(status = STABLE, since = "2.6.2")
     public void setUniformValue(String uniformName, int value0, int value1, int value2, int value3) {
         ShaderGroup sg = this.getShaderGroup();
         if (sg != null) {
@@ -283,7 +285,7 @@ public final class PostProcessShader {
      * @param uniformName the name of the uniform field in the shader source file
      * @param value float value
      */
-    @PublicApi
+    @API(status = STABLE, since = "2.6.2")
     public void setUniformValue(String uniformName, float value) {
         ShaderGroup sg = this.getShaderGroup();
         if (sg != null) {
@@ -300,7 +302,7 @@ public final class PostProcessShader {
      * @param value0 float value
      * @param value1 float value
      */
-    @PublicApi
+    @API(status = STABLE, since = "2.6.2")
     public void setUniformValue(String uniformName, float value0, float value1) {
         ShaderGroup sg = this.getShaderGroup();
         if (sg != null) {
@@ -318,7 +320,7 @@ public final class PostProcessShader {
      * @param value1 float value
      * @param value2 float value
      */
-    @PublicApi
+    @API(status = STABLE, since = "2.6.2")
     public void setUniformValue(String uniformName, float value0, float value1, float value2) {
         ShaderGroup sg = this.getShaderGroup();
         if (sg != null) {
@@ -337,7 +339,7 @@ public final class PostProcessShader {
      * @param value2 float value
      * @param value3 float value
      */
-    @PublicApi
+    @API(status = STABLE, since = "2.6.2")
     public void setUniformValue(String uniformName, float value0, float value1, float value2, float value3) {
         ShaderGroup sg = this.getShaderGroup();
         if (sg != null) {
@@ -353,7 +355,7 @@ public final class PostProcessShader {
      * @param uniformName the name of the uniform field in the shader source file
      * @param value a matrix
      */
-    @PublicApi
+    @API(status = STABLE, since = "2.6.2")
     public void setUniformValue(String uniformName, Matrix4f value) {
         ShaderGroup sg = this.getShaderGroup();
         if (sg != null) {
@@ -369,7 +371,7 @@ public final class PostProcessShader {
      * @param samplerName the name of the sampler uniform field in the shader source file and json
      * @param texture a texture object
      */
-    @PublicApi
+    @API(status = STABLE, since = "2.6.2")
     public void setSamplerUniform(String samplerName, ITextureObject texture) {
         setSamplerUniform(samplerName, (Object) texture);
     }
@@ -379,7 +381,7 @@ public final class PostProcessShader {
      * @param samplerName the name of the sampler uniform field in the shader source file and json
      * @param textureFbo a framebuffer which main texture will be used
      */
-    @PublicApi
+    @API(status = STABLE, since = "2.6.2")
     public void setSamplerUniform(String samplerName, Framebuffer textureFbo) {
         setSamplerUniform(samplerName, (Object) textureFbo);
     }
@@ -389,7 +391,7 @@ public final class PostProcessShader {
      * @param samplerName the name of the sampler uniform field in the shader source file and json
      * @param textureName an opengl texture name
      */
-    @PublicApi
+    @API(status = STABLE, since = "2.6.2")
     public void setSamplerUniform(String samplerName, int textureName) {
         setSamplerUniform(samplerName, Integer.valueOf(textureName));
     }

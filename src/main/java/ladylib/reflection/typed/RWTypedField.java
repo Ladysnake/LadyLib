@@ -1,5 +1,9 @@
 package ladylib.reflection.typed;
 
+import org.apiguardian.api.API;
+
+import static org.apiguardian.api.API.Status.EXPERIMENTAL;
+
 /**
  * A read-write reference to a field, using method handles as getter and setter
  * @param <T> type of the field's owner
@@ -7,6 +11,7 @@ package ladylib.reflection.typed;
  * @see ladylib.reflection.TypedReflection#createFieldRef(Class, String, Class)
  * @since 2.6
  */
+@API(status = EXPERIMENTAL, since = "2.6.2")
 public class RWTypedField<T, R> {
     private TypedGetter<T, R> getter;
     private TypedSetter<T, R> setter;

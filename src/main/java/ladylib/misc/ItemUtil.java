@@ -7,10 +7,13 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.stats.StatBase;
 import net.minecraft.stats.StatList;
 import net.minecraftforge.items.ItemHandlerHelper;
+import org.apiguardian.api.API;
 
 import javax.annotation.Nonnull;
 
-@PublicApi
+import static org.apiguardian.api.API.Status.MAINTAINED;
+
+@API(status = MAINTAINED, since = "2.6.2")
 public final class ItemUtil {
     private ItemUtil() { }
 
@@ -20,7 +23,7 @@ public final class ItemUtil {
      * @return the stack's nbt compound
      */
     @Nonnull
-    @PublicApi
+    @API(status = MAINTAINED, since = "2.6.2")
     public static NBTTagCompound getOrCreateCompound(@Nonnull ItemStack stack) {
         NBTTagCompound nbt = stack.getTagCompound();
         if (nbt == null) {
@@ -44,7 +47,7 @@ public final class ItemUtil {
      * @param affectCreative If false, the transformation will not occur for players in creative mode
      * @return The remainder of the old stack after being converted
      */
-    @PublicApi
+    @API(status = MAINTAINED, since = "2.6.2")
     public static ItemStack turnItemIntoAnother(ItemStack fromStack, EntityLivingBase bearer, ItemStack toStack, boolean affectCreative) {
         if (!affectCreative && bearer instanceof EntityPlayer && ((EntityPlayer) bearer).isCreative()) {
             return fromStack;

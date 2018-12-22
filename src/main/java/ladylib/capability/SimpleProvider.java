@@ -1,19 +1,21 @@
 package ladylib.capability;
 
-import ladylib.misc.PublicApi;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
+import org.apiguardian.api.API;
 
 import javax.annotation.Nonnull;
+
+import static org.apiguardian.api.API.Status.MAINTAINED;
 
 /**
  * A capability provider that can wrap any capability instance
  * as long as it is handled by the capability's default storage
  * @param <C> the capability type
  */
-@PublicApi
+@API(status = MAINTAINED, since = "2.6.2")
 public class SimpleProvider<C> implements ICapabilitySerializable<NBTBase> {
 
     private Capability<C> capability;

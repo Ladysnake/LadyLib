@@ -4,6 +4,7 @@ import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToFindClassException;
 import net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToFindFieldException;
 import net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToFindMethodException;
+import org.apiguardian.api.API;
 import org.objectweb.asm.Type;
 
 import javax.annotation.Nullable;
@@ -11,6 +12,9 @@ import java.lang.invoke.*;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+
+import static org.apiguardian.api.API.Status.MAINTAINED;
+import static org.apiguardian.api.API.Status.STABLE;
 
 public final class ReflectionUtil {
     private ReflectionUtil() { }
@@ -74,8 +78,10 @@ public final class ReflectionUtil {
      * @param parameterTypes The parameter types of the method to find.
      * @return A handle for the method with the specified name and parameters in the given class.
      * @throws UnableToFindMethodException if an issue prevents the method from being reflected
+     *
+     * @see ladylib.reflection.TypedReflection#findMethod(Class, String, Class)
      */
-    @PublicApi
+    @API(status = STABLE, since = "2.6.2")
     public static MethodHandle findMethodHandleFromObfName(Class<?> clazz, String methodObfName, Class<?> returnType, Class<?>... parameterTypes) {
         try {
             return MethodHandles.lookup().unreflect(ObfuscationReflectionHelper.findMethod(clazz, methodObfName, returnType, parameterTypes));
@@ -96,7 +102,7 @@ public final class ReflectionUtil {
      * @return A handle for the getter of the field with the specified name and type in the given class.
      * @throws UnableToFindFieldException if an issue prevents the field from being reflected
      */
-    @PublicApi
+    @API(status = STABLE, since = "2.6.2")
     public static MethodHandle findGetterFromObfName(Class<?> clazz, String fieldObfName, Class<?> type) {
         try {
             return MethodHandles.lookup().unreflectGetter(ObfuscationReflectionHelper.findField(clazz, fieldObfName));
@@ -117,7 +123,7 @@ public final class ReflectionUtil {
      * @return A handle for the setter of the field with the specified name and type in the given class.
      * @throws UnableToFindFieldException if an issue prevents the field from being reflected
      */
-    @PublicApi
+    @API(status = STABLE, since = "2.6.2")
     public static MethodHandle findSetterFromObfName(Class<?> clazz, String fieldObfName, Class<?> type) {
         try {
             return MethodHandles.lookup().unreflectSetter(ObfuscationReflectionHelper.findField(clazz, fieldObfName));
@@ -137,7 +143,7 @@ public final class ReflectionUtil {
      * @return a factory implementing <tt>lambdaType</tt>
      * @see #createFactory(Class, String, Class, Lookup)
      */
-    @PublicApi
+    @API(status = STABLE, since = "2.6.2")
     public static <T> T createFactory(Class<?> clazz, String invokedName, Class<?> lambdaType) {
         return createFactory(clazz, invokedName, lambdaType, MethodHandles.lookup());
     }
@@ -152,7 +158,7 @@ public final class ReflectionUtil {
      * @param lookup      the lookup to use to find the constructor
      * @return a factory implementing <tt>lambdaType</tt>
      */
-    @PublicApi
+    @API(status = STABLE, since = "2.6.2")
     @SuppressWarnings("unchecked")
     public static <T> T createFactory(Class<?> clazz, String invokedName, Class<?> lambdaType, Lookup lookup) {
         try {
@@ -175,6 +181,7 @@ public final class ReflectionUtil {
      * @param clazz the class that the returned lookup should report as its own
      * @return a trusted lookup that has all permissions in the given class
      */
+    @API(status = MAINTAINED, since = "2.6.2")
     public static Lookup getTrustedLookup(Class clazz) {
         // Invoke black magic.
         return TRUSTED_LOOKUP.in(clazz);

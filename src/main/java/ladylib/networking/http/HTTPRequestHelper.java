@@ -3,8 +3,8 @@ package ladylib.networking.http;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
-import ladylib.misc.PublicApi;
 import ladylib.modwinder.installer.InstallationException;
+import org.apiguardian.api.API;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -21,6 +21,8 @@ import java.nio.file.Path;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import static org.apiguardian.api.API.Status.STABLE;
 
 public class HTTPRequestHelper {
     private static final Gson GSON = new Gson();
@@ -57,7 +59,7 @@ public class HTTPRequestHelper {
      * @param success A callback function that is executed if the request succeeds.
      * @see #getJSON(URL)
      */
-    @PublicApi
+    @API(status = STABLE, since = "2.6.2")
     public static void getJSON(String url, JsonCallback success) {
         try {
             getJSON(new URL(url)).thenAccept(success);
@@ -89,7 +91,7 @@ public class HTTPRequestHelper {
      * @see #getJSON(String, JsonCallback)
      * @see CompletableFuture
      */
-    @PublicApi
+    @API(status = STABLE, since = "2.6.2")
     public static CompletableFuture<JsonElement> getJSON(URL url) {
         return CompletableFuture.supplyAsync(() -> requestJSON(url), THREAD_POOL);
     }
@@ -101,7 +103,7 @@ public class HTTPRequestHelper {
      * @return an opened connection that may have been redirected
      * @throws IOException if an I/O exception occurs or that there are too many redirects
      */
-    @PublicApi
+    @API(status = STABLE, since = "2.6.2")
     public static URLConnection openUrlConnection(URL url) throws IOException {
         URL currentUrl = url;
         for (int redirects = 0; redirects < MAX_HTTP_REDIRECTS; redirects++) {
@@ -137,7 +139,7 @@ public class HTTPRequestHelper {
      * @param urlString a valid url from which to download the file
      * @return the path of the downloaded file
      */
-    @PublicApi
+    @API(status = STABLE, since = "2.6.2")
     public static Path downloadFile(String dest, String urlString) {
         try {
             Path temp = Files.createTempFile(dest, null);

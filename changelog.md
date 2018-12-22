@@ -1,3 +1,6 @@
+##### Version 1.12.2-2.6.2 - BUILT
+- Replaced usage of `@PublicApi` with more expressive `@API` Guardian
+
 ##### Version 1.12.2-2.6.1 - BUILT
 - Fixed dedicated server crash
 
