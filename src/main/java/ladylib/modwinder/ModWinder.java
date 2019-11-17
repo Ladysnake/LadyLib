@@ -23,17 +23,23 @@ public class ModWinder {
     }
 
     /**
-     * Retrieves the list of mods featured on <a href=https://ladysnake.glitch.me/milksnake-bar>Ladysnake's website</a>
+     * Retrieves the list of mods featured on <a href=https://github.com/sschr15/ModWinder>sschr15's github repo</a>
      * and processes it.
      * <p>
      * This process is asynchronous, as such the method should return instantly even though the whole process is likely to
      * take several seconds.
      */
     private static void refillModBar() {
+        //This will send a report to the console on whether or not the list was loaded.
+        boolean foundList = false;
         try {
-            ModWinderList.retrieveList(new URL("https://ladysnake.glitch.me/milksnake-bar-v2")).thenAccept(map -> map.forEach(ModWinderList::addList));
+            ModWinderList.retrieveList(new URL("https://raw.githubusercontent.com/sschr15/ModWinder/master/milksnakebar.json")).thenAccept(map -> map.forEach(ModWinderList::addList));
+            foundList = true;
         } catch (MalformedURLException e) {
             throw new AssertionError(e); // Oi this is hardcoded
+        }
+        if (!foundList) {
+            System.out.println("Error while fetching mod list! ModWinder was unable to access the JSON file. Are you connected to the internet? If you are, send an issue on sschr15's ModWinder page at https://github.com/sschr15/ModWinder");
         }
     }
 
