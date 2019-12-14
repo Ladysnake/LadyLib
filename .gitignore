@@ -22,5 +22,5 @@ eclipse
 run
 /classes/
 
-# Visual Studio Code, Window Colors
+# Visual Studio Code
 .vscode/
