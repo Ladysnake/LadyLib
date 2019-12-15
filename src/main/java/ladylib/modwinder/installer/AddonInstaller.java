@@ -142,7 +142,7 @@ public class AddonInstaller {
                         if (MinecraftForge.MC_VERSION.equals(el.getAsJsonObject().get("gameVersion").getAsString())) {
                             return new ParamHolder(
                                     el.getAsJsonObject().get("projectFileName").getAsString(),
-                                    el.getAsJsonObject().get("projectFileID").getAsString()
+                                    el.getAsJsonObject().get("projectFileId").getAsString()
                             );
                         }
                     }
@@ -266,8 +266,8 @@ public class AddonInstaller {
                         // filter the files based on the name
                         JsonObject fileToDownload = null;
                         for (JsonElement el : json.getAsJsonArray()) {
-                            String fileNameOnDisk = el.getAsJsonObject().get("fileNameOnDisk").getAsString();
-                            if (fileNameOnDisk.equals(fileName) || el.getAsJsonObject().get("id").getAsString().equals(fileId)) {
+                            String fileNameOnDisk = el.getAsJsonObject().get("fileName").getAsString();
+                            if ( fileNameOnDisk.equals(fileName) || /**/ el.getAsJsonObject().get("id").getAsString().equals(fileId)) {
                                 fileToDownload = el.getAsJsonObject();
                                 break;
                             }
@@ -282,7 +282,7 @@ public class AddonInstaller {
                         installDependencies(fileToDownload, downloadedFiles);
 
                         // download this file from the associated url
-                        String downloadURL = fileToDownload.getAsJsonObject().get("downloadURL").getAsString();
+                        String downloadURL = fileToDownload.getAsJsonObject().get("downloadUrl").getAsString();
                         mod.setInstallationState(new InstallationState(InstallationState.Status.INSTALLING, I18n.format("modwinder.status.downloading.file", fileName)));
                         Path temp = HTTPRequestHelper.downloadFile(fileName, downloadURL);
                         mod.setInstallationState(new InstallationState(InstallationState.Status.INSTALLING, I18n.format("modwinder.status.installing", fileName)));
