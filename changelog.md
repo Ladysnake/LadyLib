@@ -1,3 +1,8 @@
+##### Version 1.12.2-2.6.3 - BUILT
+From sschr15:
+
+- Brought ModWinder support back! No more needing to go to Curseforge (possibly in the future)
+
 ##### Version 1.12.2-2.6.2 - BUILT
 - Replaced usage of `@PublicApi` with more expressive `@API` Guardian
 
