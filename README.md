@@ -53,7 +53,7 @@ jar {
 * Actual documentation (yes, I count that as a feature)
 
 ## ModWinder
-ModWinder is an integrated installer for [Ladysnake approved mods](https://ladysnake.glitch.me/milksnake-bar). 
+ModWinder is an integrated installer for [Ladysnake (or sschr15) approved mods](https://github.com/sschr15/ModWinder/blob/master/milksnakebar.json). 
 It works as a child mod of LadyLib, and allows players to easily install and update mods from inside the game.
 
 ## [Milksnake](Milksnake/README.md)
