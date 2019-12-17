@@ -185,8 +185,8 @@ public class GuiModBar extends GuiScreen {
         // Update all
         this.buttonList.add(new GuiButton(UPDATE_ALL_BUTTON_ID, (this.width / 4) - (this.width / 5) , this.height - 57, this.width / 5, 20, I18n.format("modwinder.update_all")));
         // Cycle displayed list
-//        this.cycleListButton = new GuiButton(SWITCH_LIST_BUTTON_ID, (this.width / 4) - (this.width / 5) , this.height - 38, this.width / 5, 20, I18n.format(selectedList.getUnlocalizedName()));
-//        this.buttonList.add(cycleListButton);
+        this.cycleListButton = new GuiButton(SWITCH_LIST_BUTTON_ID, (this.width / 4) - (this.width / 5) , this.height - 38, this.width / 5, 20, I18n.format(selectedList.getUnlocalizedName()));
+        this.buttonList.add(cycleListButton);
 
         // Search bar
         search = new GuiTextField(0, fontRenderer, 12 + 3 * this.modList.getListWidth() / 4, this.modList.getTop() - 17, this.modList.getListWidth() / 4 - 4, 14);

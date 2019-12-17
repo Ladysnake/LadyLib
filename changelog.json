@@ -1,8 +1,8 @@
 {
     "homepage": "https://github.com/Ladysnake/LadyLib/releases",
     "promos": {
-        "1.12.2-latest": "2.6.3",
-        "1.12.2-recommended": "2.6.3"
+        "1.12.2-latest": "2.6.4",
+        "1.12.2-recommended": "2.6.4"
     },
     "1.12.2": {
         "2.1.0": "Add screen shaders\nFix automatic registration for older mappings\nAdd reflection helper methods for obfuscation and method handles",
@@ -17,6 +17,7 @@
         "2.6.0": "Reflection:\n- Renamed `LLMethodHandle*` to `TypedMethod`\n- Add typed read-write fields\n- Deprecated some methods made redundant by `ObfuscationReflectionHelper`",
         "2.6.1": "- Fixed dedicated server crash",
         "2.6.2": "- Replaced usage of `@PublicApi` with more expressive `@API` Guardian",
-        "2.6.3": "From sschr15:\n- Brought ModWinder support back! No more needing to go to Curseforge (possibly in the future)"
+        "2.6.3": "- Brought ModWinder support back! No more needing to go to Curseforge (possibly in the future)",
+        "2.6.4": "- Re-added button unlocking non-Ladysnake mods"
     }
 }

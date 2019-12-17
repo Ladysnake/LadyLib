@@ -1,6 +1,7 @@
-##### Version 1.12.2-2.6.3 - BUILT
-From sschr15:
+##### Version 1.12.2-2.6.4 - BUILT
+- Re-added button unlocking non-Ladysnake mods
 
+##### Version 1.12.2-2.6.3 - BUILT
 - Brought ModWinder support back! No more needing to go to Curseforge (possibly in the future)
 
 ##### Version 1.12.2-2.6.2 - BUILT
