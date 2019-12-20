@@ -23,7 +23,7 @@ public class ModWinder {
     }
 
     /**
-     * Retrieves the list of mods featured on <a href=https://github.com/sschr15/ModWinder>sschr15's github repo</a>
+     * Retrieves the list of mods featured on <a href=https://github.com/Ladysnake/ModWinder>Ladysnake's github repo</a>
      * and processes it.
      * <p>
      * This process is asynchronous, as such the method should return instantly even though the whole process is likely to
@@ -33,7 +33,7 @@ public class ModWinder {
         //This will send a report to the console on whether or not the list was loaded.
         boolean foundList = false;
         try {
-            ModWinderList.retrieveList(new URL("https://raw.githubusercontent.com/sschr15/ModWinder/master/milksnakebar.json")).thenAccept(map -> map.forEach(ModWinderList::addList));
+            ModWinderList.retrieveList(new URL("https://raw.githubusercontent.com/Ladysnake/ModWinder/master/milksnakebar.json")).thenAccept(map -> map.forEach(ModWinderList::addList));
             foundList = true;
         } catch (MalformedURLException e) {
             throw new AssertionError(e); // Oi this is hardcoded
