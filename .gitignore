@@ -21,6 +21,5 @@ build
 eclipse
 run
 /classes/
-
-# Visual Studio Code
 .vscode/
+keystore.jks

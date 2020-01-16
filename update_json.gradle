@@ -95,7 +95,7 @@ class GenerateUpdateJSON extends DefaultTask {
 }
 
 task updateJson(type: GenerateUpdateJSON) {
-    curseforgeURL = project.findProperty("${project.name}URL")
+    curseforgeURL = project.findProperty(project.name + "URL")
     changelog = project.file("changelog.md")
     output = project.file("changelog.json")
 }

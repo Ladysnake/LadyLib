@@ -96,10 +96,12 @@ allprojects {
             project.hasProperty('keyStore')
         }
 
-        keyStore = project.properties.keyStore
-        alias = project.properties.keyStoreAlias
-        storePass = project.properties.keyStorePass
-        keyPass = project.properties.keyStoreKeyPass
+        keyStore = project.findProperty("keyStore")
+        alias = project.findProperty("keyStoreAlias")
+        storePass = project.findProperty("keyStorePass")
+        keyPass = project.findProperty("keyStoreKeyPass")
+        inputFile = jar.archivePath
+        outputFile = jar.archivePath
     }
 
     build.dependsOn signJar
