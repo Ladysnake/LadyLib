@@ -152,7 +152,7 @@ public class ModEntry {
                 .thenApply(json -> {
                     // get the logo's url
                     for (JsonElement attachment : json.getAsJsonObject().get("attachments").getAsJsonArray()) {
-                        if (attachment.getAsJsonObject().get("default").getAsBoolean()) {
+                        if (attachment.getAsJsonObject().get("isDefault").getAsBoolean()) {
                             return GSON.fromJson(attachment.getAsJsonObject().get("url"), URL.class);
                         }
                     }
@@ -166,9 +166,9 @@ public class ModEntry {
                         throw new CompletionException(e);
                     }
                 }).exceptionally(t -> {
-            ModWinder.LOGGER.error("Could not download logo", t);
-            return null;
-        });
+                    ModWinder.LOGGER.error("Could not download logo", t);
+                    return null;
+                });
     }
 
     /**

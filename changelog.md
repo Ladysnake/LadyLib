@@ -1,3 +1,6 @@
+##### Version 1.12.2-2.6.5 - BUILT
+- Fixed invalid mod icons
+
 ##### Version 1.12.2-2.6.4 - BUILT
 - Re-added button unlocking non-Ladysnake mods
 
